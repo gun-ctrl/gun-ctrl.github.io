@@ -6,7 +6,7 @@
   <link href="http://example.com/atom.xml" rel="self"/>
   
   <link href="http://example.com/"/>
-  <updated>2022-07-12T07:40:34.272Z</updated>
+  <updated>2022-07-12T08:02:12.135Z</updated>
   <id>http://example.com/</id>
   
   <author>
@@ -15,6 +15,30 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>测试</title>
+    <link href="http://example.com/2022/07/12/%E6%B5%8B%E8%AF%95/"/>
+    <id>http://example.com/2022/07/12/%E6%B5%8B%E8%AF%95/</id>
+    <published>2022-07-12T08:00:30.901Z</published>
+    <updated>2022-07-12T08:02:12.135Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h3 id=&quot;关于Hexo搭建遇到的小问题&quot;&gt;&lt;a href=&quot;#关于Hexo搭建遇到的小问题&quot; class=&quot;headerlink&quot; title=&quot;关于Hexo搭建遇到的小问题&quot;&gt;&lt;/a&gt;关于Hexo搭建遇到的小问题&lt;/h3&gt;</summary>
+      
+    
+    
+    
+    <category term="其他" scheme="http://example.com/categories/%E5%85%B6%E4%BB%96/"/>
+    
+    
+    <category term="测试" scheme="http://example.com/tags/%E6%B5%8B%E8%AF%95/"/>
+    
+  </entry>
   
   <entry>
     <title>第一次上传测试</title>
