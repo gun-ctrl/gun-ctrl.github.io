@@ -3,12 +3,10 @@
   <entry>
     <title>RecyclerView高级用法——吸顶效果</title>
     <url>/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/</url>
-    <content><![CDATA[<p>##引言</p>
-<blockquote>
+    <content><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><blockquote>
 <p>我们对RecyclerView的使用不能仅仅停留在表面，可以探索一些高级的用法——自定义，不过要实现这些的前提是必须对RecycleView的源码流程有所了解。今天小编就略讲一下，主要是和今天的主体有关的内容。我们今天就来实现如下的吸顶效果。</p>
 </blockquote>
-<p>##通过绘制实现RecyclerView的吸顶效果</p>
-<blockquote>
+<h3 id="通过绘制实现RecyclerView的吸顶效果"><a href="#通过绘制实现RecyclerView的吸顶效果" class="headerlink" title="通过绘制实现RecyclerView的吸顶效果"></a>通过绘制实现RecyclerView的吸顶效果</h3><blockquote>
 <p>ItemDecoration</p>
 <p>ItemDecoration允许应用给具体的View添加具体的图画或者layout的偏移，对于绘制View之间的分割线，视觉分组边界等等是非常有用的。</p>
 <p>当我们调用addItemDecoration()方法添加decoration的时候，RecyclerView就会调用该类的onDraw方法区绘制分割线，也就是说：分割线是绘制出来的。</p>
@@ -30,8 +28,7 @@
 <blockquote>
 <p>也就是说绘制流程是：onDraw()-&gt;ItemView-&gt;onDrawOver</p>
 </blockquote>
-<p>##具体实现</p>
-<ul>
+<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ul>
 <li>在Adapter中创建两个方法<ul>
 <li>1.获取组名</li>
 <li>2.判断是否是组的头部<ul>
@@ -52,8 +49,7 @@
 
 <figure class="highlight pf"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void getItemOffsets(@N<span class="keyword">on</span>Null Rect <span class="keyword">out</span>Rect, @N<span class="keyword">on</span>Null View view, @N<span class="keyword">on</span>Null RecyclerView <span class="keyword">parent</span>, @N<span class="keyword">on</span>Null RecyclerView.State <span class="keyword">state</span>) &#123;</span><br><span class="line">        super.getItemOffsets(<span class="keyword">out</span>Rect, view, <span class="keyword">parent</span>, <span class="keyword">state</span>);</span><br><span class="line">        if (<span class="keyword">parent</span>.getAdapter() instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) <span class="keyword">parent</span>.getAdapter();</span><br><span class="line">            int position = <span class="keyword">parent</span>.getChildAdapterPosition(view);</span><br><span class="line">            boolean isGroupHeader = adapter.isGroupHeader(position);</span><br><span class="line">            //判断itemView是不是头部</span><br><span class="line">            if (isGroupHeader)&#123;</span><br><span class="line">                //如果是头部，预留更大的地方</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="keyword">group</span>HeaderHeight,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="number">4</span>,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></li>
 </ul>
-<p>##总结</p>
-<p>其实这部分的重点就是自定义分割线（ItemDecoration），弄清绘制顺序以及设置偏移值的作用就简单多了。当然，难点（也不是难点）就是弄清除尺寸参数,特别是尺寸变化引起的换组顶部推动效果。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>其实这部分的重点就是自定义分割线（ItemDecoration），弄清绘制顺序以及设置偏移值的作用就简单多了。当然，难点（也不是难点）就是弄清除尺寸参数,特别是尺寸变化引起的换组顶部推动效果。</p>
 <p>其次就是特别注意有padding的情况，相信大家看出小编在这设置了顶部padding，有padding的时候需要注意尺寸。（不过有设置padding的情况很少）</p>
 <p><a href="https://github.com/gun-ctrl/RecyclerViewPro">全部代码</a></p>
 ]]></content>
@@ -134,39 +130,6 @@
 ]]></content>
       <tags>
         <tag>Android随笔</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>括号问题</title>
-    <url>/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/</url>
-    <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给出n对括号，请编写一个函数来生成所有的由n对括号组成的合法组合。</p>
-<p>例如，给出n&#x3D;3，解集为：</p>
-<p>“((()))”, “(()())”, “(())()”, “()()()”, “()(())”</p>
-<p>数据范围：0&lt;&#x3D;n&lt;&#x3D;10</p>
-<p>要求：空间复杂度O(n)，时间复杂度O(2^n)</p>
-<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><h4 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h4><blockquote>
-<p>输入：1</p>
-<p>返回值：[“()”]</p>
-</blockquote>
-<h4 id="示例2"><a href="#示例2" class="headerlink" title="示例2"></a>示例2</h4><blockquote>
-<p>输入：2</p>
-<p>返回值：[“(())”，”()()”]</p>
-</blockquote>
-<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>相当于一共n个左括号和n个右括号，可以给我们使用，我们需要依次组装这些括号。每当我们使用一个左括号之后，就剩下n-1个左括号和n个右括号给我们使用，结果拼在使用的左括号之后就行了，因此后者就是一个子问题，可以使用递归：</p>
-<ul>
-<li>终止条件：左右括号都使用了n个，将结果加入数组。</li>
-<li>返回值：每一级向上一级返回后续组装后的字符串，即子问题中搭配出来的括号序列。</li>
-<li>本级任务：每一级就是保证左括号还有剩余的情况下，使用一次左括号进入子问题，或者右括号还有剩余且右括号使用次数少于左括号的情况下使用一次右括号进入子问题。</li>
-<li><strong>注意：</strong>我们需要保证左括号出现的次数比右括号多时我们再使用右括号就一定能保证括号合法了，因此每次需要检查左括号和右括号的使用次数。</li>
-</ul>
-<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight processing"><table><tr><td class="code"><pre><span class="line">```</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 代码中的类名、方法名、参数名已经指定，请勿修改，直接返回方法规定的值即可</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * </span></span><br><span class="line"><span class="comment">     * @param n int整型 </span></span><br><span class="line"><span class="comment">     * @return string字符串ArrayList</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">recursion</span>(<span class="type">int</span> left,<span class="type">int</span> right,<span class="built_in">String</span> temp,<span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res,<span class="type">int</span> n)&#123;</span><br><span class="line">        <span class="comment">//左右括号都用完了，就加入结果</span></span><br><span class="line">        <span class="keyword">if</span>(left==n&amp;&amp;right==n)&#123;</span><br><span class="line">            res.<span class="property">add</span>(temp);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次左括号</span></span><br><span class="line">        <span class="keyword">if</span>(left&lt;n)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left+<span class="number">1</span>,right,temp + <span class="string">&quot;（&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次有括号</span></span><br><span class="line">        <span class="keyword">if</span>(right&lt;n&amp;&amp;right&lt;left)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left,right+<span class="number">1</span>,temp + <span class="string">&quot;）&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; <span class="title function_">generateParenthesis</span> (<span class="type">int</span> n) &#123;</span><br><span class="line">        <span class="comment">//记录结果</span></span><br><span class="line">        <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res = <span class="keyword">new </span><span class="class title_">ArrayList</span>&lt;<span class="built_in">String</span>&gt;();</span><br><span class="line">        <span class="comment">//递归</span></span><br><span class="line">        <span class="title function_">recursion</span>(<span class="number">0</span>,<span class="number">0</span>,<span class="string">&quot;&quot;</span>,res,n);</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>算法</category>
-      </categories>
-      <tags>
-        <tag>算法</tag>
       </tags>
   </entry>
   <entry>
@@ -262,6 +225,39 @@
       </categories>
       <tags>
         <tag>高级UI</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>括号问题</title>
+    <url>/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给出n对括号，请编写一个函数来生成所有的由n对括号组成的合法组合。</p>
+<p>例如，给出n&#x3D;3，解集为：</p>
+<p>“((()))”, “(()())”, “(())()”, “()()()”, “()(())”</p>
+<p>数据范围：0&lt;&#x3D;n&lt;&#x3D;10</p>
+<p>要求：空间复杂度O(n)，时间复杂度O(2^n)</p>
+<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><h4 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h4><blockquote>
+<p>输入：1</p>
+<p>返回值：[“()”]</p>
+</blockquote>
+<h4 id="示例2"><a href="#示例2" class="headerlink" title="示例2"></a>示例2</h4><blockquote>
+<p>输入：2</p>
+<p>返回值：[“(())”，”()()”]</p>
+</blockquote>
+<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>相当于一共n个左括号和n个右括号，可以给我们使用，我们需要依次组装这些括号。每当我们使用一个左括号之后，就剩下n-1个左括号和n个右括号给我们使用，结果拼在使用的左括号之后就行了，因此后者就是一个子问题，可以使用递归：</p>
+<ul>
+<li>终止条件：左右括号都使用了n个，将结果加入数组。</li>
+<li>返回值：每一级向上一级返回后续组装后的字符串，即子问题中搭配出来的括号序列。</li>
+<li>本级任务：每一级就是保证左括号还有剩余的情况下，使用一次左括号进入子问题，或者右括号还有剩余且右括号使用次数少于左括号的情况下使用一次右括号进入子问题。</li>
+<li><strong>注意：</strong>我们需要保证左括号出现的次数比右括号多时我们再使用右括号就一定能保证括号合法了，因此每次需要检查左括号和右括号的使用次数。</li>
+</ul>
+<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight processing"><table><tr><td class="code"><pre><span class="line">```</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 代码中的类名、方法名、参数名已经指定，请勿修改，直接返回方法规定的值即可</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * </span></span><br><span class="line"><span class="comment">     * @param n int整型 </span></span><br><span class="line"><span class="comment">     * @return string字符串ArrayList</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">recursion</span>(<span class="type">int</span> left,<span class="type">int</span> right,<span class="built_in">String</span> temp,<span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res,<span class="type">int</span> n)&#123;</span><br><span class="line">        <span class="comment">//左右括号都用完了，就加入结果</span></span><br><span class="line">        <span class="keyword">if</span>(left==n&amp;&amp;right==n)&#123;</span><br><span class="line">            res.<span class="property">add</span>(temp);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次左括号</span></span><br><span class="line">        <span class="keyword">if</span>(left&lt;n)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left+<span class="number">1</span>,right,temp + <span class="string">&quot;（&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次有括号</span></span><br><span class="line">        <span class="keyword">if</span>(right&lt;n&amp;&amp;right&lt;left)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left,right+<span class="number">1</span>,temp + <span class="string">&quot;）&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; <span class="title function_">generateParenthesis</span> (<span class="type">int</span> n) &#123;</span><br><span class="line">        <span class="comment">//记录结果</span></span><br><span class="line">        <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res = <span class="keyword">new </span><span class="class title_">ArrayList</span>&lt;<span class="built_in">String</span>&gt;();</span><br><span class="line">        <span class="comment">//递归</span></span><br><span class="line">        <span class="title function_">recursion</span>(<span class="number">0</span>,<span class="number">0</span>,<span class="string">&quot;&quot;</span>,res,n);</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>算法</category>
+      </categories>
+      <tags>
+        <tag>算法</tag>
       </tags>
   </entry>
   <entry>
