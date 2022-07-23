@@ -3,11 +3,11 @@
   <title>搬码人’s Blog</title>
   
   <subtitle>将来的你一定会感谢现在努力拼搏的态度</subtitle>
-  <link href="http://example.com/atom.xml" rel="self"/>
+  <link href="https://gun-ctrl.github.io/atom.xml" rel="self"/>
   
-  <link href="http://example.com/"/>
+  <link href="https://gun-ctrl.github.io/"/>
   <updated>2022-07-22T13:22:17.277Z</updated>
-  <id>http://example.com/</id>
+  <id>https://gun-ctrl.github.io/</id>
   
   <author>
     <name>搬码人</name>
@@ -18,8 +18,8 @@
   
   <entry>
     <title>adb命令</title>
-    <link href="http://example.com/2022/07/19/adb%E5%91%BD%E4%BB%A4/"/>
-    <id>http://example.com/2022/07/19/adb%E5%91%BD%E4%BB%A4/</id>
+    <link href="https://gun-ctrl.github.io/2022/07/19/adb%E5%91%BD%E4%BB%A4/"/>
+    <id>https://gun-ctrl.github.io/2022/07/19/adb%E5%91%BD%E4%BB%A4/</id>
     <published>2022-07-19T13:53:09.637Z</published>
     <updated>2022-07-22T13:22:17.277Z</updated>
     
@@ -34,14 +34,14 @@
     
     
     
-    <category term="Android随笔" scheme="http://example.com/tags/Android%E9%9A%8F%E7%AC%94/"/>
+    <category term="Android随笔" scheme="https://gun-ctrl.github.io/tags/Android%E9%9A%8F%E7%AC%94/"/>
     
   </entry>
   
   <entry>
     <title>RecyclerView高级用法——吸顶效果</title>
-    <link href="http://example.com/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/"/>
-    <id>http://example.com/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/</id>
+    <link href="https://gun-ctrl.github.io/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/"/>
+    <id>https://gun-ctrl.github.io/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/</id>
     <published>2022-07-19T11:32:45.781Z</published>
     <updated>2022-07-22T13:09:33.926Z</updated>
     
@@ -55,17 +55,17 @@
     
     
     
-    <category term="Android高级UI" scheme="http://example.com/categories/Android%E9%AB%98%E7%BA%A7UI/"/>
+    <category term="Android高级UI" scheme="https://gun-ctrl.github.io/categories/Android%E9%AB%98%E7%BA%A7UI/"/>
     
     
-    <category term="高级UI" scheme="http://example.com/tags/%E9%AB%98%E7%BA%A7UI/"/>
+    <category term="高级UI" scheme="https://gun-ctrl.github.io/tags/%E9%AB%98%E7%BA%A7UI/"/>
     
   </entry>
   
   <entry>
     <title>京东淘宝首页二级联动</title>
-    <link href="http://example.com/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/"/>
-    <id>http://example.com/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/</id>
+    <link href="https://gun-ctrl.github.io/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/"/>
+    <id>https://gun-ctrl.github.io/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/</id>
     <published>2022-07-18T13:38:25.672Z</published>
     <updated>2022-07-19T13:51:55.810Z</updated>
     
@@ -80,17 +80,17 @@
     
     
     
-    <category term="高级UI" scheme="http://example.com/categories/%E9%AB%98%E7%BA%A7UI/"/>
+    <category term="高级UI" scheme="https://gun-ctrl.github.io/categories/%E9%AB%98%E7%BA%A7UI/"/>
     
     
-    <category term="高级UI" scheme="http://example.com/tags/%E9%AB%98%E7%BA%A7UI/"/>
+    <category term="高级UI" scheme="https://gun-ctrl.github.io/tags/%E9%AB%98%E7%BA%A7UI/"/>
     
   </entry>
   
   <entry>
     <title>按Z字形顺序打印二叉树</title>
-    <link href="http://example.com/2022/07/17/%E6%8C%89Z%E5%AD%97%E5%BD%A2%E9%A1%BA%E5%BA%8F%E6%89%93%E5%8D%B0%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
-    <id>http://example.com/2022/07/17/%E6%8C%89Z%E5%AD%97%E5%BD%A2%E9%A1%BA%E5%BA%8F%E6%89%93%E5%8D%B0%E4%BA%8C%E5%8F%89%E6%A0%91/</id>
+    <link href="https://gun-ctrl.github.io/2022/07/17/%E6%8C%89Z%E5%AD%97%E5%BD%A2%E9%A1%BA%E5%BA%8F%E6%89%93%E5%8D%B0%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
+    <id>https://gun-ctrl.github.io/2022/07/17/%E6%8C%89Z%E5%AD%97%E5%BD%A2%E9%A1%BA%E5%BA%8F%E6%89%93%E5%8D%B0%E4%BA%8C%E5%8F%89%E6%A0%91/</id>
     <published>2022-07-17T02:37:21.023Z</published>
     <updated>2022-07-18T13:45:53.673Z</updated>
     
@@ -104,17 +104,17 @@
     
     
     
-    <category term="算法" scheme="http://example.com/categories/%E7%AE%97%E6%B3%95/"/>
+    <category term="算法" scheme="https://gun-ctrl.github.io/categories/%E7%AE%97%E6%B3%95/"/>
     
     
-    <category term="算法" scheme="http://example.com/tags/%E7%AE%97%E6%B3%95/"/>
+    <category term="算法" scheme="https://gun-ctrl.github.io/tags/%E7%AE%97%E6%B3%95/"/>
     
   </entry>
   
   <entry>
     <title>括号问题</title>
-    <link href="http://example.com/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/"/>
-    <id>http://example.com/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/</id>
+    <link href="https://gun-ctrl.github.io/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/"/>
+    <id>https://gun-ctrl.github.io/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/</id>
     <published>2022-07-13T09:15:42.941Z</published>
     <updated>2022-07-19T13:51:54.291Z</updated>
     
@@ -129,17 +129,17 @@
     
     
     
-    <category term="算法" scheme="http://example.com/categories/%E7%AE%97%E6%B3%95/"/>
+    <category term="算法" scheme="https://gun-ctrl.github.io/categories/%E7%AE%97%E6%B3%95/"/>
     
     
-    <category term="算法" scheme="http://example.com/tags/%E7%AE%97%E6%B3%95/"/>
+    <category term="算法" scheme="https://gun-ctrl.github.io/tags/%E7%AE%97%E6%B3%95/"/>
     
   </entry>
   
   <entry>
     <title>测试</title>
-    <link href="http://example.com/2022/07/12/%E6%B5%8B%E8%AF%95/"/>
-    <id>http://example.com/2022/07/12/%E6%B5%8B%E8%AF%95/</id>
+    <link href="https://gun-ctrl.github.io/2022/07/12/%E6%B5%8B%E8%AF%95/"/>
+    <id>https://gun-ctrl.github.io/2022/07/12/%E6%B5%8B%E8%AF%95/</id>
     <published>2022-07-12T08:00:30.901Z</published>
     <updated>2022-07-12T08:49:03.845Z</updated>
     
@@ -153,17 +153,17 @@
     
     
     
-    <category term="其他" scheme="http://example.com/categories/%E5%85%B6%E4%BB%96/"/>
+    <category term="其他" scheme="https://gun-ctrl.github.io/categories/%E5%85%B6%E4%BB%96/"/>
     
     
-    <category term="测试" scheme="http://example.com/tags/%E6%B5%8B%E8%AF%95/"/>
+    <category term="测试" scheme="https://gun-ctrl.github.io/tags/%E6%B5%8B%E8%AF%95/"/>
     
   </entry>
   
   <entry>
     <title>第一次上传测试</title>
-    <link href="http://example.com/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/"/>
-    <id>http://example.com/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/</id>
+    <link href="https://gun-ctrl.github.io/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/"/>
+    <id>https://gun-ctrl.github.io/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/</id>
     <published>2022-07-09T13:01:31.859Z</published>
     <updated>2022-07-12T07:40:34.272Z</updated>
     
