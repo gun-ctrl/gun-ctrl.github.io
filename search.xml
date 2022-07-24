@@ -57,134 +57,6 @@
       </tags>
   </entry>
   <entry>
-    <title>括号问题</title>
-    <url>/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/</url>
-    <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给出n对括号，请编写一个函数来生成所有的由n对括号组成的合法组合。</p>
-<p>例如，给出n&#x3D;3，解集为：</p>
-<p>“((()))”, “(()())”, “(())()”, “()()()”, “()(())”</p>
-<p>数据范围：0&lt;&#x3D;n&lt;&#x3D;10</p>
-<p>要求：空间复杂度O(n)，时间复杂度O(2^n)</p>
-<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><h4 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h4><blockquote>
-<p>输入：1</p>
-<p>返回值：[“()”]</p>
-</blockquote>
-<h4 id="示例2"><a href="#示例2" class="headerlink" title="示例2"></a>示例2</h4><blockquote>
-<p>输入：2</p>
-<p>返回值：[“(())”，”()()”]</p>
-</blockquote>
-<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>相当于一共n个左括号和n个右括号，可以给我们使用，我们需要依次组装这些括号。每当我们使用一个左括号之后，就剩下n-1个左括号和n个右括号给我们使用，结果拼在使用的左括号之后就行了，因此后者就是一个子问题，可以使用递归：</p>
-<ul>
-<li>终止条件：左右括号都使用了n个，将结果加入数组。</li>
-<li>返回值：每一级向上一级返回后续组装后的字符串，即子问题中搭配出来的括号序列。</li>
-<li>本级任务：每一级就是保证左括号还有剩余的情况下，使用一次左括号进入子问题，或者右括号还有剩余且右括号使用次数少于左括号的情况下使用一次右括号进入子问题。</li>
-<li><strong>注意：</strong>我们需要保证左括号出现的次数比右括号多时我们再使用右括号就一定能保证括号合法了，因此每次需要检查左括号和右括号的使用次数。</li>
-</ul>
-<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight processing"><table><tr><td class="code"><pre><span class="line">```</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 代码中的类名、方法名、参数名已经指定，请勿修改，直接返回方法规定的值即可</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * </span></span><br><span class="line"><span class="comment">     * @param n int整型 </span></span><br><span class="line"><span class="comment">     * @return string字符串ArrayList</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">recursion</span>(<span class="type">int</span> left,<span class="type">int</span> right,<span class="built_in">String</span> temp,<span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res,<span class="type">int</span> n)&#123;</span><br><span class="line">        <span class="comment">//左右括号都用完了，就加入结果</span></span><br><span class="line">        <span class="keyword">if</span>(left==n&amp;&amp;right==n)&#123;</span><br><span class="line">            res.<span class="property">add</span>(temp);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次左括号</span></span><br><span class="line">        <span class="keyword">if</span>(left&lt;n)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left+<span class="number">1</span>,right,temp + <span class="string">&quot;（&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次有括号</span></span><br><span class="line">        <span class="keyword">if</span>(right&lt;n&amp;&amp;right&lt;left)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left,right+<span class="number">1</span>,temp + <span class="string">&quot;）&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; <span class="title function_">generateParenthesis</span> (<span class="type">int</span> n) &#123;</span><br><span class="line">        <span class="comment">//记录结果</span></span><br><span class="line">        <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res = <span class="keyword">new </span><span class="class title_">ArrayList</span>&lt;<span class="built_in">String</span>&gt;();</span><br><span class="line">        <span class="comment">//递归</span></span><br><span class="line">        <span class="title function_">recursion</span>(<span class="number">0</span>,<span class="number">0</span>,<span class="string">&quot;&quot;</span>,res,n);</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>算法</category>
-      </categories>
-      <tags>
-        <tag>算法</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>京东淘宝首页二级联动</title>
-    <url>/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/</url>
-    <content><![CDATA[<p><strong>说明：</strong>这篇文章主要用于作者临时观看，因为涉及版权问题，所以短时间内会删除</p>
-<h2 id="京东淘宝首页二级联动"><a href="#京东淘宝首页二级联动" class="headerlink" title="京东淘宝首页二级联动"></a>京东淘宝首页二级联动</h2><h3 id="单点触摸与多点触摸"><a href="#单点触摸与多点触摸" class="headerlink" title="单点触摸与多点触摸"></a>单点触摸与多点触摸</h3><p>####单点触摸</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212127652.png" alt="image-20220718212127652"></p>
-<p>####多点触摸</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212142549.png" alt="image-20220718212142549"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212203113.png" alt="image-20220718212203113"></p>
-<blockquote>
-<p>面试题</p>
-<p>一个move事件 中间有多少个手指的信息-&gt;有多少个手指就有多少个手指信息-&gt;最多32个</p>
-</blockquote>
-<h3 id="Touch事件源码"><a href="#Touch事件源码" class="headerlink" title="Touch事件源码"></a>Touch事件源码</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212217242.png" alt="image-20220718212217242"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212232559.png" alt="image-20220718212232559"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212254074.png" alt="image-20220718212254074"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212316235.png" alt="image-20220718212316235"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212335895.png" alt="image-20220718212335895"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212349700.png" alt="image-20220718212349700"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212414454.png" alt="image-20220718212414454"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212432841.png" alt="image-20220718212432841"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212452115.png" alt="image-20220718212452115"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212515213.png" alt="image-20220718212515213"></p>
-<p>上述的disallowIntercept及相关内容就是所谓的“尚方宝剑”</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212536424.png" alt="image-20220718212536424"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212555410.png" alt="image-20220718212555410"></p>
-<p> <img src="C:\Users\15786\AppData\Roaming\Typora\typora-user-images\image-20220718212609465.png" alt="image-20220718212609465"></p>
-<h3 id="嵌套滑动"><a href="#嵌套滑动" class="headerlink" title="嵌套滑动"></a>嵌套滑动</h3><blockquote>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212649556.png" alt="image-20220718212649556"></p>
-</blockquote>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212704210.png" alt="image-20220718212704210"></p>
-<p>并且从上面可以看出NestedScrollView既可以做“父亲”，也可以做“孩子”</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212718655.png" alt="image-20220718212718655"></p>
-<p>“孩子”有三个版本</p>
-<p>三个版本之间是的关系  同样“父亲”也是一样</p>
-<blockquote>
-<p>版本2与版本1相比  增加了type 如惯性滑动效果</p>
-</blockquote>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212737829.png" alt="image-20220718212737829"></p>
-<h4 id="吸顶效果"><a href="#吸顶效果" class="headerlink" title="吸顶效果"></a>吸顶效果</h4><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212758009.png" alt="image-20220718212758009"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212818443.png" alt="image-20220718212818443"></p>
-<p>onFinishInflate()中获取第一个孩子的第二个孩子，从下图可以看出也就是是第二个LinearLayout</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212839006.png" alt="image-20220718212839006"></p>
-<h4 id="继续嵌套滑动"><a href="#继续嵌套滑动" class="headerlink" title="继续嵌套滑动"></a>继续嵌套滑动</h4><p>嵌套滑动-&gt;是由孩子主动的   触发的</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212906775.png" alt="image-20220718212906775"></p>
-<p>google为了方便我们处理嵌套滑动，所以提供了这个帮助类 -&gt; getScrollingChildHelper()</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212928635.png" alt="image-20220718212928635"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212942972.png" alt="image-20220718212942972"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213001121.png" alt="image-20220718213001121"></p>
-<p>while(p!&#x3D;null)一直找，直到找到支持嵌套滑动</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213017801.png" alt="image-20220718213017801"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213043191.png" alt="image-20220718213043191"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213058717.png" alt="image-20220718213058717"></p>
-<p>所以它没有滑，“父亲”划不动的时候，它(NestedScrollView)才动</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213122243.png" alt="image-20220718213122243"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213138627.png" alt="image-20220718213138627"></p>
-<p>问题描述：需求是整个页面滑动，当父View滑不动的时候，子View才动。问题出现的原因就是上面的文字描述，要想解决</p>
-<p>问题的解决：重写onNestedPreScroll()方法，做一些设置，如果自己还能滑，那么就自己滑，并且需要记录一下（consumed[1]，0记录的x，1记录的y）</p>
-<ul>
-<li><p>注意：NetestScrollLayout是自定义继承NetestScrollView的</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213208543.png" alt="image-20220718213208543"></p>
-</li>
-</ul>
-<h3 id="惯性滑动"><a href="#惯性滑动" class="headerlink" title="惯性滑动"></a>惯性滑动</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213227462.png" alt="image-20220718213227462"></p>
-<p>记录下速度 velocityY</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213246067.png" alt="image-20220718213246067"></p>
-<blockquote>
-<ul>
-<li>1、记下来速度 velocity</li>
-<li>2、转化成 距离</li>
-<li>3、自己滑了多少距离 根据速度转换后的距离 -&gt; 我自己的滑动距离 &#x3D; 孩子应该滑的距离</li>
-<li>4、孩子应该滑的距离又要转化成速度</li>
-</ul>
-</blockquote>
-<ul>
-<li>google提供的速度转距离的工具</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213300370.png" alt="image-20220718213300370"></p>
-<p>孩子 -&gt;如recyclerView又会将距离转换成速度(因为RecyclerView只支持fling，所以需要转化成速度再转成距离)</p>
-<p>下面两个方法分别对应上述步骤中的第3步和第4步</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213317734.png" alt="image-20220718213317734"></p>
-<p><strong>关于totalDy</strong></p>
-<p>下面注解一处错误：第一个，其实是Viewpager2，不是RecyclerView，通过前面有一张布局截图可以看出最后下面那个是ViewPager2</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213340340.png" alt="image-20220718213340340"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213358954.png" alt="image-20220718213358954"></p>
-<h3 id="关于内部拦截"><a href="#关于内部拦截" class="headerlink" title="关于内部拦截"></a>关于内部拦截</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213415057.png" alt="image-20220718213415057"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213428785.png" alt="image-20220718213428785"></p>
-]]></content>
-      <categories>
-        <category>高级UI</category>
-      </categories>
-      <tags>
-        <tag>高级UI</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>adb命令</title>
     <url>/2022/07/19/adb%E5%91%BD%E4%BB%A4/</url>
     <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>本文为小编学习总结的一些adb的常用命令，可能一些命令有待验证，更多内容可以参考<a href="https://github.com/mzlogin/awesome-adb#%E6%8C%87%E5%AE%9A-adb-server-%E7%9A%84%E7%BD%91%E7%BB%9C%E7%AB%AF%E5%8F%A3">adb用法大全</a></p>
@@ -320,6 +192,134 @@
       </tags>
   </entry>
   <entry>
+    <title>括号问题</title>
+    <url>/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给出n对括号，请编写一个函数来生成所有的由n对括号组成的合法组合。</p>
+<p>例如，给出n&#x3D;3，解集为：</p>
+<p>“((()))”, “(()())”, “(())()”, “()()()”, “()(())”</p>
+<p>数据范围：0&lt;&#x3D;n&lt;&#x3D;10</p>
+<p>要求：空间复杂度O(n)，时间复杂度O(2^n)</p>
+<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><h4 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h4><blockquote>
+<p>输入：1</p>
+<p>返回值：[“()”]</p>
+</blockquote>
+<h4 id="示例2"><a href="#示例2" class="headerlink" title="示例2"></a>示例2</h4><blockquote>
+<p>输入：2</p>
+<p>返回值：[“(())”，”()()”]</p>
+</blockquote>
+<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>相当于一共n个左括号和n个右括号，可以给我们使用，我们需要依次组装这些括号。每当我们使用一个左括号之后，就剩下n-1个左括号和n个右括号给我们使用，结果拼在使用的左括号之后就行了，因此后者就是一个子问题，可以使用递归：</p>
+<ul>
+<li>终止条件：左右括号都使用了n个，将结果加入数组。</li>
+<li>返回值：每一级向上一级返回后续组装后的字符串，即子问题中搭配出来的括号序列。</li>
+<li>本级任务：每一级就是保证左括号还有剩余的情况下，使用一次左括号进入子问题，或者右括号还有剩余且右括号使用次数少于左括号的情况下使用一次右括号进入子问题。</li>
+<li><strong>注意：</strong>我们需要保证左括号出现的次数比右括号多时我们再使用右括号就一定能保证括号合法了，因此每次需要检查左括号和右括号的使用次数。</li>
+</ul>
+<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight processing"><table><tr><td class="code"><pre><span class="line">```</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 代码中的类名、方法名、参数名已经指定，请勿修改，直接返回方法规定的值即可</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * </span></span><br><span class="line"><span class="comment">     * @param n int整型 </span></span><br><span class="line"><span class="comment">     * @return string字符串ArrayList</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">recursion</span>(<span class="type">int</span> left,<span class="type">int</span> right,<span class="built_in">String</span> temp,<span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res,<span class="type">int</span> n)&#123;</span><br><span class="line">        <span class="comment">//左右括号都用完了，就加入结果</span></span><br><span class="line">        <span class="keyword">if</span>(left==n&amp;&amp;right==n)&#123;</span><br><span class="line">            res.<span class="property">add</span>(temp);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次左括号</span></span><br><span class="line">        <span class="keyword">if</span>(left&lt;n)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left+<span class="number">1</span>,right,temp + <span class="string">&quot;（&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次有括号</span></span><br><span class="line">        <span class="keyword">if</span>(right&lt;n&amp;&amp;right&lt;left)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left,right+<span class="number">1</span>,temp + <span class="string">&quot;）&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; <span class="title function_">generateParenthesis</span> (<span class="type">int</span> n) &#123;</span><br><span class="line">        <span class="comment">//记录结果</span></span><br><span class="line">        <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res = <span class="keyword">new </span><span class="class title_">ArrayList</span>&lt;<span class="built_in">String</span>&gt;();</span><br><span class="line">        <span class="comment">//递归</span></span><br><span class="line">        <span class="title function_">recursion</span>(<span class="number">0</span>,<span class="number">0</span>,<span class="string">&quot;&quot;</span>,res,n);</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>算法</category>
+      </categories>
+      <tags>
+        <tag>算法</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>京东淘宝首页二级联动</title>
+    <url>/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/</url>
+    <content><![CDATA[<p><strong>说明：</strong>这篇文章主要用于作者临时观看，因为涉及版权问题，所以短时间内会删除</p>
+<h2 id="京东淘宝首页二级联动"><a href="#京东淘宝首页二级联动" class="headerlink" title="京东淘宝首页二级联动"></a>京东淘宝首页二级联动</h2><h3 id="单点触摸与多点触摸"><a href="#单点触摸与多点触摸" class="headerlink" title="单点触摸与多点触摸"></a>单点触摸与多点触摸</h3><p>####单点触摸</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212127652.png" alt="image-20220718212127652"></p>
+<p>####多点触摸</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212142549.png" alt="image-20220718212142549"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212203113.png" alt="image-20220718212203113"></p>
+<blockquote>
+<p>面试题</p>
+<p>一个move事件 中间有多少个手指的信息-&gt;有多少个手指就有多少个手指信息-&gt;最多32个</p>
+</blockquote>
+<h3 id="Touch事件源码"><a href="#Touch事件源码" class="headerlink" title="Touch事件源码"></a>Touch事件源码</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212217242.png" alt="image-20220718212217242"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212232559.png" alt="image-20220718212232559"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212254074.png" alt="image-20220718212254074"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212316235.png" alt="image-20220718212316235"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212335895.png" alt="image-20220718212335895"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212349700.png" alt="image-20220718212349700"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212414454.png" alt="image-20220718212414454"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212432841.png" alt="image-20220718212432841"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212452115.png" alt="image-20220718212452115"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212515213.png" alt="image-20220718212515213"></p>
+<p>上述的disallowIntercept及相关内容就是所谓的“尚方宝剑”</p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212536424.png" alt="image-20220718212536424"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212555410.png" alt="image-20220718212555410"></p>
+<p> <img src="C:\Users\15786\AppData\Roaming\Typora\typora-user-images\image-20220718212609465.png" alt="image-20220718212609465"></p>
+<h3 id="嵌套滑动"><a href="#嵌套滑动" class="headerlink" title="嵌套滑动"></a>嵌套滑动</h3><blockquote>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212649556.png" alt="image-20220718212649556"></p>
+</blockquote>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212704210.png" alt="image-20220718212704210"></p>
+<p>并且从上面可以看出NestedScrollView既可以做“父亲”，也可以做“孩子”</p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212718655.png" alt="image-20220718212718655"></p>
+<p>“孩子”有三个版本</p>
+<p>三个版本之间是的关系  同样“父亲”也是一样</p>
+<blockquote>
+<p>版本2与版本1相比  增加了type 如惯性滑动效果</p>
+</blockquote>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212737829.png" alt="image-20220718212737829"></p>
+<h4 id="吸顶效果"><a href="#吸顶效果" class="headerlink" title="吸顶效果"></a>吸顶效果</h4><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212758009.png" alt="image-20220718212758009"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212818443.png" alt="image-20220718212818443"></p>
+<p>onFinishInflate()中获取第一个孩子的第二个孩子，从下图可以看出也就是是第二个LinearLayout</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212839006.png" alt="image-20220718212839006"></p>
+<h4 id="继续嵌套滑动"><a href="#继续嵌套滑动" class="headerlink" title="继续嵌套滑动"></a>继续嵌套滑动</h4><p>嵌套滑动-&gt;是由孩子主动的   触发的</p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212906775.png" alt="image-20220718212906775"></p>
+<p>google为了方便我们处理嵌套滑动，所以提供了这个帮助类 -&gt; getScrollingChildHelper()</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212928635.png" alt="image-20220718212928635"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212942972.png" alt="image-20220718212942972"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213001121.png" alt="image-20220718213001121"></p>
+<p>while(p!&#x3D;null)一直找，直到找到支持嵌套滑动</p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213017801.png" alt="image-20220718213017801"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213043191.png" alt="image-20220718213043191"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213058717.png" alt="image-20220718213058717"></p>
+<p>所以它没有滑，“父亲”划不动的时候，它(NestedScrollView)才动</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213122243.png" alt="image-20220718213122243"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213138627.png" alt="image-20220718213138627"></p>
+<p>问题描述：需求是整个页面滑动，当父View滑不动的时候，子View才动。问题出现的原因就是上面的文字描述，要想解决</p>
+<p>问题的解决：重写onNestedPreScroll()方法，做一些设置，如果自己还能滑，那么就自己滑，并且需要记录一下（consumed[1]，0记录的x，1记录的y）</p>
+<ul>
+<li><p>注意：NetestScrollLayout是自定义继承NetestScrollView的</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213208543.png" alt="image-20220718213208543"></p>
+</li>
+</ul>
+<h3 id="惯性滑动"><a href="#惯性滑动" class="headerlink" title="惯性滑动"></a>惯性滑动</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213227462.png" alt="image-20220718213227462"></p>
+<p>记录下速度 velocityY</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213246067.png" alt="image-20220718213246067"></p>
+<blockquote>
+<ul>
+<li>1、记下来速度 velocity</li>
+<li>2、转化成 距离</li>
+<li>3、自己滑了多少距离 根据速度转换后的距离 -&gt; 我自己的滑动距离 &#x3D; 孩子应该滑的距离</li>
+<li>4、孩子应该滑的距离又要转化成速度</li>
+</ul>
+</blockquote>
+<ul>
+<li>google提供的速度转距离的工具</li>
+</ul>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213300370.png" alt="image-20220718213300370"></p>
+<p>孩子 -&gt;如recyclerView又会将距离转换成速度(因为RecyclerView只支持fling，所以需要转化成速度再转成距离)</p>
+<p>下面两个方法分别对应上述步骤中的第3步和第4步</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213317734.png" alt="image-20220718213317734"></p>
+<p><strong>关于totalDy</strong></p>
+<p>下面注解一处错误：第一个，其实是Viewpager2，不是RecyclerView，通过前面有一张布局截图可以看出最后下面那个是ViewPager2</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213340340.png" alt="image-20220718213340340"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213358954.png" alt="image-20220718213358954"></p>
+<h3 id="关于内部拦截"><a href="#关于内部拦截" class="headerlink" title="关于内部拦截"></a>关于内部拦截</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213415057.png" alt="image-20220718213415057"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213428785.png" alt="image-20220718213428785"></p>
+]]></content>
+      <categories>
+        <category>高级UI</category>
+      </categories>
+      <tags>
+        <tag>高级UI</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>按Z字形顺序打印二叉树</title>
     <url>/2022/07/17/%E6%8C%89Z%E5%AD%97%E5%BD%A2%E9%A1%BA%E5%BA%8F%E6%89%93%E5%8D%B0%E4%BA%8C%E5%8F%89%E6%A0%91/</url>
     <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给定一个二叉树，返回该二叉树的之字形层序遍历，（第一层从左向右，下一层从右向左，一直这样交替）<br>数据范围：0≤n≤1500,树上每个节点的val满足∣val∣≤1500<br>要求：空间复杂度：O(n)，时间复杂度：O(n)</p>
@@ -371,5 +371,54 @@
 
 <p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
 ]]></content>
+  </entry>
+  <entry>
+    <title>自定义LayoutManager实现卡片滑动</title>
+    <url>/2022/07/23/%E8%87%AA%E5%AE%9A%E4%B9%89LayoutManager%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E6%BB%91%E5%8A%A8/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
+<p>前面介绍了利用自定义ItemDecoration实现RecyclerView吸顶效果，重点就在onDraw -&gt; ItemView -&gt; onDrawOver的绘制流程，同时注意预留空间的利用。</p>
+<p>今天介绍一个新的知识点与demo，利用自定义LayoutManager的方式实现卡片滑动。有时候系统提供的LayoutManager已经不能够满足我们的需求，这个时候我们就需要自定义LayoutManager。</p>
+</blockquote>
+<h2 id="卡片滑动实现"><a href="#卡片滑动实现" class="headerlink" title="卡片滑动实现"></a>卡片滑动实现</h2><p>卡片滑动的效果如下图所示。</p>
+<p>分析一下卡片效果，顶部的卡片是正常摆放，接着的后面两张会随着位置变化缩小、下移，产生视觉上的叠层效果，再然后的卡片就与第三张重叠摆放。可以滑动移除图片，下面的卡片会自动补全。</p>
+<ul>
+<li>实现这样的效果突破点在于两点：</li>
+</ul>
+<ol>
+<li>要实现这样重叠式布局的效果，我们就需要自定义LayoutManager，就像系统自带的<code>LinearLayoutManager</code>、<code>GridLayoutManager</code>一样。</li>
+<li>滑动移除效果的实现，没有重写<code>scrollVerticallyBy</code>以及<code>scrollHorizontallyBy</code>，这就需要一个重要的帮助类<code>ItemTouchHelper</code></li>
+</ol>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/SlideCard.gif" alt="SlideCard"></p>
+<ul>
+<li><p>实现思路</p>
+<blockquote>
+<ol>
+<li>摆放策略交给LayoutManager-&gt;具体怎么摆，每一个卡片布局策略和数据绑定由Adapter负责</li>
+<li>LayoutManager必须重写<code>onLayoutChildren</code>方法，当数据发生改变时，会重新布局，detachAndScrapAttachedViews处理回收，recycler.getViewForPosition(i)获取对应位置的View，这两个方法基本不用重写，在源码中会有实现。</li>
+<li>测量view，摆放时需要考虑通过ItemDecoration预留的间距<code>layoutDecoratedWithMargins</code></li>
+<li>卡片采用的是倒序摆放，即从第8张到第一张的顺序摆放</li>
+<li>利用ItemTouchHelper实现滑动移除，并且需要重写onChildDraw，实现滑动动画开始时，下方图片缩放效果。TouchHelper是ItemDecoration的子类，在onDraw时根据滑动距离来影响后面view的大小</li>
+</ol>
+</blockquote>
+</li>
+<li><p>关键代码块：</p>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SlideCardLayoutManager</span>:RecyclerView.LayoutManager() &#123;</span><br><span class="line">    override fun <span class="title function_">generateDefaultLayoutParams</span><span class="params">()</span>: RecyclerView.LayoutParams &#123;</span><br><span class="line">        <span class="keyword">return</span> RecyclerView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,</span><br><span class="line">        ViewGroup.LayoutParams.WRAP_CONTENT)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun <span class="title function_">onLayoutChildren</span><span class="params">(recycler: RecyclerView.Recycler?, state: RecyclerView.State?)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onLayoutChildren(recycler, state)</span><br><span class="line">        detachAndScrapAttachedViews(recycler!!)</span><br><span class="line">        <span class="type">val</span> <span class="variable">itemCount</span> <span class="operator">=</span> itemCount</span><br><span class="line">        <span class="type">var</span> <span class="variable">bottomPosition</span> <span class="operator">=</span> <span class="number">0</span></span><br><span class="line">        <span class="keyword">if</span> (itemCount&lt;CardConfig.MAX_SHOW_COUNT)&#123;</span><br><span class="line">            bottomPosition = <span class="number">0</span></span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            bottomPosition = itemCount - CardConfig.MAX_SHOW_COUNT</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (i in bottomPosition until  itemCount)&#123;</span><br><span class="line">            <span class="type">val</span> <span class="variable">view</span> <span class="operator">=</span> recycler.getViewForPosition(i)</span><br><span class="line">            addView(view)</span><br><span class="line">            <span class="comment">//测量</span></span><br><span class="line">            measureChildWithMargins(view,<span class="number">0</span>,<span class="number">0</span>)</span><br><span class="line">            <span class="type">val</span> <span class="variable">widthSpace</span> <span class="operator">=</span> width - getDecoratedMeasuredHeight(view)</span><br><span class="line">            <span class="type">val</span> <span class="variable">heightSpace</span> <span class="operator">=</span> height - getDecoratedMeasuredHeight(view)</span><br><span class="line">            <span class="comment">//布局</span></span><br><span class="line">            layoutDecoratedWithMargins(view,</span><br><span class="line">            widthSpace/<span class="number">2</span>,</span><br><span class="line">            heightSpace/<span class="number">2</span>,</span><br><span class="line">            widthSpace/<span class="number">2</span>+getDecoratedMeasuredWidth(view),</span><br><span class="line">            heightSpace/<span class="number">2</span>+getDecoratedMeasuredHeight(view))</span><br><span class="line">            <span class="type">var</span> <span class="variable">level</span> <span class="operator">=</span> itemCount -i -<span class="number">1</span></span><br><span class="line">            <span class="keyword">if</span> (level&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                <span class="keyword">if</span> (level&lt;CardConfig.MAX_SHOW_COUNT-<span class="number">1</span>)&#123;<span class="comment">//提示，这里CardConfig.MAX_SHOW_COUNT=4，可见小编所有代码</span></span><br><span class="line">                    view.translationY = CardConfig.TRANS_Y_GAP * level</span><br><span class="line">                    view.scaleX = <span class="number">1</span>-CardConfig.SCALE_GAP*level</span><br><span class="line">                    view.scaleY = <span class="number">1</span>-CardConfig.SCALE_GAP*level</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    view.translationY = CardConfig.TRANS_Y_GAP * (level-<span class="number">1</span>)</span><br><span class="line">                    view.scaleX = <span class="number">1</span>-CardConfig.SCALE_GAP*(level-<span class="number">1</span>)</span><br><span class="line">                    view.scaleY = <span class="number">1</span>-CardConfig.SCALE_GAP*(level-<span class="number">1</span>)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>注意：这里继承的是<code>ItemTouchHelper.SimpleCallback</code>，<code>ItemTouchHelper.Callback</code>需要重写的方法太多。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SlideCallBack</span>(</span><br><span class="line">    <span class="keyword">private</span> val adapter:SlideCardAdapter,</span><br><span class="line">    <span class="keyword">private</span> val mData:MutableList&lt;SlideCardBean&gt;</span><br><span class="line">):ItemTouchHelper.SimpleCallback(<span class="number">0</span>,<span class="number">15</span>) &#123;</span><br><span class="line">    override fun <span class="title function_">onMove</span><span class="params">(</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        viewHolder: RecyclerView.ViewHolder,</span></span><br><span class="line"><span class="params">        target: RecyclerView.ViewHolder</span></span><br><span class="line"><span class="params">    )</span>: Boolean &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@SuppressLint(&quot;NotifyDataSetChanged&quot;)</span></span><br><span class="line">    override fun <span class="title function_">onSwiped</span><span class="params">(viewHolder: RecyclerView.ViewHolder, direction: Int)</span> &#123;</span><br><span class="line">        <span class="type">val</span> <span class="variable">remove</span> <span class="operator">=</span> mData.removeAt(viewHolder.layoutPosition)</span><br><span class="line">        mData.add(<span class="number">0</span>,remove)</span><br><span class="line">        adapter.notifyDataSetChanged()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun <span class="title function_">onChildDraw</span><span class="params">(</span></span><br><span class="line"><span class="params">        c: Canvas,</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        viewHolder: RecyclerView.ViewHolder,</span></span><br><span class="line"><span class="params">        dX: Float,</span></span><br><span class="line"><span class="params">        dY: Float,</span></span><br><span class="line"><span class="params">        actionState: Int,</span></span><br><span class="line"><span class="params">        isCurrentlyActive: Boolean</span></span><br><span class="line"><span class="params">    )</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)</span><br><span class="line">        <span class="type">val</span> <span class="variable">maxDistance</span> <span class="operator">=</span> recyclerView.width * <span class="number">0.5f</span></span><br><span class="line">        <span class="type">val</span> <span class="variable">distance</span> <span class="operator">=</span> sqrt((dX*dX+dY*dY).toDouble())</span><br><span class="line">        <span class="type">var</span> <span class="variable">fraction</span> <span class="operator">=</span> distance/maxDistance</span><br><span class="line">        <span class="title function_">if</span> <span class="params">(fraction&gt;<span class="number">1</span>)</span>&#123;</span><br><span class="line">            fraction= <span class="number">1.0</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">val</span> <span class="variable">itemCount</span> <span class="operator">=</span> recyclerView.childCount</span><br><span class="line">        Log.v(<span class="string">&quot;ppp&quot;</span>,<span class="string">&quot;itemCount: $itemCount&quot;</span>)</span><br><span class="line">        <span class="keyword">for</span>(i in <span class="number">0</span> until itemCount)&#123;</span><br><span class="line">            <span class="type">val</span> <span class="variable">view</span> <span class="operator">=</span> recyclerView.getChildAt(i)</span><br><span class="line">            <span class="type">val</span> <span class="variable">level</span> <span class="operator">=</span> itemCount - i - <span class="number">1</span></span><br><span class="line">            Log.v(<span class="string">&quot;pc&quot;</span>,<span class="string">&quot;level: $level&quot;</span>)</span><br><span class="line">            <span class="keyword">if</span> (level&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                <span class="comment">//重绘level=1，2 -&gt;也就是i=5,6</span></span><br><span class="line">                <span class="keyword">if</span> (level&lt;CardConfig.MAX_SHOW_COUNT-<span class="number">1</span>)&#123;</span><br><span class="line">                    view.translationY = (CardConfig.TRANS_Y_GAP * (level-fraction)).toFloat()</span><br><span class="line">                    view.scaleX = (<span class="number">1</span>-CardConfig.SCALE_GAP*level+fraction*CardConfig.SCALE_GAP).toFloat()</span><br><span class="line">                    view.scaleY = (<span class="number">1</span>-CardConfig.SCALE_GAP*level+fraction*CardConfig.SCALE_GAP).toFloat()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//动画持续时间</span></span><br><span class="line">    override fun <span class="title function_">getAnimationDuration</span><span class="params">(</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        animationType: Int,</span></span><br><span class="line"><span class="params">        animateDx: Float,</span></span><br><span class="line"><span class="params">        animateDy: Float</span></span><br><span class="line"><span class="params">    )</span>: Long &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">500</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>目前为止，小编已经介绍了RecyclerView自定义用法的两种，自定义ItemDecoration和自定义LayoutManager。这里有一个逻辑上的坑点：顶部的卡片是正常摆放，我们自定义LayoutManager中不用管它，所以在上方两个代码块中都有<code>level&gt;0</code>和<code>level&lt;CardConfig.MAX_SHOW_COUNT-1</code>，也就是重绘索引值<code>i=5,6</code>即第6和7个，在<code>SlideCardLayoutManager</code>中，第5张卡片即一下的重叠在第6张的下面。这个点烦恼了小编好久，刚开始一直不明白顶部的摆放去哪了，从这点可以看出了解原理看源码的重要性。下一章，我们将对RecyclerView源码机制进行解读。</p>
+<p><a href="https://github.com/gun-ctrl/SlideCard">全部代码地址</a></p>
+]]></content>
+      <categories>
+        <category>高级UI</category>
+      </categories>
+      <tags>
+        <tag>高级UI</tag>
+      </tags>
   </entry>
 </search>
