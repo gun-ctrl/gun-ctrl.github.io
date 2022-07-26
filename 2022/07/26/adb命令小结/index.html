@@ -1,0 +1,540 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>adb小结 | 搬码人’s Blog</title><meta name="keywords" content="adb"><meta name="author" content="搬码人"><meta name="copyright" content="搬码人"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="adb常用命令 与应用交互主要是使用am命令，常用的如下    command 用途    start [options]  启动  指定的 Activity   startservice [options]  启动  指定的 Service   broadcast [options]  发送  指定的广播   force-stop  停止  相关的进程    参数很灵活，和写 Android 程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="adb小结">
+<meta property="og:url" content="https://gun-ctrl.github.io/2022/07/26/adb%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93/index.html">
+<meta property="og:site_name" content="搬码人’s Blog">
+<meta property="og:description" content="adb常用命令 与应用交互主要是使用am命令，常用的如下    command 用途    start [options]  启动  指定的 Activity   startservice [options]  启动  指定的 Service   broadcast [options]  发送  指定的广播   force-stop  停止  相关的进程    参数很灵活，和写 Android 程">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gun-ctrl.github.io/img/pansen.png">
+<meta property="article:published_time" content="2022-07-26T10:58:48.938Z">
+<meta property="article:modified_time" content="2022-07-26T11:03:33.494Z">
+<meta property="article:author" content="搬码人">
+<meta property="article:tag" content="adb">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gun-ctrl.github.io/img/pansen.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://gun-ctrl.github.io/2022/07/26/adb%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":20,"languages":{"author":"作者: 搬码人","link":"链接: ","source":"来源: 搬码人’s Blog","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'null',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'adb小结',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-07-26 19:03:33'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="搬码人’s Blog" type="application/atom+xml">
+</head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">11</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">5</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/img/pansen.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">搬码人’s Blog</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">adb小结</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-07-26T10:58:48.938Z" title="发表于 2022-07-26 18:58:48">2022-07-26</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-07-26T11:03:33.494Z" title="更新于 2022-07-26 19:03:33">2022-07-26</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E9%9A%8F%E7%AC%94/">Android随笔</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">1.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>6分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="adb小结"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p><a href="http://banmaman.com/2022/07/19/adb%E5%91%BD%E4%BB%A4/">adb常用命令</a></p>
+<h2 id="与应用交互"><a href="#与应用交互" class="headerlink" title="与应用交互"></a>与应用交互</h2><p>主要是使用am<command>命令，常用的<command>如下</p>
+<table>
+<thead>
+<tr>
+<th>command</th>
+<th align="left">用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>start [options] <INTENT></td>
+<td align="left">启动 <INTENT> 指定的 Activity</td>
+</tr>
+<tr>
+<td>startservice [options] <INTENT></td>
+<td align="left">启动 <INTENT> 指定的 Service</td>
+</tr>
+<tr>
+<td>broadcast [options] <INTENT></td>
+<td align="left">发送 <INTENT> 指定的广播</td>
+</tr>
+<tr>
+<td>force-stop <packagename></td>
+<td align="left">停止 <packagename> 相关的进程</td>
+</tr>
+<tr>
+<td><INTENT> 参数很灵活，和写 Android 程序时代码里的 Intent 相对应。</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td>用于决定intent对象的选项如下：</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td>参数</td>
+<td align="left">含义</td>
+</tr>
+<tr>
+<td>—-</td>
+<td align="left">:—-</td>
+</tr>
+<tr>
+<td>-a <ACTION></td>
+<td align="left">指定 action，比如 android.intent.action.VIEW</td>
+</tr>
+<tr>
+<td>-c <CATEGORY></td>
+<td align="left">指定 category，比如 android.intent.category.APP_CONTACTS</td>
+</tr>
+<tr>
+<td>-n <COMPONENT></td>
+<td align="left">指定完整 component 名，用于明确指定启动哪个 Activity，如 com.example.app&#x2F;.ExampleActivity</td>
+</tr>
+</tbody></table>
+<p><INTENT> 里还能带数据，就像写代码时的 Bundle 一样：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>–esn <EXTRA_KEY></td>
+<td align="left">null 值（只有 key 名）</td>
+</tr>
+<tr>
+<td>–es <EXTRA_KEY> <EXTRA_BOOLEAN_VALUE></td>
+<td align="left">string 值</td>
+</tr>
+<tr>
+<td>–ez <EXTRA_KEY> <EXTRA_BOOLEAN_VALUE></td>
+<td align="left">boolean 值</td>
+</tr>
+<tr>
+<td>–ei <EXTRA_KEY> <EXTRA_INT_VALUE></td>
+<td align="left">integer 值</td>
+</tr>
+<tr>
+<td>–el <EXTRA_KEY> <EXTRA_LONG_VALUE></td>
+<td align="left">long 值</td>
+</tr>
+<tr>
+<td>–ef <EXTRA_KEY> <EXTRA_FLOAT_VALUE></td>
+<td align="left">float 值</td>
+</tr>
+<tr>
+<td>–eu <EXTRA_KEY> <EXTRA_URI_VALUE></td>
+<td align="left">URI</td>
+</tr>
+<tr>
+<td>–ecn <EXTRA_KEY> <EXTRA_COMPONENT_NAME_VALUE></td>
+<td align="left">component name</td>
+</tr>
+<tr>
+<td>–eia <EXTRA_KEY> <EXTRA_INT_VALUE>[,&lt;EXTRA_INT_VALUE…]</td>
+<td align="left">integer 数组</td>
+</tr>
+<tr>
+<td>–ela <EXTRA_KEY> <EXTRA_LONG_VALUE>[,&lt;EXTRA_LONG_VALUE…]</td>
+<td align="left">long 数组</td>
+</tr>
+</tbody></table>
+<h3 id="启动应用-x2F-调起Activity"><a href="#启动应用-x2F-调起Activity" class="headerlink" title="启动应用&#x2F;调起Activity"></a>启动应用&#x2F;调起Activity</h3><h4 id="指定Activity名称启动"><a href="#指定Activity名称启动" class="headerlink" title="指定Activity名称启动"></a>指定Activity名称启动</h4><p>命令格式：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> start [<span class="keyword">options</span>] <span class="symbol">&lt;INTENT&gt;</span></span><br></pre></td></tr></table></figure>
+<p>调起微信并传给它 string 数据键值对 <code>toast - hello, world</code>。<br><img src="https://upload-images.jianshu.io/upload_images/20123021-e42736fb5ede5c8a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<h4 id="不指定Activity名称启动-启动主Activity"><a href="#不指定Activity名称启动-启动主Activity" class="headerlink" title="不指定Activity名称启动(启动主Activity)"></a>不指定Activity名称启动(启动主Activity)</h4><p>命令格式：</p>
+<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell monkey -<span class="selector-tag">p</span> &lt;packagename&gt; -c android<span class="selector-class">.intent</span><span class="selector-class">.category</span><span class="selector-class">.LAUNCHER</span> <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<p>启动QQ<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-a315569b2b8ab380.png" alt="image.png"></p>
+<h3 id="调起Service"><a href="#调起Service" class="headerlink" title="调起Service"></a>调起Service</h3><p>命令格式：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> startservice [<span class="keyword">options</span>] <span class="symbol">&lt;INTENT&gt;</span></span><br></pre></td></tr></table></figure>
+<p>例如：<br>调起微信的某Service</p>
+<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell am startservice -n com<span class="selector-class">.tencent</span>.mm/<span class="selector-class">.plugin</span><span class="selector-class">.accountsync</span><span class="selector-class">.model</span>.AccountAuthenticatorService</span><br></pre></td></tr></table></figure>
+<p>另外一个典型的用例是如果设备上原本应该显示虚拟按键但是没有显示，可以试试这个：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> startservice -n <span class="keyword">com</span>.android.systemui/.SystemUIService</span><br></pre></td></tr></table></figure>
+<h3 id="停止Service"><a href="#停止Service" class="headerlink" title="停止Service"></a>停止Service</h3><p>命令格式：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> stopservice [<span class="keyword">options</span>] <span class="symbol">&lt;INTENT&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="发送广播"><a href="#发送广播" class="headerlink" title="发送广播"></a>发送广播</h3><p>命令格式：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> broadcast [<span class="keyword">options</span>] <span class="symbol">&lt;INTENT&gt;</span></span><br></pre></td></tr></table></figure>
+<p>可以向所有组件广播，也可以向指定组件广播<br>例如，向所有组件广播：</p>
+<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell am broadcast -<span class="selector-tag">a</span> android<span class="selector-class">.intent</span><span class="selector-class">.action</span>.BOOT_COMPLETED</span><br></pre></td></tr></table></figure>
+<p>又例如，只向<code>org.mazhuang.boottimemeasure/.BootCompletedReceiver</code>广播</p>
+<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell am broadcast -<span class="selector-tag">a</span> android<span class="selector-class">.intent</span><span class="selector-class">.action</span><span class="selector-class">.BOOT_COMPLETED</span> -n org<span class="selector-class">.mazhuang</span>.boottimemeasure/.BootCompletedReceiver</span><br></pre></td></tr></table></figure>
+<p>这类用法在测试的时候很实用，比如某个广播的场景很难制造，可以考虑通过这种方式来发送广播。<br>既能发送系统预定义的广播，也能发送自定义广播。如下是部分系统预定义广播及正常触发时机：<br>（均可使用adb触发）</p>
+<table>
+<thead>
+<tr>
+<th>action</th>
+<th align="left">触发时机</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>android.net.conn.CONNECTIVITY_CHANGE</td>
+<td align="left">网络连接发生变化</td>
+</tr>
+<tr>
+<td>android.intent.action.SCREEN_ON</td>
+<td align="left">屏幕点亮</td>
+</tr>
+<tr>
+<td>android.intent.action.SCREEN_OFF</td>
+<td align="left">屏幕熄灭</td>
+</tr>
+<tr>
+<td>android.intent.action.BATTERY_LOW</td>
+<td align="left">电量低，会弹出电量低提示框</td>
+</tr>
+<tr>
+<td>android.intent.action.BATTERY_OKAY</td>
+<td align="left">电量恢复了</td>
+</tr>
+<tr>
+<td>android.intent.action.BOOT_COMPLETED</td>
+<td align="left">设备启动完毕</td>
+</tr>
+<tr>
+<td>android.intent.action.DEVICE_STORAGE_LOW</td>
+<td align="left">存储空间过低</td>
+</tr>
+<tr>
+<td>android.intent.action.DEVICE_STORAGE_OK</td>
+<td align="left">存储空间恢复</td>
+</tr>
+<tr>
+<td>android.intent.action.PACKAGE_ADDED</td>
+<td align="left">安装了新的应用</td>
+</tr>
+<tr>
+<td>android.net.wifi.STATE_CHANGE</td>
+<td align="left">WiFi 连接状态发生变化</td>
+</tr>
+<tr>
+<td>android.net.wifi.WIFI_STATE_CHANGED</td>
+<td align="left">WiFi 状态变为启用&#x2F;关闭&#x2F;正在启动&#x2F;正在关闭&#x2F;未知</td>
+</tr>
+<tr>
+<td>android.intent.action.BATTERY_CHANGED</td>
+<td align="left">电池电量发生变化</td>
+</tr>
+<tr>
+<td>android.intent.action.INPUT_METHOD_CHANGED</td>
+<td align="left">系统输入法发生变化</td>
+</tr>
+<tr>
+<td>android.intent.action.ACTION_POWER_CONNECTED</td>
+<td align="left">外部电源连接</td>
+</tr>
+<tr>
+<td>android.intent.action.ACTION_POWER_DISCONNECTED</td>
+<td align="left">外部电源断开连接</td>
+</tr>
+<tr>
+<td>android.intent.action.DREAMING_STARTED</td>
+<td align="left">系统开始休眠</td>
+</tr>
+<tr>
+<td>android.intent.action.DREAMING_STOPPED</td>
+<td align="left">系统停止休眠</td>
+</tr>
+<tr>
+<td>android.intent.action.HEADSET_PLUG</td>
+<td align="left">插入耳机</td>
+</tr>
+<tr>
+<td>android.intent.action.MEDIA_UNMOUNTED</td>
+<td align="left">卸载外部介质</td>
+</tr>
+<tr>
+<td>android.intent.action.MEDIA_MOUNTED</td>
+<td align="left">挂载外部介质</td>
+</tr>
+<tr>
+<td>android.os.action.POWER_SAVE_MODE_CHANGED</td>
+<td align="left">省电模式开启</td>
+</tr>
+</tbody></table>
+<h3 id="强制停止应用"><a href="#强制停止应用" class="headerlink" title="强制停止应用"></a>强制停止应用</h3><p>命令：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> force-<span class="keyword">stop</span> <span class="symbol">&lt;packagename&gt;</span></span><br></pre></td></tr></table></figure>
+<p>命令示例：<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-f509618cec978dc1.png" alt="image.png"></p>
+<h3 id="收紧内存"><a href="#收紧内存" class="headerlink" title="收紧内存"></a>收紧内存</h3><figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span>  <span class="keyword">am</span> send-trim-memory <span class="symbol">&lt;pid&gt;</span> <span class="symbol">&lt;level&gt;</span></span><br></pre></td></tr></table></figure>
+<p>pid: 进程 ID level: HIDDEN、RUNNING_MODERATE、BACKGROUND、 RUNNING_LOW、MODERATE、RUNNING_CRITICAL、COMPLETE<br>命令示例：</p>
+<figure class="highlight stata"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> am send-<span class="keyword">trim</span>-<span class="keyword">memory</span> 12345 RUNNING_LOW</span><br></pre></td></tr></table></figure>
+<p>表示向 pid&#x3D;12345 的进程，发出 level&#x3D;RUNNING_LOW 的收紧内存命令。 </p>
+<h2 id="修改设置"><a href="#修改设置" class="headerlink" title="修改设置"></a>修改设置</h2><p><strong>注：</strong> 修改设置之后，运行恢复命令有可能显示仍然不太正常，可以运行 adb reboot 重启设备，或手动重启。<br>修改设置的原理主要是通过 settings 命令修改 &#x2F;data&#x2F;data&#x2F;com.android.providers.settings&#x2F;databases&#x2F;settings.db 里存放的设置值。</p>
+<h3 id="分辨率"><a href="#分辨率" class="headerlink" title="分辨率"></a>分辨率</h3><figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">adb</span> shell wm size <span class="number">480</span>x1024</span><br></pre></td></tr></table></figure>
+<p>表示将分辨率修改为 480px * 1024px。<br>恢复：</p>
+<figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line">adb shell wm size reset</span><br></pre></td></tr></table></figure>
+<h3 id="屏幕密度"><a href="#屏幕密度" class="headerlink" title="屏幕密度"></a>屏幕密度</h3><figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">adb</span> shell wm density <span class="number">160</span></span><br></pre></td></tr></table></figure>
+<p>表示将屏幕密度修改为 160dpi。<br>恢复：</p>
+<figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span><span class="language-bash"> wm density reset</span></span><br></pre></td></tr></table></figure>
+<h3 id="显示区域"><a href="#显示区域" class="headerlink" title="显示区域"></a>显示区域</h3><figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">adb</span> shell wm overscan <span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">200</span></span><br></pre></td></tr></table></figure>
+<p>四个数字分别表示距离左、上、右、下边缘的留白像素，以上命令表示将屏幕底部 200px 留白。<br>恢复：</p>
+<figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span><span class="language-bash"> wm overscan reset</span></span><br></pre></td></tr></table></figure>
+<h3 id="关闭USB调试"><a href="#关闭USB调试" class="headerlink" title="关闭USB调试"></a>关闭USB调试</h3><figure class="highlight livecodeserver"><table><tr><td class="code"><pre><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">put</span> <span class="built_in">global</span> adb_enabled <span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p>恢复：<br>用命令恢复不了了，毕竟关闭了 USB 调试 adb 就连接不上 Android 设备了。<br>去设备上手动恢复吧：「设置」-「开发者选项」-「Android 调试」。</p>
+<h3 id="允许-x2F-禁止访问非-SDK-API："><a href="#允许-x2F-禁止访问非-SDK-API：" class="headerlink" title="允许&#x2F;禁止访问非 SDK API："></a>允许&#x2F;禁止访问非 SDK API：</h3><p>不需要设备获得Root权限。<br>允许访问非 SDK API：</p>
+<figure class="highlight livecodeserver"><table><tr><td class="code"><pre><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">put</span> <span class="built_in">global</span> hidden_api_policy_pre_p_apps <span class="number">1</span></span><br><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">put</span> <span class="built_in">global</span> hidden_api_policy_p_apps <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<p>禁止访问非 SDK API</p>
+<figure class="highlight livecodeserver"><table><tr><td class="code"><pre><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">delete</span> <span class="built_in">global</span> hidden_api_policy_pre_p_apps</span><br><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">delete</span> <span class="built_in">global</span> hidden_api_policy_p_apps</span><br></pre></td></tr></table></figure>
+<p>命令最后的数字的含义：</p>
+<table>
+<thead>
+<tr>
+<th>值</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td align="left">禁止检测非 SDK 接口的调用。该情况下，日志记录功能被禁用，并且令 strict mode API，即 detectNonSdkApiUsage() 无效。不推荐。</td>
+</tr>
+<tr>
+<td>1</td>
+<td align="left">仅警告——允许访问所有非 SDK 接口，但保留日志中的警告信息，可继续使用 strick mode API。</td>
+</tr>
+<tr>
+<td>2</td>
+<td align="left">禁止调用深灰名单和黑名单中的接口。</td>
+</tr>
+<tr>
+<td>3</td>
+<td align="left">禁止调用黑名单中的接口，但允许调用深灰名单中的接口。</td>
+</tr>
+</tbody></table>
+<h2 id="实用功能"><a href="#实用功能" class="headerlink" title="实用功能"></a>实用功能</h2><h3 id="屏幕截图"><a href="#屏幕截图" class="headerlink" title="屏幕截图"></a>屏幕截图</h3><p><strong>注：</strong>未指定路径则，默认为adb所在的文件夹<br>截图保存到电脑：</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">exec</span><span class="operator">-</span><span class="keyword">out</span> screencap <span class="operator">-</span>p <span class="operator">&gt;</span> sc.png</span><br></pre></td></tr></table></figure>
+<p>如果 adb 版本较老，无法使用 exec-out 命令，这时候建议更新 adb 版本。无法更新的话可以使用以下麻烦点的办法：<br>先截图保存到设备里：</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">adb shell screencap -p <span class="regexp">/sdcard/</span>sc.png</span><br></pre></td></tr></table></figure>
+<p>然后将 png 文件导出到电脑：<br>adb pull &#x2F;sdcard&#x2F;sc.png<br>可以使用<code>adb shell screencap -h</code> 查看 screencap 命令的帮助信息，下面是两个有意义的参数及含义：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-p</td>
+<td align="left">指定保存文件为 png 格式（如果指定文件后缀png，则可省略）</td>
+</tr>
+<tr>
+<td>-d display-id</td>
+<td align="left">指定截图的显示屏编号（有多显示屏的情况下）</td>
+</tr>
+</tbody></table>
+<h3 id="录制屏幕"><a href="#录制屏幕" class="headerlink" title="录制屏幕"></a>录制屏幕</h3><p>录制屏幕以mp4格式保存到 &#x2F;sdcard：</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">adb shell screenrecord <span class="regexp">/sdcard/</span>filename.mp4</span><br></pre></td></tr></table></figure>
+<p>需要停止时按 <code>Ctrl-C</code>，默认录制时间和最长录制时间都是 180 秒。<br>如果需要导出到电脑：</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">adb pull <span class="regexp">/sdcard/</span>filename.mp4</span><br></pre></td></tr></table></figure>
+<p>可以使用 <code>adb shell screenrecord --help</code> 查看 screenrecord 命令的帮助信息，下面是常见参数及含义：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>–size WIDTHxHEIGHT</td>
+<td align="left">视频的尺寸，比如 1280x720，默认是屏幕分辨率。</td>
+</tr>
+<tr>
+<td>–bit-rate RATE</td>
+<td align="left">视频的比特率，默认是 4Mbps。</td>
+</tr>
+<tr>
+<td>–time-limit TIME</td>
+<td align="left">录制时长，单位秒。</td>
+</tr>
+<tr>
+<td>–verbose</td>
+<td align="left">输出更多信息。</td>
+</tr>
+</tbody></table>
+<h3 id="开启-x2F-关闭wifi"><a href="#开启-x2F-关闭wifi" class="headerlink" title="开启&#x2F;关闭wifi"></a>开启&#x2F;关闭wifi</h3><p>开启</p>
+<figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span><span class="language-bash"> svc wifi <span class="built_in">enable</span></span></span><br></pre></td></tr></table></figure>
+<p>关闭</p>
+<figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span><span class="language-bash"> svc wifi <span class="built_in">disable</span></span></span><br></pre></td></tr></table></figure>
+<h3 id="使用Monkey进行压力测试"><a href="#使用Monkey进行压力测试" class="headerlink" title="使用Monkey进行压力测试"></a>使用Monkey进行压力测试</h3><p>Monkey 可以生成伪随机用户事件来模拟单击、触摸、手势等操作，可以对正在开发中的程序进行随机压力测试。<br>简单用法：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> monkey -<span class="keyword">p</span> <span class="symbol">&lt;packagename&gt;</span> -v <span class="number">500</span></span><br></pre></td></tr></table></figure>
+<p>表示向 <code>&lt;packagename&gt;</code> 指定的应用程序发送 500 个伪随机事件。<br>更多内容可见<a href="https://developer.android.google.cn/studio/test/monkey.html">monkey官网</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io">搬码人</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io/2022/07/26/adb%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93/">https://gun-ctrl.github.io/2022/07/26/adb%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://gun-ctrl.github.io" target="_blank">搬码人’s Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/adb/">adb</a></div><div class="post_share"><div class="social-share" data-image="/img/pansen.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechatpay.jpg" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/img/alipay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/alipay.jpg" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-full"><a href="/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/"><img class="prev-cover" src="/img/liqing.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">adb shell input text不能输入中文的解决方案</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/" title="adb shell input text不能输入中文的解决方案"><img class="cover" src="/img/liqing.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-24</div><div class="title">adb shell input text不能输入中文的解决方案</div></div></a></div><div><a href="/2022/07/19/adb%E5%91%BD%E4%BB%A4/" title="adb命令"><img class="cover" src="/img/timo.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-19</div><div class="title">adb命令</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div><div id="comment-switch"><span class="first-comment">Valine</span><span class="switch-btn"></span><span class="second-comment">Disqus</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div><div><div id="disqus_thread"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8E%E5%BA%94%E7%94%A8%E4%BA%A4%E4%BA%92"><span class="toc-number">1.</span> <span class="toc-text">与应用交互</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E5%BA%94%E7%94%A8-x2F-%E8%B0%83%E8%B5%B7Activity"><span class="toc-number">1.1.</span> <span class="toc-text">启动应用&#x2F;调起Activity</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8C%87%E5%AE%9AActivity%E5%90%8D%E7%A7%B0%E5%90%AF%E5%8A%A8"><span class="toc-number">1.1.1.</span> <span class="toc-text">指定Activity名称启动</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%8D%E6%8C%87%E5%AE%9AActivity%E5%90%8D%E7%A7%B0%E5%90%AF%E5%8A%A8-%E5%90%AF%E5%8A%A8%E4%B8%BBActivity"><span class="toc-number">1.1.2.</span> <span class="toc-text">不指定Activity名称启动(启动主Activity)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B0%83%E8%B5%B7Service"><span class="toc-number">1.2.</span> <span class="toc-text">调起Service</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%81%9C%E6%AD%A2Service"><span class="toc-number">1.3.</span> <span class="toc-text">停止Service</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%91%E9%80%81%E5%B9%BF%E6%92%AD"><span class="toc-number">1.4.</span> <span class="toc-text">发送广播</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%BA%E5%88%B6%E5%81%9C%E6%AD%A2%E5%BA%94%E7%94%A8"><span class="toc-number">1.5.</span> <span class="toc-text">强制停止应用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%94%B6%E7%B4%A7%E5%86%85%E5%AD%98"><span class="toc-number">1.6.</span> <span class="toc-text">收紧内存</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%AE%E6%94%B9%E8%AE%BE%E7%BD%AE"><span class="toc-number">2.</span> <span class="toc-text">修改设置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E8%BE%A8%E7%8E%87"><span class="toc-number">2.1.</span> <span class="toc-text">分辨率</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%8F%E5%B9%95%E5%AF%86%E5%BA%A6"><span class="toc-number">2.2.</span> <span class="toc-text">屏幕密度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%98%BE%E7%A4%BA%E5%8C%BA%E5%9F%9F"><span class="toc-number">2.3.</span> <span class="toc-text">显示区域</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E9%97%ADUSB%E8%B0%83%E8%AF%95"><span class="toc-number">2.4.</span> <span class="toc-text">关闭USB调试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%81%E8%AE%B8-x2F-%E7%A6%81%E6%AD%A2%E8%AE%BF%E9%97%AE%E9%9D%9E-SDK-API%EF%BC%9A"><span class="toc-number">2.5.</span> <span class="toc-text">允许&#x2F;禁止访问非 SDK API：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E7%94%A8%E5%8A%9F%E8%83%BD"><span class="toc-number">3.</span> <span class="toc-text">实用功能</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE"><span class="toc-number">3.1.</span> <span class="toc-text">屏幕截图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BD%95%E5%88%B6%E5%B1%8F%E5%B9%95"><span class="toc-number">3.2.</span> <span class="toc-text">录制屏幕</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%80%E5%90%AF-x2F-%E5%85%B3%E9%97%ADwifi"><span class="toc-number">3.3.</span> <span class="toc-text">开启&#x2F;关闭wifi</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8Monkey%E8%BF%9B%E8%A1%8C%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95"><span class="toc-number">3.4.</span> <span class="toc-text">使用Monkey进行压力测试</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url('/img/pansen.png')"><div id="footer-wrap"><div class="copyright">&copy;2022 By 搬码人</div><div class="framework-info"><span>框架 </span><a href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="聊天"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div></div></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script src="/js/search/local-search.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',preloader.endLoading())</script><div class="js-pjax"><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: '',
+      appKey: '',
+      avatar: 'monsterid',
+      serverURLs: '',
+      emojiMaps: "",
+      path: window.location.pathname,
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script><script>function loadDisqus () {
+  var disqus_config = function () {
+    this.page.url = 'https://gun-ctrl.github.io/2022/07/26/adb%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93/'
+    this.page.identifier = '/2022/07/26/adb%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93/'
+    this.page.title = 'adb小结'
+  };
+
+  window.disqusReset = () => {
+    DISQUS.reset({
+      reload: true,
+      config: disqus_config
+    })
+  }
+
+  if (window.DISQUS) disqusReset()
+  else {
+    (function() { 
+      var d = document, s = d.createElement('script');
+      s.src = 'https://.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  }
+
+  document.getElementById('darkmode').addEventListener('click', () => {
+    setTimeout(() => window.disqusReset(), 200)
+  })
+}
+
+if ('Valine' === 'Disqus' || !true) {
+  if (true) btf.loadComment(document.getElementById('disqus_thread'), loadDisqus)
+  else loadDisqus()
+} else {
+  function loadOtherComment () {
+    loadDisqus()
+  }
+}
+</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
