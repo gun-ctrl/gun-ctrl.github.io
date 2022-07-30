@@ -186,7 +186,7 @@ template {
 .site-data > a .headline,
 #pagination .prev_info,
 #pagination .next_info,
-sidebar sidebar-menus .menus_items .site-page {
+#sidebar #sidebar-menus .menus_items .site-page {
   overflow: hidden;
   -o-text-overflow: ellipsis;
   text-overflow: ellipsis;
@@ -4655,7 +4655,7 @@ h1.page-title + .tag-cloud-list {
     display: none;
   }
 }
-sidebar menu-mask {
+#sidebar #menu-mask {
   position: fixed;
   z-index: 102;
   display: none;
@@ -4663,7 +4663,7 @@ sidebar menu-mask {
   height: 100%;
   background: rgba(0,0,0,0.8);
 }
-sidebar sidebar-menus {
+#sidebar #sidebar-menus {
   position: fixed;
   top: 0;
   right: -300px;
@@ -4679,40 +4679,40 @@ sidebar sidebar-menus {
   -ms-transition: all 0.5s;
   transition: all 0.5s;
 }
-sidebar sidebar-menus.open {
+#sidebar #sidebar-menus.open {
   -webkit-transform: translate3d(-100%, 0, 0);
   -moz-transform: translate3d(-100%, 0, 0);
   -o-transform: translate3d(-100%, 0, 0);
   -ms-transform: translate3d(-100%, 0, 0);
   transform: translate3d(-100%, 0, 0);
 }
-sidebar sidebar-menus > .avatar-img {
+#sidebar #sidebar-menus > .avatar-img {
   margin: 20px auto;
 }
-sidebar sidebar-menus .sidebar-site-data {
+#sidebar #sidebar-menus .sidebar-site-data {
   padding: 0 10px;
 }
-sidebar sidebar-menus hr {
+#sidebar #sidebar-menus hr {
   margin: 20px auto;
 }
-sidebar sidebar-menus .menus_items {
+#sidebar #sidebar-menus .menus_items {
   padding: 0 10px 40px;
 }
-sidebar sidebar-menus .menus_items .site-page {
+#sidebar #sidebar-menus .menus_items .site-page {
   position: relative;
   display: block;
   padding: 6px 30px 6px 22px;
   color: var(--font-color);
   font-size: 1.15em;
 }
-sidebar sidebar-menus .menus_items .site-page:hover {
+#sidebar #sidebar-menus .menus_items .site-page:hover {
   background: var(--text-bg-hover);
 }
-sidebar sidebar-menus .menus_items .site-page i:first-child {
+#sidebar #sidebar-menus .menus_items .site-page i:first-child {
   width: 15%;
   text-align: left;
 }
-sidebar sidebar-menus .menus_items .site-page.group > i:last-child {
+#sidebar #sidebar-menus .menus_items .site-page.group > i:last-child {
   position: absolute;
   top: 0.78em;
   right: 18px;
@@ -4722,17 +4722,17 @@ sidebar sidebar-menus .menus_items .site-page.group > i:last-child {
   -ms-transition: -ms-transform 0.3s;
   transition: transform 0.3s;
 }
-sidebar sidebar-menus .menus_items .site-page.group.hide > i:last-child {
+#sidebar #sidebar-menus .menus_items .site-page.group.hide > i:last-child {
   -webkit-transform: rotate(90deg);
   -moz-transform: rotate(90deg);
   -o-transform: rotate(90deg);
   -ms-transform: rotate(90deg);
   transform: rotate(90deg);
 }
-sidebar sidebar-menus .menus_items .site-page.group.hide + .menus_item_child {
+#sidebar #sidebar-menus .menus_items .site-page.group.hide + .menus_item_child {
   display: none;
 }
-sidebar sidebar-menus .menus_items .menus_item_child {
+#sidebar #sidebar-menus .menus_items .menus_item_child {
   margin: 0;
   list-style: none;
 }
