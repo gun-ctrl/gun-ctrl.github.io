@@ -1,1063 +1,270 @@
 <?xml version="1.0" encoding="utf-8"?>
-<search>
-  <entry>
-    <title>RecyclerView高级用法——吸顶效果</title>
-    <url>/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/</url>
-    <content><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>我们对RecyclerView的使用不能仅仅停留在表面，可以探索一些高级的用法——自定义，不过要实现这些的前提是必须对RecycleView的源码流程有所了解。今天小编就略讲一下，主要是和今天的主体有关的内容。我们今天就来实现如下的吸顶效果。</p>
-<h3 id="通过绘制实现RecyclerView的吸顶效果"><a href="#通过绘制实现RecyclerView的吸顶效果" class="headerlink" title="通过绘制实现RecyclerView的吸顶效果"></a>通过绘制实现RecyclerView的吸顶效果</h3><p>ItemDecoration</p>
-<p>ItemDecoration允许应用给具体的View添加具体的图画或者layout的偏移，对于绘制View之间的分割线，视觉分组边界等等是非常有用的。</p>
-<p>当我们调用addItemDecoration()方法添加decoration的时候，RecyclerView就会调用该类的onDraw方法区绘制分割线，也就是说：分割线是绘制出来的。</p>
-<blockquote>
-<p>RecyclerView.ItemDecoration，该类为抽象类，官方目前只提供了一个实现类DividerItemDecoration。</p>
-<p>并且只有LinearLayoutManager能够使用</p>
-</blockquote>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719205304144.png" alt="image-20220719205304144"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C.gif" alt="吸顶效果"></p>
-<p>要实现这样的吸顶效果，首先，就需要了解一下RecyclerView.ItemDecoration的绘制流程。</p>
-<p>1.onDraw</p>
-<p>在绘制每个itemView之前绘制，上图中的每个跟着滑动的头部就是在此处绘制</p>
-<p>2.onDrawOver</p>
-<p>在绘制了每个ItemView之后绘制，上图中固定的顶部在此处绘制</p>
-<p>3.getItemOffsets</p>
-<p>设置偏移值，可以在绘制itemView时设置偏移值，其实上demo中的每个头部（红色区域）就是在绘制itemView预留了部分空间用于绘制头部。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719210625576.png" alt="image-20220719210625576"></p>
-<blockquote>
-<p>也就是说绘制流程是：onDraw()-&gt;ItemView-&gt;onDrawOver</p>
-</blockquote>
-<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ul>
-<li>在Adapter中创建两个方法<ul>
-<li>1.获取组名</li>
-<li>2.判断是否是组的头部<ul>
-<li>首先，position&#x3D;0一定是组的头部</li>
-<li>其次，可以通过前后两次组名判断当前item是不是组的头部</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line"><span class="comment">//是否是 组的第一个</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Boolean <span class="title">isGroupHeader</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (position==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="type">String</span> currentName = <span class="built_in">getGroupName</span>(position);</span><br><span class="line">            <span class="type">String</span> preGroupName = <span class="built_in">getGroupName</span>(position<span class="number">-1</span>);</span><br><span class="line">            <span class="keyword">if</span> (preGroupName.<span class="built_in">equals</span>(currentName))&#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="type">String</span> <span class="title">getGroupName</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> modelList.<span class="built_in">get</span>(position).<span class="built_in">getGroupName</span>();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>自定义分割线</p>
-<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void on<span class="constructor">Draw(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">        super.on<span class="constructor">Draw(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">        <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">            <span class="built_in">int</span> count  = parent.get<span class="constructor">ChildCount()</span>;</span><br><span class="line">            <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">            <span class="built_in">int</span> right  = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">                <span class="comment">//获取对应的View</span></span><br><span class="line">                View view = parent.get<span class="constructor">ChildAt(<span class="params">i</span>)</span>;</span><br><span class="line">                <span class="comment">//获取View的布局位置</span></span><br><span class="line">                <span class="built_in">int</span> position = parent.get<span class="constructor">ChildLayoutPosition(<span class="params">view</span>)</span>;</span><br><span class="line">                <span class="comment">//判断是不是头部</span></span><br><span class="line">                boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>)</span>;</span><br><span class="line">                <span class="keyword">if</span> (isGroupHeader<span class="operator"> &amp;&amp; </span>view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                    String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">                    textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>, 0, <span class="params">groupName</span>.<span class="params">length</span>()</span>, textRect);</span><br><span class="line">                    c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight/<span class="number">2</span>+textRect.height<span class="literal">()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line"></span><br><span class="line">                &#125;<span class="keyword">else</span> <span class="keyword">if</span> (view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="comment">//分割线</span></span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-<span class="number">4</span>,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">   public void on<span class="constructor">DrawOver(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">       super.on<span class="constructor">DrawOver(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">       <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">           ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">           <span class="comment">//返回可见区域的第一个item的position</span></span><br><span class="line">           <span class="built_in">int</span> position = ((LinearLayoutManager)parent.get<span class="constructor">LayoutManager()</span>).find<span class="constructor">FirstVisibleItemPosition()</span>;</span><br><span class="line">           <span class="comment">//获取对应的position的View</span></span><br><span class="line">           View itemView = parent.find<span class="constructor">ViewHolderForAdapterPosition(<span class="params">position</span>)</span>.itemView;</span><br><span class="line">           <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">           <span class="built_in">int</span> right = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">           <span class="built_in">int</span> top = parent.get<span class="constructor">PaddingTop()</span>;</span><br><span class="line">           <span class="comment">//当下一个是组的头部时</span></span><br><span class="line">           boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>+1)</span>;</span><br><span class="line">           String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">           textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>,0,<span class="params">groupName</span>.<span class="params">length</span>()</span>,textRect);</span><br><span class="line">           <span class="keyword">if</span> (isGroupHeader)&#123;</span><br><span class="line">               <span class="comment">//对顶部进行缩小效果，在视觉上是被下一个组的顶部推进去的</span></span><br><span class="line">               <span class="built_in">int</span> bottom = <span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>min(groupHeaderHeight,itemView.get<span class="constructor">Bottom()</span>-parent.get<span class="constructor">PaddingTop()</span>);</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.clip<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">bottom</span>-<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">groupHeaderHeight</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight pf"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void getItemOffsets(@N<span class="keyword">on</span>Null Rect <span class="keyword">out</span>Rect, @N<span class="keyword">on</span>Null View view, @N<span class="keyword">on</span>Null RecyclerView <span class="keyword">parent</span>, @N<span class="keyword">on</span>Null RecyclerView.State <span class="keyword">state</span>) &#123;</span><br><span class="line">        super.getItemOffsets(<span class="keyword">out</span>Rect, view, <span class="keyword">parent</span>, <span class="keyword">state</span>);</span><br><span class="line">        if (<span class="keyword">parent</span>.getAdapter() instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) <span class="keyword">parent</span>.getAdapter();</span><br><span class="line">            int position = <span class="keyword">parent</span>.getChildAdapterPosition(view);</span><br><span class="line">            boolean isGroupHeader = adapter.isGroupHeader(position);</span><br><span class="line">            //判断itemView是不是头部</span><br><span class="line">            if (isGroupHeader)&#123;</span><br><span class="line">                //如果是头部，预留更大的地方</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="keyword">group</span>HeaderHeight,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="number">4</span>,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></li>
-</ul>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>其实这部分的重点就是自定义分割线（ItemDecoration），弄清绘制顺序以及设置偏移值的作用就简单多了。当然，难点（也不是难点）就是弄清除尺寸参数,特别是尺寸变化引起的换组顶部推动效果。</p>
-<p>其次就是特别注意有padding的情况，相信大家看出小编在这设置了顶部padding，有padding的时候需要注意尺寸。（不过有设置padding的情况很少）</p>
-<p><a href="https://github.com/gun-ctrl/RecyclerViewPro">全部代码</a></p>
-]]></content>
+<search> 
+  
+  
+    
+    <entry>
+      <title>adb小结</title>
+      <link href="/2022/07/26/adb%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93/"/>
+      <url>/2022/07/26/adb%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93/</url>
+      
+        <content type="html"><![CDATA[<p><a href="http://banmaman.com/2022/07/19/adb%E5%91%BD%E4%BB%A4/">adb常用命令</a></p><h2 id="与应用交互"><a href="#与应用交互" class="headerlink" title="与应用交互"></a>与应用交互</h2><p>主要是使用am<command>命令，常用的<command>如下</p><table><thead><tr><th>command</th><th align="left">用途</th></tr></thead><tbody><tr><td>start [options] <INTENT></td><td align="left">启动 <INTENT> 指定的 Activity</td></tr><tr><td>startservice [options] <INTENT></td><td align="left">启动 <INTENT> 指定的 Service</td></tr><tr><td>broadcast [options] <INTENT></td><td align="left">发送 <INTENT> 指定的广播</td></tr><tr><td>force-stop <packagename></td><td align="left">停止 <packagename> 相关的进程</td></tr><tr><td><INTENT> 参数很灵活，和写 Android 程序时代码里的 Intent 相对应。</td><td align="left"></td></tr><tr><td>用于决定intent对象的选项如下：</td><td align="left"></td></tr><tr><td>参数</td><td align="left">含义</td></tr><tr><td>—-</td><td align="left">:—-</td></tr><tr><td>-a <ACTION></td><td align="left">指定 action，比如 android.intent.action.VIEW</td></tr><tr><td>-c <CATEGORY></td><td align="left">指定 category，比如 android.intent.category.APP_CONTACTS</td></tr><tr><td>-n <COMPONENT></td><td align="left">指定完整 component 名，用于明确指定启动哪个 Activity，如 com.example.app&#x2F;.ExampleActivity</td></tr></tbody></table><p><INTENT> 里还能带数据，就像写代码时的 Bundle 一样：</p><table><thead><tr><th>参数</th><th align="left">含义</th></tr></thead><tbody><tr><td>–esn <EXTRA_KEY></td><td align="left">null 值（只有 key 名）</td></tr><tr><td>–es <EXTRA_KEY> <EXTRA_BOOLEAN_VALUE></td><td align="left">string 值</td></tr><tr><td>–ez <EXTRA_KEY> <EXTRA_BOOLEAN_VALUE></td><td align="left">boolean 值</td></tr><tr><td>–ei <EXTRA_KEY> <EXTRA_INT_VALUE></td><td align="left">integer 值</td></tr><tr><td>–el <EXTRA_KEY> <EXTRA_LONG_VALUE></td><td align="left">long 值</td></tr><tr><td>–ef <EXTRA_KEY> <EXTRA_FLOAT_VALUE></td><td align="left">float 值</td></tr><tr><td>–eu <EXTRA_KEY> <EXTRA_URI_VALUE></td><td align="left">URI</td></tr><tr><td>–ecn <EXTRA_KEY> <EXTRA_COMPONENT_NAME_VALUE></td><td align="left">component name</td></tr><tr><td>–eia <EXTRA_KEY> <EXTRA_INT_VALUE>[,&lt;EXTRA_INT_VALUE…]</td><td align="left">integer 数组</td></tr><tr><td>–ela <EXTRA_KEY> <EXTRA_LONG_VALUE>[,&lt;EXTRA_LONG_VALUE…]</td><td align="left">long 数组</td></tr></tbody></table><h3 id="启动应用-x2F-调起Activity"><a href="#启动应用-x2F-调起Activity" class="headerlink" title="启动应用&#x2F;调起Activity"></a>启动应用&#x2F;调起Activity</h3><h4 id="指定Activity名称启动"><a href="#指定Activity名称启动" class="headerlink" title="指定Activity名称启动"></a>指定Activity名称启动</h4><p>命令格式：</p><figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> start [<span class="keyword">options</span>] <span class="symbol">&lt;INTENT&gt;</span></span><br></pre></td></tr></table></figure><p>调起微信并传给它 string 数据键值对 <code>toast - hello, world</code>。<br><img src="https://upload-images.jianshu.io/upload_images/20123021-e42736fb5ede5c8a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p><h4 id="不指定Activity名称启动-启动主Activity"><a href="#不指定Activity名称启动-启动主Activity" class="headerlink" title="不指定Activity名称启动(启动主Activity)"></a>不指定Activity名称启动(启动主Activity)</h4><p>命令格式：</p><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell monkey -<span class="selector-tag">p</span> &lt;packagename&gt; -c android<span class="selector-class">.intent</span><span class="selector-class">.category</span><span class="selector-class">.LAUNCHER</span> <span class="number">1</span></span><br></pre></td></tr></table></figure><p>启动QQ<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-a315569b2b8ab380.png" alt="image.png"></p><h3 id="调起Service"><a href="#调起Service" class="headerlink" title="调起Service"></a>调起Service</h3><p>命令格式：</p><figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> startservice [<span class="keyword">options</span>] <span class="symbol">&lt;INTENT&gt;</span></span><br></pre></td></tr></table></figure><p>例如：<br>调起微信的某Service</p><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell am startservice -n com<span class="selector-class">.tencent</span>.mm/<span class="selector-class">.plugin</span><span class="selector-class">.accountsync</span><span class="selector-class">.model</span>.AccountAuthenticatorService</span><br></pre></td></tr></table></figure><p>另外一个典型的用例是如果设备上原本应该显示虚拟按键但是没有显示，可以试试这个：</p><figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> startservice -n <span class="keyword">com</span>.android.systemui/.SystemUIService</span><br></pre></td></tr></table></figure><h3 id="停止Service"><a href="#停止Service" class="headerlink" title="停止Service"></a>停止Service</h3><p>命令格式：</p><figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> stopservice [<span class="keyword">options</span>] <span class="symbol">&lt;INTENT&gt;</span></span><br></pre></td></tr></table></figure><h3 id="发送广播"><a href="#发送广播" class="headerlink" title="发送广播"></a>发送广播</h3><p>命令格式：</p><figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> broadcast [<span class="keyword">options</span>] <span class="symbol">&lt;INTENT&gt;</span></span><br></pre></td></tr></table></figure><p>可以向所有组件广播，也可以向指定组件广播<br>例如，向所有组件广播：</p><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell am broadcast -<span class="selector-tag">a</span> android<span class="selector-class">.intent</span><span class="selector-class">.action</span>.BOOT_COMPLETED</span><br></pre></td></tr></table></figure><p>又例如，只向<code>org.mazhuang.boottimemeasure/.BootCompletedReceiver</code>广播</p><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell am broadcast -<span class="selector-tag">a</span> android<span class="selector-class">.intent</span><span class="selector-class">.action</span><span class="selector-class">.BOOT_COMPLETED</span> -n org<span class="selector-class">.mazhuang</span>.boottimemeasure/.BootCompletedReceiver</span><br></pre></td></tr></table></figure><p>这类用法在测试的时候很实用，比如某个广播的场景很难制造，可以考虑通过这种方式来发送广播。<br>既能发送系统预定义的广播，也能发送自定义广播。如下是部分系统预定义广播及正常触发时机：<br>（均可使用adb触发）</p><table><thead><tr><th>action</th><th align="left">触发时机</th></tr></thead><tbody><tr><td>android.net.conn.CONNECTIVITY_CHANGE</td><td align="left">网络连接发生变化</td></tr><tr><td>android.intent.action.SCREEN_ON</td><td align="left">屏幕点亮</td></tr><tr><td>android.intent.action.SCREEN_OFF</td><td align="left">屏幕熄灭</td></tr><tr><td>android.intent.action.BATTERY_LOW</td><td align="left">电量低，会弹出电量低提示框</td></tr><tr><td>android.intent.action.BATTERY_OKAY</td><td align="left">电量恢复了</td></tr><tr><td>android.intent.action.BOOT_COMPLETED</td><td align="left">设备启动完毕</td></tr><tr><td>android.intent.action.DEVICE_STORAGE_LOW</td><td align="left">存储空间过低</td></tr><tr><td>android.intent.action.DEVICE_STORAGE_OK</td><td align="left">存储空间恢复</td></tr><tr><td>android.intent.action.PACKAGE_ADDED</td><td align="left">安装了新的应用</td></tr><tr><td>android.net.wifi.STATE_CHANGE</td><td align="left">WiFi 连接状态发生变化</td></tr><tr><td>android.net.wifi.WIFI_STATE_CHANGED</td><td align="left">WiFi 状态变为启用&#x2F;关闭&#x2F;正在启动&#x2F;正在关闭&#x2F;未知</td></tr><tr><td>android.intent.action.BATTERY_CHANGED</td><td align="left">电池电量发生变化</td></tr><tr><td>android.intent.action.INPUT_METHOD_CHANGED</td><td align="left">系统输入法发生变化</td></tr><tr><td>android.intent.action.ACTION_POWER_CONNECTED</td><td align="left">外部电源连接</td></tr><tr><td>android.intent.action.ACTION_POWER_DISCONNECTED</td><td align="left">外部电源断开连接</td></tr><tr><td>android.intent.action.DREAMING_STARTED</td><td align="left">系统开始休眠</td></tr><tr><td>android.intent.action.DREAMING_STOPPED</td><td align="left">系统停止休眠</td></tr><tr><td>android.intent.action.HEADSET_PLUG</td><td align="left">插入耳机</td></tr><tr><td>android.intent.action.MEDIA_UNMOUNTED</td><td align="left">卸载外部介质</td></tr><tr><td>android.intent.action.MEDIA_MOUNTED</td><td align="left">挂载外部介质</td></tr><tr><td>android.os.action.POWER_SAVE_MODE_CHANGED</td><td align="left">省电模式开启</td></tr></tbody></table><h3 id="强制停止应用"><a href="#强制停止应用" class="headerlink" title="强制停止应用"></a>强制停止应用</h3><p>命令：</p><figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> force-<span class="keyword">stop</span> <span class="symbol">&lt;packagename&gt;</span></span><br></pre></td></tr></table></figure><p>命令示例：<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-f509618cec978dc1.png" alt="image.png"></p><h3 id="收紧内存"><a href="#收紧内存" class="headerlink" title="收紧内存"></a>收紧内存</h3><figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span>  <span class="keyword">am</span> send-trim-memory <span class="symbol">&lt;pid&gt;</span> <span class="symbol">&lt;level&gt;</span></span><br></pre></td></tr></table></figure><p>pid: 进程 ID level: HIDDEN、RUNNING_MODERATE、BACKGROUND、 RUNNING_LOW、MODERATE、RUNNING_CRITICAL、COMPLETE<br>命令示例：</p><figure class="highlight stata"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> am send-<span class="keyword">trim</span>-<span class="keyword">memory</span> 12345 RUNNING_LOW</span><br></pre></td></tr></table></figure><p>表示向 pid&#x3D;12345 的进程，发出 level&#x3D;RUNNING_LOW 的收紧内存命令。 </p><h2 id="修改设置"><a href="#修改设置" class="headerlink" title="修改设置"></a>修改设置</h2><p><strong>注：</strong> 修改设置之后，运行恢复命令有可能显示仍然不太正常，可以运行 adb reboot 重启设备，或手动重启。<br>修改设置的原理主要是通过 settings 命令修改 &#x2F;data&#x2F;data&#x2F;com.android.providers.settings&#x2F;databases&#x2F;settings.db 里存放的设置值。</p><h3 id="分辨率"><a href="#分辨率" class="headerlink" title="分辨率"></a>分辨率</h3><figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">adb</span> shell wm size <span class="number">480</span>x1024</span><br></pre></td></tr></table></figure><p>表示将分辨率修改为 480px * 1024px。<br>恢复：</p><figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line">adb shell wm size reset</span><br></pre></td></tr></table></figure><h3 id="屏幕密度"><a href="#屏幕密度" class="headerlink" title="屏幕密度"></a>屏幕密度</h3><figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">adb</span> shell wm density <span class="number">160</span></span><br></pre></td></tr></table></figure><p>表示将屏幕密度修改为 160dpi。<br>恢复：</p><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span><span class="language-bash"> wm density reset</span></span><br></pre></td></tr></table></figure><h3 id="显示区域"><a href="#显示区域" class="headerlink" title="显示区域"></a>显示区域</h3><figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">adb</span> shell wm overscan <span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">200</span></span><br></pre></td></tr></table></figure><p>四个数字分别表示距离左、上、右、下边缘的留白像素，以上命令表示将屏幕底部 200px 留白。<br>恢复：</p><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span><span class="language-bash"> wm overscan reset</span></span><br></pre></td></tr></table></figure><h3 id="关闭USB调试"><a href="#关闭USB调试" class="headerlink" title="关闭USB调试"></a>关闭USB调试</h3><figure class="highlight livecodeserver"><table><tr><td class="code"><pre><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">put</span> <span class="built_in">global</span> adb_enabled <span class="number">0</span></span><br></pre></td></tr></table></figure><p>恢复：<br>用命令恢复不了了，毕竟关闭了 USB 调试 adb 就连接不上 Android 设备了。<br>去设备上手动恢复吧：「设置」-「开发者选项」-「Android 调试」。</p><h3 id="允许-x2F-禁止访问非-SDK-API："><a href="#允许-x2F-禁止访问非-SDK-API：" class="headerlink" title="允许&#x2F;禁止访问非 SDK API："></a>允许&#x2F;禁止访问非 SDK API：</h3><p>不需要设备获得Root权限。<br>允许访问非 SDK API：</p><figure class="highlight livecodeserver"><table><tr><td class="code"><pre><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">put</span> <span class="built_in">global</span> hidden_api_policy_pre_p_apps <span class="number">1</span></span><br><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">put</span> <span class="built_in">global</span> hidden_api_policy_p_apps <span class="number">1</span></span><br></pre></td></tr></table></figure><p>禁止访问非 SDK API</p><figure class="highlight livecodeserver"><table><tr><td class="code"><pre><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">delete</span> <span class="built_in">global</span> hidden_api_policy_pre_p_apps</span><br><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">delete</span> <span class="built_in">global</span> hidden_api_policy_p_apps</span><br></pre></td></tr></table></figure><p>命令最后的数字的含义：</p><table><thead><tr><th>值</th><th align="left">含义</th></tr></thead><tbody><tr><td>0</td><td align="left">禁止检测非 SDK 接口的调用。该情况下，日志记录功能被禁用，并且令 strict mode API，即 detectNonSdkApiUsage() 无效。不推荐。</td></tr><tr><td>1</td><td align="left">仅警告——允许访问所有非 SDK 接口，但保留日志中的警告信息，可继续使用 strick mode API。</td></tr><tr><td>2</td><td align="left">禁止调用深灰名单和黑名单中的接口。</td></tr><tr><td>3</td><td align="left">禁止调用黑名单中的接口，但允许调用深灰名单中的接口。</td></tr></tbody></table><h2 id="实用功能"><a href="#实用功能" class="headerlink" title="实用功能"></a>实用功能</h2><h3 id="屏幕截图"><a href="#屏幕截图" class="headerlink" title="屏幕截图"></a>屏幕截图</h3><p><strong>注：</strong>未指定路径则，默认为adb所在的文件夹<br>截图保存到电脑：</p><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">exec</span><span class="operator">-</span><span class="keyword">out</span> screencap <span class="operator">-</span>p <span class="operator">&gt;</span> sc.png</span><br></pre></td></tr></table></figure><p>如果 adb 版本较老，无法使用 exec-out 命令，这时候建议更新 adb 版本。无法更新的话可以使用以下麻烦点的办法：<br>先截图保存到设备里：</p><figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">adb shell screencap -p <span class="regexp">/sdcard/</span>sc.png</span><br></pre></td></tr></table></figure><p>然后将 png 文件导出到电脑：<br>adb pull &#x2F;sdcard&#x2F;sc.png<br>可以使用<code>adb shell screencap -h</code> 查看 screencap 命令的帮助信息，下面是两个有意义的参数及含义：</p><table><thead><tr><th>参数</th><th align="left">含义</th></tr></thead><tbody><tr><td>-p</td><td align="left">指定保存文件为 png 格式（如果指定文件后缀png，则可省略）</td></tr><tr><td>-d display-id</td><td align="left">指定截图的显示屏编号（有多显示屏的情况下）</td></tr></tbody></table><h3 id="录制屏幕"><a href="#录制屏幕" class="headerlink" title="录制屏幕"></a>录制屏幕</h3><p>录制屏幕以mp4格式保存到 &#x2F;sdcard：</p><figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">adb shell screenrecord <span class="regexp">/sdcard/</span>filename.mp4</span><br></pre></td></tr></table></figure><p>需要停止时按 <code>Ctrl-C</code>，默认录制时间和最长录制时间都是 180 秒。<br>如果需要导出到电脑：</p><figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">adb pull <span class="regexp">/sdcard/</span>filename.mp4</span><br></pre></td></tr></table></figure><p>可以使用 <code>adb shell screenrecord --help</code> 查看 screenrecord 命令的帮助信息，下面是常见参数及含义：</p><table><thead><tr><th>参数</th><th align="left">含义</th></tr></thead><tbody><tr><td>–size WIDTHxHEIGHT</td><td align="left">视频的尺寸，比如 1280x720，默认是屏幕分辨率。</td></tr><tr><td>–bit-rate RATE</td><td align="left">视频的比特率，默认是 4Mbps。</td></tr><tr><td>–time-limit TIME</td><td align="left">录制时长，单位秒。</td></tr><tr><td>–verbose</td><td align="left">输出更多信息。</td></tr></tbody></table><h3 id="开启-x2F-关闭wifi"><a href="#开启-x2F-关闭wifi" class="headerlink" title="开启&#x2F;关闭wifi"></a>开启&#x2F;关闭wifi</h3><p>开启</p><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span><span class="language-bash"> svc wifi <span class="built_in">enable</span></span></span><br></pre></td></tr></table></figure><p>关闭</p><figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span><span class="language-bash"> svc wifi <span class="built_in">disable</span></span></span><br></pre></td></tr></table></figure><h3 id="使用Monkey进行压力测试"><a href="#使用Monkey进行压力测试" class="headerlink" title="使用Monkey进行压力测试"></a>使用Monkey进行压力测试</h3><p>Monkey 可以生成伪随机用户事件来模拟单击、触摸、手势等操作，可以对正在开发中的程序进行随机压力测试。<br>简单用法：</p><figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> monkey -<span class="keyword">p</span> <span class="symbol">&lt;packagename&gt;</span> -v <span class="number">500</span></span><br></pre></td></tr></table></figure><p>表示向 <code>&lt;packagename&gt;</code> 指定的应用程序发送 500 个伪随机事件。<br>更多内容可见<a href="https://developer.android.google.cn/studio/test/monkey.html">monkey官网</a></p>]]></content>
+      
+      
       <categories>
-        <category>Android高级UI</category>
+          
+          <category> Android随笔 </category>
+          
       </categories>
-      <tags>
-        <tag>高级UI</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>RecyclerView的回收复用机制</title>
-    <url>/2022/07/24/RecyclerView%E7%9A%84%E5%9B%9E%E6%94%B6%E5%A4%8D%E7%94%A8%E6%9C%BA%E5%88%B6/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一章，小编介绍了RecyclerView的高级用法——自定义LayoutManager。今天，我们来从源码的角度深度剖析RecyclerView，主要是对RecyclerView的回收复用机制熟悉掌握。</p>
-<h2 id="RecyclerView介绍"><a href="#RecyclerView介绍" class="headerlink" title="RecyclerView介绍"></a>RecyclerView介绍</h2><blockquote>
-<p>RecyclerView可以说是项目必备的系统高级控件，相比于传统的ListVIew，RecyclerView最大的优势就是四级缓存机制，ListView是两级缓存机制（屏幕内可见、屏幕外）。</p>
-</blockquote>
-<h3 id="四级缓存机制"><a href="#四级缓存机制" class="headerlink" title="四级缓存机制"></a>四级缓存机制</h3><ul>
-<li><p>mChangeScrap（主要与动画相关）与mAttachedScrap（一般这两算一级）</p>
-<p>用来缓存还在屏幕内的ViewHolder</p>
-</li>
-<li><p>mCachedViews</p>
-<p>用来缓存移除屏幕之外的ViewHolder</p>
-</li>
-<li><p>mViewCacheExtension</p>
-<p>用户的自定义扩展缓存，需要用户自己管理View的创建和缓存</p>
-</li>
-<li><p>RecyclerViewPool</p>
-<p>ViewHolder缓存池</p>
-</li>
-</ul>
-<h3 id="回收复用的入口"><a href="#回收复用的入口" class="headerlink" title="回收复用的入口"></a>回收复用的入口</h3><p>上一章中自定义LayoutManager中有<code> detachAndScrapAttachedViews(recycler!!)</code>这样一个方法，用于回收ViewHolder。下面就来介绍一下RecyclerView的回收。</p>
-<p>回收有两个入口，一是布局onLayout时，二是在fill填充itemVIew时</p>
-<ul>
-<li>onLayout</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220724172908391.png" alt="image-20220724172908391"></p>
-<p>1.因为RecyclerView的具体onLayout是交给具体的LayoutManager来实现的，所以回收复用的具体操作是由LayoutManager来完成，在自定义LayoutManager时需考虑这一点，参考系统提供的LinearLayoutManager</p>
-<p>2.上图的两个重心是LinearLayoutManager中回收入口的分叉和Recycler中的实际回收情况，而我们在自定义LayoutManager时，回收Holder只需要通过detachAndScrapAttachedViews这一个方法即可，具体是如何进行回收的我们不关心，但需要知道有哪几种，因为这对应了几种缓存，上面已经介绍了四级缓存。</p>
-<p>3.缓存池与mCacheViews的关系：</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144808720.png" alt="image-20220717144808720"></p>
-<blockquote>
-<p> <strong>注意：</strong>缓存池中保存的只是ViewHolder，没有数据，所以缓存池中的ViewHolder复用还需要绑定</p>
-</blockquote>
-<ul>
-<li><p>fill</p>
-<p>在fill中只考虑了recycleViewHolderInternal这种情况，滑动过程中会触发</p>
-</li>
-</ul>
-<p><strong>回收重要源码截图</strong></p>
-<blockquote>
-<p>如果觉得上述回收流程图理解起来抽象的，可见结合部分源码截图理解。</p>
-</blockquote>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717115957690.png" alt="image-20220717115957690"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717121349370.png" alt="image-20220717121349370"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717141954608.png" alt="image-20220717141954608"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717142707778.png"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717142831116.png" alt="image-20220717142831116"></p>
-<blockquote>
-<p>如果超过mCacheView最大值（2），就加入到缓存池</p>
-<p>缓存到缓存池之后，就从mCacheView中移除</p>
-<p>从“0”拿出，说明是先进先出的</p>
-</blockquote>
-<ul>
-<li>否则，直接进缓存池  和上面一样都是调用<code>addViewHolderToRecycledViewPool</code></li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717143953794.png" alt="image-20220717143953794"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144255403.png" alt="image-20220717144255403"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144354585.png" alt="image-20220717144354585"></p>
-<blockquote>
-<p>ScrapData -&gt; ArrayList<ViewHolder></p>
-<p>mScrap-&gt;SpareArray<ScrapData></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144443187.png" alt="image-20220717144443187"></p>
-</blockquote>
-<p><strong>recycler.scrapView()</strong></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717153414420.png" alt="image-20220717153414420"></p>
-<p><strong>ViewHolder的包装源码</strong></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120045307.png" alt="image-20220717120045307"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120201306.png" alt="image-20220717120201306"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120910841.png" alt="image-20220717120910841"></p>
-<h3 id="复用入口"><a href="#复用入口" class="headerlink" title="复用入口"></a>复用入口</h3><blockquote>
-<p>复用的入口点同样也是两个，分别是布局时与滑动时。</p>
-</blockquote>
-<ul>
-<li><p>onLayout</p>
-<p>上一章中我们在自定义LayoutManager中就是重写的下面的<code>4.onLayoutChildren</code></p>
-</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717165422042.png" alt="image-20220717165422042"></p>
-<ul>
-<li>onTouch</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220724174858215.png" alt="image-20220724174858215"></p>
-<p>其实二者雷同，从fill入口开始，onLayout与onTouch几乎一样，只是第一张图用的时序图，绘制的比较详细。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>其实我们阅读源码了解原理机制，不用记住每个方法的入口、流程细节等，只需要记住大致过程，并理解重要部分。比如RecyclerView的四级缓存，以及回收复用的大致过程。</p>
-<p>这章的几个重点：</p>
-<p>1.从mAttachedScrap、mChangedScrap、mCachedViews中取出的holder不需要再绑定数据</p>
-<p>2.从RecyclerPool取出的holder需要重新绑定数据</p>
-<p>3.mAttachedScrap、mChangedScrap缓存的是屏幕看到的holder</p>
-<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a href="https://wiwiyiyi.com/RecyclerView%E5%9B%9E%E6%94%B6%E4%B8%8E%E5%A4%8D%E7%94%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html#%E5%9B%9B-%E6%80%BB%E7%BB%93">https://wiwiyiyi.com/RecyclerView%E5%9B%9E%E6%94%B6%E4%B8%8E%E5%A4%8D%E7%94%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html#%E5%9B%9B-%E6%80%BB%E7%BB%93</a></p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> adb </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>adb shell input text不能输入中文的解决方案</title>
+      <link href="/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/"/>
+      <url>/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</url>
+      
+        <content type="html"><![CDATA[<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><p>adb默认是不支持Unicode编码的，无法通过adb shell input text 命令输入中文到手机或者模拟器。</p><h3 id="解决步骤"><a href="#解决步骤" class="headerlink" title="解决步骤"></a>解决步骤</h3><ul><li>1、安装ADBKeyBoard.apk文件(直接搜索就能找到)<br>打开手机或模拟器，adb install ADBKeyBoard.apk安装该输入法<br>在手机上直接安装也可</li><li>2、设置默认输入法<br>打开手机设置 -&gt; 点击语法与输入法 -&gt; 点击输入法管理 -&gt; 启用ADBKeyboard<br>重启手机后即可使用该输入法</li><li>3、输入adb命令测试中文输入<br>adb shell am broadcast -a ADB_INPUT_TEXT –es msg ‘这是一段adb中文测试’</li></ul>]]></content>
+      
+      
       <categories>
-        <category>高级UI</category>
+          
+          <category> Android随笔 </category>
+          
       </categories>
-      <tags>
-        <tag>RecyclerView</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>adb shell input text不能输入中文的解决方案</title>
-    <url>/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</url>
-    <content><![CDATA[<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><p>adb默认是不支持Unicode编码的，无法通过adb shell input text 命令输入中文到手机或者模拟器。</p>
-<h3 id="解决步骤"><a href="#解决步骤" class="headerlink" title="解决步骤"></a>解决步骤</h3><ul>
-<li>1、安装ADBKeyBoard.apk文件(直接搜索就能找到)<br>打开手机或模拟器，adb install ADBKeyBoard.apk安装该输入法<br>在手机上直接安装也可</li>
-<li>2、设置默认输入法<br>打开手机设置 -&gt; 点击语法与输入法 -&gt; 点击输入法管理 -&gt; 启用ADBKeyboard<br>重启手机后即可使用该输入法</li>
-<li>3、输入adb命令测试中文输入<br>adb shell am broadcast -a ADB_INPUT_TEXT –es msg ‘这是一段adb中文测试’</li>
-</ul>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> adb </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>RecyclerView的回收复用机制</title>
+      <link href="/2022/07/24/RecyclerView%E7%9A%84%E5%9B%9E%E6%94%B6%E5%A4%8D%E7%94%A8%E6%9C%BA%E5%88%B6/"/>
+      <url>/2022/07/24/RecyclerView%E7%9A%84%E5%9B%9E%E6%94%B6%E5%A4%8D%E7%94%A8%E6%9C%BA%E5%88%B6/</url>
+      
+        <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一章，小编介绍了RecyclerView的高级用法——自定义LayoutManager。今天，我们来从源码的角度深度剖析RecyclerView，主要是对RecyclerView的回收复用机制熟悉掌握。</p><h2 id="RecyclerView介绍"><a href="#RecyclerView介绍" class="headerlink" title="RecyclerView介绍"></a>RecyclerView介绍</h2><blockquote><p>RecyclerView可以说是项目必备的系统高级控件，相比于传统的ListVIew，RecyclerView最大的优势就是四级缓存机制，ListView是两级缓存机制（屏幕内可见、屏幕外）。</p></blockquote><h3 id="四级缓存机制"><a href="#四级缓存机制" class="headerlink" title="四级缓存机制"></a>四级缓存机制</h3><ul><li><p>mChangeScrap（主要与动画相关）与mAttachedScrap（一般这两算一级）</p><p>用来缓存还在屏幕内的ViewHolder</p></li><li><p>mCachedViews</p><p>用来缓存移除屏幕之外的ViewHolder</p></li><li><p>mViewCacheExtension</p><p>用户的自定义扩展缓存，需要用户自己管理View的创建和缓存</p></li><li><p>RecyclerViewPool</p><p>ViewHolder缓存池</p></li></ul><h3 id="回收复用的入口"><a href="#回收复用的入口" class="headerlink" title="回收复用的入口"></a>回收复用的入口</h3><p>上一章中自定义LayoutManager中有<code> detachAndScrapAttachedViews(recycler!!)</code>这样一个方法，用于回收ViewHolder。下面就来介绍一下RecyclerView的回收。</p><p>回收有两个入口，一是布局onLayout时，二是在fill填充itemVIew时</p><ul><li>onLayout</li></ul><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220724172908391.png" alt="image-20220724172908391"></p><p>1.因为RecyclerView的具体onLayout是交给具体的LayoutManager来实现的，所以回收复用的具体操作是由LayoutManager来完成，在自定义LayoutManager时需考虑这一点，参考系统提供的LinearLayoutManager</p><p>2.上图的两个重心是LinearLayoutManager中回收入口的分叉和Recycler中的实际回收情况，而我们在自定义LayoutManager时，回收Holder只需要通过detachAndScrapAttachedViews这一个方法即可，具体是如何进行回收的我们不关心，但需要知道有哪几种，因为这对应了几种缓存，上面已经介绍了四级缓存。</p><p>3.缓存池与mCacheViews的关系：</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144808720.png" alt="image-20220717144808720"></p><blockquote><p> <strong>注意：</strong>缓存池中保存的只是ViewHolder，没有数据，所以缓存池中的ViewHolder复用还需要绑定</p></blockquote><ul><li><p>fill</p><p>在fill中只考虑了recycleViewHolderInternal这种情况，滑动过程中会触发</p></li></ul><p><strong>回收重要源码截图</strong></p><blockquote><p>如果觉得上述回收流程图理解起来抽象的，可见结合部分源码截图理解。</p></blockquote><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717115957690.png" alt="image-20220717115957690"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717121349370.png" alt="image-20220717121349370"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717141954608.png" alt="image-20220717141954608"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717142707778.png"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717142831116.png" alt="image-20220717142831116"></p><blockquote><p>如果超过mCacheView最大值（2），就加入到缓存池</p><p>缓存到缓存池之后，就从mCacheView中移除</p><p>从“0”拿出，说明是先进先出的</p></blockquote><ul><li>否则，直接进缓存池  和上面一样都是调用<code>addViewHolderToRecycledViewPool</code></li></ul><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717143953794.png" alt="image-20220717143953794"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144255403.png" alt="image-20220717144255403"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144354585.png" alt="image-20220717144354585"></p><blockquote><p>ScrapData -&gt; ArrayList<ViewHolder></p><p>mScrap-&gt;SpareArray<ScrapData></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144443187.png" alt="image-20220717144443187"></p></blockquote><p><strong>recycler.scrapView()</strong></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717153414420.png" alt="image-20220717153414420"></p><p><strong>ViewHolder的包装源码</strong></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120045307.png" alt="image-20220717120045307"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120201306.png" alt="image-20220717120201306"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120910841.png" alt="image-20220717120910841"></p><h3 id="复用入口"><a href="#复用入口" class="headerlink" title="复用入口"></a>复用入口</h3><blockquote><p>复用的入口点同样也是两个，分别是布局时与滑动时。</p></blockquote><ul><li><p>onLayout</p><p>上一章中我们在自定义LayoutManager中就是重写的下面的<code>4.onLayoutChildren</code></p></li></ul><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717165422042.png" alt="image-20220717165422042"></p><ul><li>onTouch</li></ul><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220724174858215.png" alt="image-20220724174858215"></p><p>其实二者雷同，从fill入口开始，onLayout与onTouch几乎一样，只是第一张图用的时序图，绘制的比较详细。</p><h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>其实我们阅读源码了解原理机制，不用记住每个方法的入口、流程细节等，只需要记住大致过程，并理解重要部分。比如RecyclerView的四级缓存，以及回收复用的大致过程。</p><p>这章的几个重点：</p><p>1.从mAttachedScrap、mChangedScrap、mCachedViews中取出的holder不需要再绑定数据</p><p>2.从RecyclerPool取出的holder需要重新绑定数据</p><p>3.mAttachedScrap、mChangedScrap缓存的是屏幕看到的holder</p><h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a href="https://wiwiyiyi.com/RecyclerView%E5%9B%9E%E6%94%B6%E4%B8%8E%E5%A4%8D%E7%94%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html#%E5%9B%9B-%E6%80%BB%E7%BB%93">https://wiwiyiyi.com/RecyclerView%E5%9B%9E%E6%94%B6%E4%B8%8E%E5%A4%8D%E7%94%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html#%E5%9B%9B-%E6%80%BB%E7%BB%93</a></p>]]></content>
+      
+      
       <categories>
-        <category>Android随笔</category>
+          
+          <category> 高级UI </category>
+          
       </categories>
-      <tags>
-        <tag>adb</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>adb命令</title>
-    <url>/2022/07/19/adb%E5%91%BD%E4%BB%A4/</url>
-    <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>本文为小编学习总结的一些adb的常用命令，可能一些命令有待验证，更多内容可以参考<a href="https://github.com/mzlogin/awesome-adb#%E6%8C%87%E5%AE%9A-adb-server-%E7%9A%84%E7%BD%91%E7%BB%9C%E7%AB%AF%E5%8F%A3">adb用法大全</a></p>
-<h3 id="基本用法"><a href="#基本用法" class="headerlink" title="基本用法"></a>基本用法</h3><h4 id="语法命令"><a href="#语法命令" class="headerlink" title="语法命令"></a>语法命令</h4><p>adb 命令的基本语法如下：<br>adb [ -d| -e| -s <sericalNumber>] <command><br>如果只有一个设备&#x2F;模拟器连接时，可以省略掉[ -d| -e| -s] <sericalNumber>] 这一部分，直接使用adb <command>。</p>
-<h4 id="为命令指定目标设备"><a href="#为命令指定目标设备" class="headerlink" title="为命令指定目标设备"></a>为命令指定目标设备</h4><p>如果有多个设备&#x2F;模拟器,则需要为命令指定目标设备</p>
-<table>
-<thead>
-<tr>
-<th>参数</th>
-<th align="left">含义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>-d</td>
-<td align="left">指定当前唯一通过 USB 连接的 Android 设备为命令目标</td>
-</tr>
-<tr>
-<td>-e</td>
-<td align="left">指定当前唯一运行的模拟器为目标命令</td>
-</tr>
-<tr>
-<td>-s<serialNumber></td>
-<td align="left">指定相应 serialNumber 号的设备&#x2F;模拟器为命令目标</td>
-</tr>
-<tr>
-<td>###查看adb版本号</td>
-<td align="left"></td>
-</tr>
-</tbody></table>
-<h2 id="常用adb命令"><a href="#常用adb命令" class="headerlink" title="常用adb命令"></a>常用adb命令</h2><h3 id="查看adb版本号"><a href="#查看adb版本号" class="headerlink" title="查看adb版本号"></a>查看adb版本号</h3><p>adb version</p>
-<h3 id="查看已连接设备"><a href="#查看已连接设备" class="headerlink" title="查看已连接设备"></a>查看已连接设备</h3><p>adb devices</p>
-<h3 id="查看手机序列号"><a href="#查看手机序列号" class="headerlink" title="查看手机序列号"></a>查看手机序列号</h3><p>adb get-serialno<br>如返回127.0.0.1:7555</p>
-<h3 id="查看日志"><a href="#查看日志" class="headerlink" title="查看日志"></a>查看日志</h3><p>adb logcat</p>
-<blockquote>
-<p>adb logcat -c 清除日志<br>adb logcat | grep “tag” 过滤日志 这里的tag就是你打印日志的时候需要设置的第一个参数TAG，通过TAG我们可以很轻松的过滤出我们想要的日志，轻松高效。</p>
-</blockquote>
-<h3 id="安装apk"><a href="#安装apk" class="headerlink" title="安装apk"></a>安装apk</h3><p>adb install [apk文件的路径]</p>
-<blockquote>
-<p>adb install douyin.apk</p>
-</blockquote>
-<ul>
-<li>多个设备安装apk<br>adb -s [设备号] install [apk文件的路径]<blockquote>
-<p>adb -s 127.0.0.1:7555 install douyin.apk</p>
-</blockquote>
-</li>
-<li>如果apk已经存在，需要覆盖安装</li>
-<li>adb install -r [apk文件的路径]<blockquote>
-<p>adb install -r douyin.apk</p>
-</blockquote>
-</li>
-</ul>
-<p>adb install后面可以跟一些可选参数来控制安装APK的行为，可选参数及含义如下</p>
-<table>
-<thead>
-<tr>
-<th>参数</th>
-<th align="left">含义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>-l</td>
-<td align="left">将应用安装到保护目录 &#x2F;mnt&#x2F;asec</td>
-</tr>
-<tr>
-<td>-r</td>
-<td align="left">允许覆盖安装</td>
-</tr>
-<tr>
-<td>-t</td>
-<td align="left">允许安装AndroidMainfest.xml里application指定<code>android:testOnly=&quot;true&quot;</code>的应用</td>
-</tr>
-<tr>
-<td>-s</td>
-<td align="left">应用安装到sdcard</td>
-</tr>
-<tr>
-<td>-d</td>
-<td align="left">允许降级覆盖安装</td>
-</tr>
-<tr>
-<td>-g</td>
-<td align="left">授予所有运行时权限</td>
-</tr>
-<tr>
-<td>–abi abi-identifier</td>
-<td align="left">为特定ABI强制安装apk，abi-identifier可以是armeabi-v7a、arm64-v8a、v86、x86_64 等</td>
-</tr>
-</tbody></table>
-<h3 id="卸载apk"><a href="#卸载apk" class="headerlink" title="卸载apk"></a>卸载apk</h3><ul>
-<li>普通卸载</li>
-<li>adb uninstall [apk文件的路径]<blockquote>
-<p>adb uninstall douyin.apk</p>
-</blockquote>
-</li>
-<li>卸载但是保留数据</li>
-<li>adb uninstall -k [apk文件的路径]<blockquote>
-<p>adb uninstall -k douyin.apk</p>
-</blockquote>
-</li>
-</ul>
-<h3 id="获取手机root权限"><a href="#获取手机root权限" class="headerlink" title="获取手机root权限"></a>获取手机root权限</h3><p>adb root</p>
-<h3 id="连接不稳定时需要挂载"><a href="#连接不稳定时需要挂载" class="headerlink" title="连接不稳定时需要挂载"></a>连接不稳定时需要挂载</h3><p>adb remount</p>
-<h3 id="重启手机"><a href="#重启手机" class="headerlink" title="重启手机"></a>重启手机</h3><ul>
-<li>正常重启<br>adb reboot</li>
-<li>重启手机到recovery<br>adb reboot recovery</li>
-<li>重启到bootloader界面<br>adb reboot bootloader</li>
-</ul>
-<h3 id="关闭adb服务"><a href="#关闭adb服务" class="headerlink" title="关闭adb服务"></a>关闭adb服务</h3><p>adb kill -server</p>
-<h3 id="启动adb服务"><a href="#启动adb服务" class="headerlink" title="启动adb服务"></a>启动adb服务</h3><p>adb start -server</p>
-<h3 id="查看手机设备型号"><a href="#查看手机设备型号" class="headerlink" title="查看手机设备型号"></a>查看手机设备型号</h3><p>adb shell getprop ro.product.model<br>如返回MI 8</p>
-<h3 id="查看设备的Android版本"><a href="#查看设备的Android版本" class="headerlink" title="查看设备的Android版本"></a>查看设备的Android版本</h3><p>adb shell getprop ro.build.version.release</p>
-<h3 id="获取手机厂商名称"><a href="#获取手机厂商名称" class="headerlink" title="获取手机厂商名称"></a>获取手机厂商名称</h3><p>adb shell getprop ro.product.brand<br>如返回Xiaomi</p>
-<h3 id="获取手机SDK版本"><a href="#获取手机SDK版本" class="headerlink" title="获取手机SDK版本"></a>获取手机SDK版本</h3><p>adb shell getprop ro.build.version.sdk</p>
-<h3 id="查看手机分辨率"><a href="#查看手机分辨率" class="headerlink" title="查看手机分辨率"></a>查看手机分辨率</h3><p>adb shell wm size</p>
-<h3 id="查看屏幕密度"><a href="#查看屏幕密度" class="headerlink" title="查看屏幕密度"></a>查看屏幕密度</h3><p>adb shell wm density<br><strong>修改屏幕密度</strong><br>adb shell wm density 160<br><strong>恢复原屏幕密度</strong><br>adb shell wm density reset</p>
-<h3 id="查看手机的mac地址"><a href="#查看手机的mac地址" class="headerlink" title="查看手机的mac地址"></a>查看手机的mac地址</h3><p>adb shell cat &#x2F;sys&#x2F;class&#x2F;net&#x2F;wlan0&#x2F;address</p>
-<h3 id="查看电池信息"><a href="#查看电池信息" class="headerlink" title="查看电池信息"></a>查看电池信息</h3><p>adb shell dumpsys battery</p>
-<h3 id="查看进程"><a href="#查看进程" class="headerlink" title="查看进程"></a>查看进程</h3><p>adb shell ps</p>
-<h3 id="查看CPU使用情况"><a href="#查看CPU使用情况" class="headerlink" title="查看CPU使用情况"></a>查看CPU使用情况</h3><p>adb shell top</p>
-<h3 id="CPU信息"><a href="#CPU信息" class="headerlink" title="CPU信息"></a>CPU信息</h3><p>adb shell cat &#x2F;proc&#x2F;cpuinfo</p>
-<h3 id="内存信息"><a href="#内存信息" class="headerlink" title="内存信息"></a>内存信息</h3><p>adb shell cat &#x2F;proc&#x2F;meminfo</p>
-<h3 id="查看手机上所有安装的app包名"><a href="#查看手机上所有安装的app包名" class="headerlink" title="查看手机上所有安装的app包名"></a>查看手机上所有安装的app包名</h3><p>adb shell pm list packages</p>
-<blockquote>
-<p>adb shell pm list packages -s 查看所有系统app的包名<br>adb shell pm list packages -3 查看所有第三方app的包名<br>adb shell pm list packages | grep [包名] 使用grep筛选所有满足要求的app包名</p>
-</blockquote>
-<h3 id="清除应用数据"><a href="#清除应用数据" class="headerlink" title="清除应用数据"></a>清除应用数据</h3><p>adb shell pm clear [<packagename>]</p>
-<blockquote>
-<p>当你只是想要清除一个apk的某些数据来复现某些操作的时候，这个命令就显得额外重要。它可以避免我们重装apk来完成这个操作。</p>
-</blockquote>
-<h3 id="获取某个应用包名的启动入口"><a href="#获取某个应用包名的启动入口" class="headerlink" title="获取某个应用包名的启动入口"></a>获取某个应用包名的启动入口</h3><ul>
-<li>adb shell dumpsys package com.ss.android.ugc.aweme|findstr activity</li>
-<li>com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity 这个就是抖音的入口<blockquote>
-<p>adb shell dumpsys package com.ss.android29111 com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity</p>
-</blockquote>
-</li>
-</ul>
-<h3 id="屏幕截屏"><a href="#屏幕截屏" class="headerlink" title="屏幕截屏"></a>屏幕截屏</h3><p>adb shell screencap [保存路径]</p>
-<blockquote>
-<p>adb shell screencap &#x2F;sdcard&#x2F;screen.png</p>
-</blockquote>
-<h3 id="录制视频"><a href="#录制视频" class="headerlink" title="录制视频"></a>录制视频</h3><p>adb shell screenrecord [保存路径]</p>
-<p>也可以使用（adb版本太老的话，需要更新adb）</p>
-<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">exec</span><span class="operator">-</span><span class="keyword">out</span> screencap  <span class="operator">&gt;</span> sc.png</span><br></pre></td></tr></table></figure>
-
-<h3 id="上传文件到手机"><a href="#上传文件到手机" class="headerlink" title="上传文件到手机"></a>上传文件到手机</h3><p>adb push [电脑文件路径] [手机文件保存路径]</p>
-<blockquote>
-<p>adb push douyin.apk sdcard&#x2F;douyin.apk</p>
-</blockquote>
-<h3 id="从手机端下载文件"><a href="#从手机端下载文件" class="headerlink" title="从手机端下载文件"></a>从手机端下载文件</h3><p>adb pull [手机上文件路径]<br><strong>注意：</strong>此时没有指定上传到电脑的路径，会默认上传到adb程序所在的路径</p>
-<blockquote>
-<p>adb pull sdcard&#x2F;douyin.apk</p>
-</blockquote>
-<p>指定上传路径：adb pull [手机上文件的路径] [电脑文件的路径]</p>
-<blockquote>
-<p>adb pull &#x2F;storage&#x2F;emulated&#x2F;0&#x2F;app&#x2F;txt.mp4 D:&#x2F;ADB&#x2F;tet.mp4</p>
-</blockquote>
-<h3 id="模拟屏幕点击事件"><a href="#模拟屏幕点击事件" class="headerlink" title="模拟屏幕点击事件"></a>模拟屏幕点击事件</h3><p>adb shell input tap x坐标轴 y坐标轴</p>
-<blockquote>
-<p>adb shell input tap 500 1450</p>
-</blockquote>
-<h3 id="模拟手势滑动事件"><a href="#模拟手势滑动事件" class="headerlink" title="模拟手势滑动事件"></a>模拟手势滑动事件</h3><p>adb shell input swipe 开始x轴 开始y轴 结束x轴 结束y轴 过程持续时间</p>
-<blockquote>
-<p>adb shell input swipe 100 500 100 1450 100</p>
-</blockquote>
-<h3 id="模拟点击键盘按钮"><a href="#模拟点击键盘按钮" class="headerlink" title="模拟点击键盘按钮"></a>模拟点击键盘按钮</h3><p>adb shell input keyevent [key值]</p>
-<blockquote>
-<p>adb shell input keyevent 25</p>
-</blockquote>
-<p>一些常用的keyevent键值信息</p>
-<table>
-<thead>
-<tr>
-<th>keyevent</th>
-<th align="left">效果</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>3</td>
-<td align="left">Home键</td>
-</tr>
-<tr>
-<td>5</td>
-<td align="left">拨号键</td>
-</tr>
-<tr>
-<td>6</td>
-<td align="left">挂机键</td>
-</tr>
-<tr>
-<td>19</td>
-<td align="left">向上</td>
-</tr>
-<tr>
-<td>20</td>
-<td align="left">向下</td>
-</tr>
-<tr>
-<td>21</td>
-<td align="left">向左</td>
-</tr>
-<tr>
-<td>22</td>
-<td align="left">向右</td>
-</tr>
-<tr>
-<td>24</td>
-<td align="left">音量加</td>
-</tr>
-<tr>
-<td>25</td>
-<td align="left">音量减</td>
-</tr>
-<tr>
-<td>26</td>
-<td align="left">电源</td>
-</tr>
-<tr>
-<td>27</td>
-<td align="left">拍照键</td>
-</tr>
-<tr>
-<td>66</td>
-<td align="left">回车键</td>
-</tr>
-<tr>
-<td>67</td>
-<td align="left">退格键</td>
-</tr>
-<tr>
-<td>82</td>
-<td align="left">菜单键</td>
-</tr>
-<tr>
-<td>83</td>
-<td align="left">通知键</td>
-</tr>
-<tr>
-<td>84</td>
-<td align="left">搜索键</td>
-</tr>
-<tr>
-<td>92</td>
-<td align="left">向上翻页</td>
-</tr>
-<tr>
-<td>93</td>
-<td align="left">向下翻页</td>
-</tr>
-<tr>
-<td>111</td>
-<td align="left">esc键</td>
-</tr>
-<tr>
-<td>112</td>
-<td align="left">删除键</td>
-</tr>
-<tr>
-<td>115</td>
-<td align="left">大写锁定键</td>
-</tr>
-<tr>
-<td>122</td>
-<td align="left">光标移动到开始键</td>
-</tr>
-<tr>
-<td>123</td>
-<td align="left">光标移动到末尾键</td>
-</tr>
-<tr>
-<td>143</td>
-<td align="left">小键盘锁</td>
-</tr>
-<tr>
-<td>168</td>
-<td align="left">放大键</td>
-</tr>
-<tr>
-<td>169</td>
-<td align="left">缩小键</td>
-</tr>
-</tbody></table>
-<h3 id="向屏幕输入一些信息"><a href="#向屏幕输入一些信息" class="headerlink" title="向屏幕输入一些信息"></a>向屏幕输入一些信息</h3><ul>
-<li>db shell input text [字符串信息]</li>
-<li>%s是空格<blockquote>
-<p>db shell input text “insert%stext%shere”</p>
-</blockquote>
-</li>
-</ul>
-<h3 id="查看前台Activity"><a href="#查看前台Activity" class="headerlink" title="查看前台Activity"></a>查看前台Activity</h3><p>同时小编也是通过这种方式获取到应用包的入口<br>adb shell dumpsys activity activities | findstr mResumedActivity<br>获取到了QQ的启动入口<br><img src="https://upload-images.jianshu.io/upload_images/20123021-1584e1eac4dde441.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
-<h3 id="启动某个app"><a href="#启动某个app" class="headerlink" title="启动某个app"></a>启动某个app</h3><p>adb shell am start -n [包名]&#x2F;[启动入口]</p>
-<blockquote>
-<p>adb shel am start -n com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity<br>Strating:Intent{cmp&#x3D;com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity}</p>
-</blockquote>
-<p>启动qq</p>
-<blockquote>
-<p>adb shell am start -n com.tencent.mobileqq&#x2F;.activity.SplashActivity</p>
-</blockquote>
-<p>启动有道词典<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-307c3a0c81650606.png" alt="image.png"></p>
-<h3 id="发送广播"><a href="#发送广播" class="headerlink" title="发送广播"></a>发送广播</h3><p>adb shell am broadcast -a “broadcastactionfilter”</p>
-<blockquote>
-<p>adb shell am broadcast -a “broadcastactionfilter”</p>
-</blockquote>
-<h3 id="使用自带浏览器打开网页"><a href="#使用自带浏览器打开网页" class="headerlink" title="使用自带浏览器打开网页"></a>使用自带浏览器打开网页</h3><p>adb shell am start -a [浏览器包名] -d [网址]</p>
-<blockquote>
-<p>adb shell am start -a “android.intent.action.VIEW” -d <a href="https://www.google.com/">https://www.google.com</a></p>
-</blockquote>
-<h3 id="获取手机内部存储信息"><a href="#获取手机内部存储信息" class="headerlink" title="获取手机内部存储信息"></a>获取手机内部存储信息</h3><p>adb shell df &#x2F;data</p>
-<h2 id="关于ADB-IDEA"><a href="#关于ADB-IDEA" class="headerlink" title="关于ADB IDEA"></a>关于ADB IDEA</h2><p>AS插件ADB IDEA，装了这款插件可以直接在AS中快速操作一些ADB命令</p>
-<h3 id="使用方式"><a href="#使用方式" class="headerlink" title="使用方式"></a>使用方式</h3><p>1、双击shift -&gt; 点击action -&gt;搜索adb<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-5f962d67d5267c67.png" alt="image.png"></p>
-<p>2、Ctrl + Shift + A，快捷键直接调用<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-0cb20333cd5ab9ca.png" alt="image.png"></p>
-<h2 id="一些琐碎小问题"><a href="#一些琐碎小问题" class="headerlink" title="一些琐碎小问题"></a>一些琐碎小问题</h2><h4 id="不知应用包的入口Activity如何启动应用包"><a href="#不知应用包的入口Activity如何启动应用包" class="headerlink" title="不知应用包的入口Activity如何启动应用包"></a>不知应用包的入口Activity如何启动应用包</h4><p>1.通过category</p>
-<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell monkey -<span class="selector-tag">p</span> &lt;packagename&gt; -c android<span class="selector-class">.intent</span><span class="selector-class">.category</span><span class="selector-class">.LAUNCHER</span> <span class="number">1</span></span><br></pre></td></tr></table></figure>
-<ol start="2">
-<li><a href="https://www.jianshu.com/p/150139c8295a">adb获取应用包入口的方案</a></li>
-</ol>
-<h4 id="adb-shell-input-text无法响应中文输入的问题"><a href="#adb-shell-input-text无法响应中文输入的问题" class="headerlink" title="adb shell input text无法响应中文输入的问题"></a>adb shell input text无法响应中文输入的问题</h4><p><a href="http://banmaman.com/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">adb shell input text不能输入中文的解决方案</a></p>
-<h2 id="adb部分总结"><a href="#adb部分总结" class="headerlink" title="adb部分总结"></a>adb部分总结</h2><p><a href="https://www.jianshu.com/p/f6fa6759e747">adb小结</a></p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> RecyclerView </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>自定义LayoutManager实现卡片滑动</title>
+      <link href="/2022/07/23/%E8%87%AA%E5%AE%9A%E4%B9%89LayoutManager%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E6%BB%91%E5%8A%A8/"/>
+      <url>/2022/07/23/%E8%87%AA%E5%AE%9A%E4%B9%89LayoutManager%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E6%BB%91%E5%8A%A8/</url>
+      
+        <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote><p>前面介绍了利用自定义ItemDecoration实现RecyclerView吸顶效果，重点就在onDraw -&gt; ItemView -&gt; onDrawOver的绘制流程，同时注意预留空间的利用。</p><p>今天介绍一个新的知识点与demo，利用自定义LayoutManager的方式实现卡片滑动。有时候系统提供的LayoutManager已经不能够满足我们的需求，这个时候我们就需要自定义LayoutManager。</p></blockquote><h2 id="卡片滑动效果介绍"><a href="#卡片滑动效果介绍" class="headerlink" title="卡片滑动效果介绍"></a>卡片滑动效果介绍</h2><p>卡片滑动的效果如下图所示。</p><p>分析一下卡片效果，顶部的卡片是正常摆放，接着的后面两张会随着位置变化缩小、下移，产生视觉上的叠层效果，再然后的卡片就与第三张重叠摆放。可以滑动移除图片，下面的卡片会自动补全。</p><ul><li>实现这样的效果突破点在于两点：</li></ul><ol><li>要实现这样重叠式布局的效果，我们就需要自定义LayoutManager，就像系统自带的<code>LinearLayoutManager</code>、<code>GridLayoutManager</code>一样。</li><li>滑动移除效果的实现，没有重写<code>scrollVerticallyBy</code>以及<code>scrollHorizontallyBy</code>，这就需要一个重要的帮助类<code>ItemTouchHelper</code></li></ol><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/SlideCard.gif" alt="SlideCard"></p><h2 id="卡片滑动实现"><a href="#卡片滑动实现" class="headerlink" title="卡片滑动实现"></a>卡片滑动实现</h2><ul><li><p>实现思路</p><blockquote><ol><li>摆放策略交给LayoutManager-&gt;具体怎么摆，每一个卡片布局策略和数据绑定由Adapter负责</li><li>LayoutManager必须重写<code>onLayoutChildren</code>方法，当数据发生改变时，会重新布局，detachAndScrapAttachedViews处理回收，recycler.getViewForPosition(i)获取对应位置的View。</li><li>测量view，摆放时需要考虑通过ItemDecoration预留的间距<code>layoutDecoratedWithMargins</code></li><li>卡片采用的是倒序摆放，即从第8张到第一张的顺序摆放</li><li>利用<code>ItemTouchHelper</code>实现滑动移除，并且需要重写onChildDraw，实现滑动动画开始时，下方图片缩放效果。TouchHelper是ItemDecoration的子类，在onDraw时根据滑动距离来影响后面view的大小</li></ol></blockquote></li><li><p>关键代码块：</p></li></ul><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SlideCardLayoutManager</span>:RecyclerView.LayoutManager() &#123;</span><br><span class="line">    override fun <span class="title function_">generateDefaultLayoutParams</span><span class="params">()</span>: RecyclerView.LayoutParams &#123;</span><br><span class="line">        <span class="keyword">return</span> RecyclerView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,</span><br><span class="line">        ViewGroup.LayoutParams.WRAP_CONTENT)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun <span class="title function_">onLayoutChildren</span><span class="params">(recycler: RecyclerView.Recycler?, state: RecyclerView.State?)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onLayoutChildren(recycler, state)</span><br><span class="line">        detachAndScrapAttachedViews(recycler!!)</span><br><span class="line">        <span class="type">val</span> <span class="variable">itemCount</span> <span class="operator">=</span> itemCount</span><br><span class="line">        <span class="type">var</span> <span class="variable">bottomPosition</span> <span class="operator">=</span> <span class="number">0</span></span><br><span class="line">        <span class="keyword">if</span> (itemCount&lt;CardConfig.MAX_SHOW_COUNT)&#123;</span><br><span class="line">            bottomPosition = <span class="number">0</span></span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            bottomPosition = itemCount - CardConfig.MAX_SHOW_COUNT</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (i in bottomPosition until  itemCount)&#123;</span><br><span class="line">            <span class="type">val</span> <span class="variable">view</span> <span class="operator">=</span> recycler.getViewForPosition(i)</span><br><span class="line">            addView(view)</span><br><span class="line">            <span class="comment">//测量</span></span><br><span class="line">            measureChildWithMargins(view,<span class="number">0</span>,<span class="number">0</span>)</span><br><span class="line">            <span class="type">val</span> <span class="variable">widthSpace</span> <span class="operator">=</span> width - getDecoratedMeasuredHeight(view)</span><br><span class="line">            <span class="type">val</span> <span class="variable">heightSpace</span> <span class="operator">=</span> height - getDecoratedMeasuredHeight(view)</span><br><span class="line">            <span class="comment">//布局</span></span><br><span class="line">            layoutDecoratedWithMargins(view,</span><br><span class="line">            widthSpace/<span class="number">2</span>,</span><br><span class="line">            heightSpace/<span class="number">2</span>,</span><br><span class="line">            widthSpace/<span class="number">2</span>+getDecoratedMeasuredWidth(view),</span><br><span class="line">            heightSpace/<span class="number">2</span>+getDecoratedMeasuredHeight(view))</span><br><span class="line">            <span class="type">var</span> <span class="variable">level</span> <span class="operator">=</span> itemCount -i -<span class="number">1</span></span><br><span class="line">            <span class="keyword">if</span> (level&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                <span class="keyword">if</span> (level&lt;CardConfig.MAX_SHOW_COUNT-<span class="number">1</span>)&#123;<span class="comment">//提示，这里CardConfig.MAX_SHOW_COUNT=4，可见小编所有代码</span></span><br><span class="line">                    view.translationY = CardConfig.TRANS_Y_GAP * level</span><br><span class="line">                    view.scaleX = <span class="number">1</span>-CardConfig.SCALE_GAP*level</span><br><span class="line">                    view.scaleY = <span class="number">1</span>-CardConfig.SCALE_GAP*level</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    view.translationY = CardConfig.TRANS_Y_GAP * (level-<span class="number">1</span>)</span><br><span class="line">                    view.scaleX = <span class="number">1</span>-CardConfig.SCALE_GAP*(level-<span class="number">1</span>)</span><br><span class="line">                    view.scaleY = <span class="number">1</span>-CardConfig.SCALE_GAP*(level-<span class="number">1</span>)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><ul><li>注意：这里继承的是<code>ItemTouchHelper.SimpleCallback</code>，<code>ItemTouchHelper.Callback</code>需要重写的方法太多。</li><li>重写onChildDraw，因为notifyDataSetChanged()会走onDraw流程，而onDraw又会调用onChildDraw。</li></ul><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SlideCallBack</span>(</span><br><span class="line">    <span class="keyword">private</span> val adapter:SlideCardAdapter,</span><br><span class="line">    <span class="keyword">private</span> val mData:MutableList&lt;SlideCardBean&gt;</span><br><span class="line">):ItemTouchHelper.SimpleCallback(<span class="number">0</span>,<span class="number">15</span>) &#123;</span><br><span class="line">    override fun <span class="title function_">onMove</span><span class="params">(</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        viewHolder: RecyclerView.ViewHolder,</span></span><br><span class="line"><span class="params">        target: RecyclerView.ViewHolder</span></span><br><span class="line"><span class="params">    )</span>: Boolean &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@SuppressLint(&quot;NotifyDataSetChanged&quot;)</span></span><br><span class="line">    override fun <span class="title function_">onSwiped</span><span class="params">(viewHolder: RecyclerView.ViewHolder, direction: Int)</span> &#123;</span><br><span class="line">        <span class="type">val</span> <span class="variable">remove</span> <span class="operator">=</span> mData.removeAt(viewHolder.layoutPosition)</span><br><span class="line">        mData.add(<span class="number">0</span>,remove)</span><br><span class="line">        adapter.notifyDataSetChanged()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun <span class="title function_">onChildDraw</span><span class="params">(</span></span><br><span class="line"><span class="params">        c: Canvas,</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        viewHolder: RecyclerView.ViewHolder,</span></span><br><span class="line"><span class="params">        dX: Float,</span></span><br><span class="line"><span class="params">        dY: Float,</span></span><br><span class="line"><span class="params">        actionState: Int,</span></span><br><span class="line"><span class="params">        isCurrentlyActive: Boolean</span></span><br><span class="line"><span class="params">    )</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)</span><br><span class="line">        <span class="type">val</span> <span class="variable">maxDistance</span> <span class="operator">=</span> recyclerView.width * <span class="number">0.5f</span></span><br><span class="line">        <span class="type">val</span> <span class="variable">distance</span> <span class="operator">=</span> sqrt((dX*dX+dY*dY).toDouble())</span><br><span class="line">        <span class="type">var</span> <span class="variable">fraction</span> <span class="operator">=</span> distance/maxDistance</span><br><span class="line">        <span class="title function_">if</span> <span class="params">(fraction&gt;<span class="number">1</span>)</span>&#123;</span><br><span class="line">            fraction= <span class="number">1.0</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">val</span> <span class="variable">itemCount</span> <span class="operator">=</span> recyclerView.childCount</span><br><span class="line">        Log.v(<span class="string">&quot;ppp&quot;</span>,<span class="string">&quot;itemCount: $itemCount&quot;</span>)</span><br><span class="line">        <span class="keyword">for</span>(i in <span class="number">0</span> until itemCount)&#123;</span><br><span class="line">            <span class="type">val</span> <span class="variable">view</span> <span class="operator">=</span> recyclerView.getChildAt(i)</span><br><span class="line">            <span class="type">val</span> <span class="variable">level</span> <span class="operator">=</span> itemCount - i - <span class="number">1</span></span><br><span class="line">            Log.v(<span class="string">&quot;pc&quot;</span>,<span class="string">&quot;level: $level&quot;</span>)</span><br><span class="line">            <span class="keyword">if</span> (level&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                <span class="comment">//重绘level=1，2 -&gt;也就是i=5,6</span></span><br><span class="line">                <span class="keyword">if</span> (level&lt;CardConfig.MAX_SHOW_COUNT-<span class="number">1</span>)&#123;</span><br><span class="line">                    view.translationY = (CardConfig.TRANS_Y_GAP * (level-fraction)).toFloat()</span><br><span class="line">                    view.scaleX = (<span class="number">1</span>-CardConfig.SCALE_GAP*level+fraction*CardConfig.SCALE_GAP).toFloat()</span><br><span class="line">                    view.scaleY = (<span class="number">1</span>-CardConfig.SCALE_GAP*level+fraction*CardConfig.SCALE_GAP).toFloat()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//s时间</span></span><br><span class="line">    override fun <span class="title function_">getAnimationDuration</span><span class="params">(</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        animationType: Int,</span></span><br><span class="line"><span class="params">        animateDx: Float,</span></span><br><span class="line"><span class="params">        animateDy: Float</span></span><br><span class="line"><span class="params">    )</span>: Long &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">500</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>目前为止，小编已经介绍了RecyclerView自定义用法的两种，自定义ItemDecoration和自定义LayoutManager。这里有一个逻辑上的坑点：顶部的卡片是正常摆放，我们自定义LayoutManager中不用管它，所以在上方两个代码块中都有<code>level&gt;0</code>和<code>level&lt;CardConfig.MAX_SHOW_COUNT-1</code>，也就是重绘索引值<code>i=5,6</code>即第6和7个，在<code>SlideCardLayoutManager</code>中，第5张卡片即一下的重叠在第6张的下面。这个点烦恼了小编好久，刚开始一直不明白顶部的摆放去哪了，从这点可以看出了解原理看源码的重要性。下一章，我们将对RecyclerView源码机制进行解读，再结合这一章的内容，将会对RecyclerView的原理有个更深层次的理解。</p><p><a href="https://github.com/gun-ctrl/SlideCard">全部代码地址</a></p>]]></content>
+      
+      
       <categories>
-        <category>Android随笔</category>
+          
+          <category> 高级UI </category>
+          
       </categories>
-      <tags>
-        <tag>adb</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>京东淘宝首页二级联动</title>
-    <url>/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/</url>
-    <content><![CDATA[<p><strong>说明：</strong>这篇文章主要用于作者临时观看，因为涉及版权问题，所以短时间内会删除</p>
-<h2 id="京东淘宝首页二级联动"><a href="#京东淘宝首页二级联动" class="headerlink" title="京东淘宝首页二级联动"></a>京东淘宝首页二级联动</h2><h3 id="单点触摸与多点触摸"><a href="#单点触摸与多点触摸" class="headerlink" title="单点触摸与多点触摸"></a>单点触摸与多点触摸</h3><p>####单点触摸</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212127652.png" alt="image-20220718212127652"></p>
-<p>####多点触摸</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212142549.png" alt="image-20220718212142549"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212203113.png" alt="image-20220718212203113"></p>
-<blockquote>
-<p>面试题</p>
-<p>一个move事件 中间有多少个手指的信息-&gt;有多少个手指就有多少个手指信息-&gt;最多32个</p>
-</blockquote>
-<h3 id="Touch事件源码"><a href="#Touch事件源码" class="headerlink" title="Touch事件源码"></a>Touch事件源码</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212217242.png" alt="image-20220718212217242"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212232559.png" alt="image-20220718212232559"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212254074.png" alt="image-20220718212254074"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212316235.png" alt="image-20220718212316235"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212335895.png" alt="image-20220718212335895"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212349700.png" alt="image-20220718212349700"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212414454.png" alt="image-20220718212414454"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212432841.png" alt="image-20220718212432841"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212452115.png" alt="image-20220718212452115"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212515213.png" alt="image-20220718212515213"></p>
-<p>上述的disallowIntercept及相关内容就是所谓的“尚方宝剑”</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212536424.png" alt="image-20220718212536424"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212555410.png" alt="image-20220718212555410"></p>
-<p> <img src="C:\Users\15786\AppData\Roaming\Typora\typora-user-images\image-20220718212609465.png" alt="image-20220718212609465"></p>
-<h3 id="嵌套滑动"><a href="#嵌套滑动" class="headerlink" title="嵌套滑动"></a>嵌套滑动</h3><blockquote>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212649556.png" alt="image-20220718212649556"></p>
-</blockquote>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212704210.png" alt="image-20220718212704210"></p>
-<p>并且从上面可以看出NestedScrollView既可以做“父亲”，也可以做“孩子”</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212718655.png" alt="image-20220718212718655"></p>
-<p>“孩子”有三个版本</p>
-<p>三个版本之间是的关系  同样“父亲”也是一样</p>
-<blockquote>
-<p>版本2与版本1相比  增加了type 如惯性滑动效果</p>
-</blockquote>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212737829.png" alt="image-20220718212737829"></p>
-<h4 id="吸顶效果"><a href="#吸顶效果" class="headerlink" title="吸顶效果"></a>吸顶效果</h4><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212758009.png" alt="image-20220718212758009"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212818443.png" alt="image-20220718212818443"></p>
-<p>onFinishInflate()中获取第一个孩子的第二个孩子，从下图可以看出也就是是第二个LinearLayout</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212839006.png" alt="image-20220718212839006"></p>
-<h4 id="继续嵌套滑动"><a href="#继续嵌套滑动" class="headerlink" title="继续嵌套滑动"></a>继续嵌套滑动</h4><p>嵌套滑动-&gt;是由孩子主动的   触发的</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212906775.png" alt="image-20220718212906775"></p>
-<p>google为了方便我们处理嵌套滑动，所以提供了这个帮助类 -&gt; getScrollingChildHelper()</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212928635.png" alt="image-20220718212928635"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212942972.png" alt="image-20220718212942972"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213001121.png" alt="image-20220718213001121"></p>
-<p>while(p!&#x3D;null)一直找，直到找到支持嵌套滑动</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213017801.png" alt="image-20220718213017801"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213043191.png" alt="image-20220718213043191"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213058717.png" alt="image-20220718213058717"></p>
-<p>所以它没有滑，“父亲”划不动的时候，它(NestedScrollView)才动</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213122243.png" alt="image-20220718213122243"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213138627.png" alt="image-20220718213138627"></p>
-<p>问题描述：需求是整个页面滑动，当父View滑不动的时候，子View才动。问题出现的原因就是上面的文字描述，要想解决</p>
-<p>问题的解决：重写onNestedPreScroll()方法，做一些设置，如果自己还能滑，那么就自己滑，并且需要记录一下（consumed[1]，0记录的x，1记录的y）</p>
-<ul>
-<li><p>注意：NetestScrollLayout是自定义继承NetestScrollView的</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213208543.png" alt="image-20220718213208543"></p>
-</li>
-</ul>
-<h3 id="惯性滑动"><a href="#惯性滑动" class="headerlink" title="惯性滑动"></a>惯性滑动</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213227462.png" alt="image-20220718213227462"></p>
-<p>记录下速度 velocityY</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213246067.png" alt="image-20220718213246067"></p>
-<blockquote>
-<ul>
-<li>1、记下来速度 velocity</li>
-<li>2、转化成 距离</li>
-<li>3、自己滑了多少距离 根据速度转换后的距离 -&gt; 我自己的滑动距离 &#x3D; 孩子应该滑的距离</li>
-<li>4、孩子应该滑的距离又要转化成速度</li>
-</ul>
-</blockquote>
-<ul>
-<li>google提供的速度转距离的工具</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213300370.png" alt="image-20220718213300370"></p>
-<p>孩子 -&gt;如recyclerView又会将距离转换成速度(因为RecyclerView只支持fling，所以需要转化成速度再转成距离)</p>
-<p>下面两个方法分别对应上述步骤中的第3步和第4步</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213317734.png" alt="image-20220718213317734"></p>
-<p><strong>关于totalDy</strong></p>
-<p>下面注解一处错误：第一个，其实是Viewpager2，不是RecyclerView，通过前面有一张布局截图可以看出最后下面那个是ViewPager2</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213340340.png" alt="image-20220718213340340"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213358954.png" alt="image-20220718213358954"></p>
-<h3 id="关于内部拦截"><a href="#关于内部拦截" class="headerlink" title="关于内部拦截"></a>关于内部拦截</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213415057.png" alt="image-20220718213415057"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213428785.png" alt="image-20220718213428785"></p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> 高级UI </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>adb命令</title>
+      <link href="/2022/07/19/adb%E5%91%BD%E4%BB%A4/"/>
+      <url>/2022/07/19/adb%E5%91%BD%E4%BB%A4/</url>
+      
+        <content type="html"><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>本文为小编学习总结的一些adb的常用命令，可能一些命令有待验证，更多内容可以参考<a href="https://github.com/mzlogin/awesome-adb#%E6%8C%87%E5%AE%9A-adb-server-%E7%9A%84%E7%BD%91%E7%BB%9C%E7%AB%AF%E5%8F%A3">adb用法大全</a></p><h3 id="基本用法"><a href="#基本用法" class="headerlink" title="基本用法"></a>基本用法</h3><h4 id="语法命令"><a href="#语法命令" class="headerlink" title="语法命令"></a>语法命令</h4><p>adb 命令的基本语法如下：<br>adb [ -d| -e| -s <sericalNumber>] <command><br>如果只有一个设备&#x2F;模拟器连接时，可以省略掉[ -d| -e| -s] <sericalNumber>] 这一部分，直接使用adb <command>。</p><h4 id="为命令指定目标设备"><a href="#为命令指定目标设备" class="headerlink" title="为命令指定目标设备"></a>为命令指定目标设备</h4><p>如果有多个设备&#x2F;模拟器,则需要为命令指定目标设备</p><table><thead><tr><th>参数</th><th align="left">含义</th></tr></thead><tbody><tr><td>-d</td><td align="left">指定当前唯一通过 USB 连接的 Android 设备为命令目标</td></tr><tr><td>-e</td><td align="left">指定当前唯一运行的模拟器为目标命令</td></tr><tr><td>-s<serialNumber></td><td align="left">指定相应 serialNumber 号的设备&#x2F;模拟器为命令目标</td></tr><tr><td>###查看adb版本号</td><td align="left"></td></tr></tbody></table><h2 id="常用adb命令"><a href="#常用adb命令" class="headerlink" title="常用adb命令"></a>常用adb命令</h2><h3 id="查看adb版本号"><a href="#查看adb版本号" class="headerlink" title="查看adb版本号"></a>查看adb版本号</h3><p>adb version</p><h3 id="查看已连接设备"><a href="#查看已连接设备" class="headerlink" title="查看已连接设备"></a>查看已连接设备</h3><p>adb devices</p><h3 id="查看手机序列号"><a href="#查看手机序列号" class="headerlink" title="查看手机序列号"></a>查看手机序列号</h3><p>adb get-serialno<br>如返回127.0.0.1:7555</p><h3 id="查看日志"><a href="#查看日志" class="headerlink" title="查看日志"></a>查看日志</h3><p>adb logcat</p><blockquote><p>adb logcat -c 清除日志<br>adb logcat | grep “tag” 过滤日志 这里的tag就是你打印日志的时候需要设置的第一个参数TAG，通过TAG我们可以很轻松的过滤出我们想要的日志，轻松高效。</p></blockquote><h3 id="安装apk"><a href="#安装apk" class="headerlink" title="安装apk"></a>安装apk</h3><p>adb install [apk文件的路径]</p><blockquote><p>adb install douyin.apk</p></blockquote><ul><li>多个设备安装apk<br>adb -s [设备号] install [apk文件的路径]<blockquote><p>adb -s 127.0.0.1:7555 install douyin.apk</p></blockquote></li><li>如果apk已经存在，需要覆盖安装</li><li>adb install -r [apk文件的路径]<blockquote><p>adb install -r douyin.apk</p></blockquote></li></ul><p>adb install后面可以跟一些可选参数来控制安装APK的行为，可选参数及含义如下</p><table><thead><tr><th>参数</th><th align="left">含义</th></tr></thead><tbody><tr><td>-l</td><td align="left">将应用安装到保护目录 &#x2F;mnt&#x2F;asec</td></tr><tr><td>-r</td><td align="left">允许覆盖安装</td></tr><tr><td>-t</td><td align="left">允许安装AndroidMainfest.xml里application指定<code>android:testOnly=&quot;true&quot;</code>的应用</td></tr><tr><td>-s</td><td align="left">应用安装到sdcard</td></tr><tr><td>-d</td><td align="left">允许降级覆盖安装</td></tr><tr><td>-g</td><td align="left">授予所有运行时权限</td></tr><tr><td>–abi abi-identifier</td><td align="left">为特定ABI强制安装apk，abi-identifier可以是armeabi-v7a、arm64-v8a、v86、x86_64 等</td></tr></tbody></table><h3 id="卸载apk"><a href="#卸载apk" class="headerlink" title="卸载apk"></a>卸载apk</h3><ul><li>普通卸载</li><li>adb uninstall [apk文件的路径]<blockquote><p>adb uninstall douyin.apk</p></blockquote></li><li>卸载但是保留数据</li><li>adb uninstall -k [apk文件的路径]<blockquote><p>adb uninstall -k douyin.apk</p></blockquote></li></ul><h3 id="获取手机root权限"><a href="#获取手机root权限" class="headerlink" title="获取手机root权限"></a>获取手机root权限</h3><p>adb root</p><h3 id="连接不稳定时需要挂载"><a href="#连接不稳定时需要挂载" class="headerlink" title="连接不稳定时需要挂载"></a>连接不稳定时需要挂载</h3><p>adb remount</p><h3 id="重启手机"><a href="#重启手机" class="headerlink" title="重启手机"></a>重启手机</h3><ul><li>正常重启<br>adb reboot</li><li>重启手机到recovery<br>adb reboot recovery</li><li>重启到bootloader界面<br>adb reboot bootloader</li></ul><h3 id="关闭adb服务"><a href="#关闭adb服务" class="headerlink" title="关闭adb服务"></a>关闭adb服务</h3><p>adb kill -server</p><h3 id="启动adb服务"><a href="#启动adb服务" class="headerlink" title="启动adb服务"></a>启动adb服务</h3><p>adb start -server</p><h3 id="查看手机设备型号"><a href="#查看手机设备型号" class="headerlink" title="查看手机设备型号"></a>查看手机设备型号</h3><p>adb shell getprop ro.product.model<br>如返回MI 8</p><h3 id="查看设备的Android版本"><a href="#查看设备的Android版本" class="headerlink" title="查看设备的Android版本"></a>查看设备的Android版本</h3><p>adb shell getprop ro.build.version.release</p><h3 id="获取手机厂商名称"><a href="#获取手机厂商名称" class="headerlink" title="获取手机厂商名称"></a>获取手机厂商名称</h3><p>adb shell getprop ro.product.brand<br>如返回Xiaomi</p><h3 id="获取手机SDK版本"><a href="#获取手机SDK版本" class="headerlink" title="获取手机SDK版本"></a>获取手机SDK版本</h3><p>adb shell getprop ro.build.version.sdk</p><h3 id="查看手机分辨率"><a href="#查看手机分辨率" class="headerlink" title="查看手机分辨率"></a>查看手机分辨率</h3><p>adb shell wm size</p><h3 id="查看屏幕密度"><a href="#查看屏幕密度" class="headerlink" title="查看屏幕密度"></a>查看屏幕密度</h3><p>adb shell wm density<br><strong>修改屏幕密度</strong><br>adb shell wm density 160<br><strong>恢复原屏幕密度</strong><br>adb shell wm density reset</p><h3 id="查看手机的mac地址"><a href="#查看手机的mac地址" class="headerlink" title="查看手机的mac地址"></a>查看手机的mac地址</h3><p>adb shell cat &#x2F;sys&#x2F;class&#x2F;net&#x2F;wlan0&#x2F;address</p><h3 id="查看电池信息"><a href="#查看电池信息" class="headerlink" title="查看电池信息"></a>查看电池信息</h3><p>adb shell dumpsys battery</p><h3 id="查看进程"><a href="#查看进程" class="headerlink" title="查看进程"></a>查看进程</h3><p>adb shell ps</p><h3 id="查看CPU使用情况"><a href="#查看CPU使用情况" class="headerlink" title="查看CPU使用情况"></a>查看CPU使用情况</h3><p>adb shell top</p><h3 id="CPU信息"><a href="#CPU信息" class="headerlink" title="CPU信息"></a>CPU信息</h3><p>adb shell cat &#x2F;proc&#x2F;cpuinfo</p><h3 id="内存信息"><a href="#内存信息" class="headerlink" title="内存信息"></a>内存信息</h3><p>adb shell cat &#x2F;proc&#x2F;meminfo</p><h3 id="查看手机上所有安装的app包名"><a href="#查看手机上所有安装的app包名" class="headerlink" title="查看手机上所有安装的app包名"></a>查看手机上所有安装的app包名</h3><p>adb shell pm list packages</p><blockquote><p>adb shell pm list packages -s 查看所有系统app的包名<br>adb shell pm list packages -3 查看所有第三方app的包名<br>adb shell pm list packages | grep [包名] 使用grep筛选所有满足要求的app包名</p></blockquote><h3 id="清除应用数据"><a href="#清除应用数据" class="headerlink" title="清除应用数据"></a>清除应用数据</h3><p>adb shell pm clear [<packagename>]</p><blockquote><p>当你只是想要清除一个apk的某些数据来复现某些操作的时候，这个命令就显得额外重要。它可以避免我们重装apk来完成这个操作。</p></blockquote><h3 id="获取某个应用包名的启动入口"><a href="#获取某个应用包名的启动入口" class="headerlink" title="获取某个应用包名的启动入口"></a>获取某个应用包名的启动入口</h3><ul><li>adb shell dumpsys package com.ss.android.ugc.aweme|findstr activity</li><li>com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity 这个就是抖音的入口<blockquote><p>adb shell dumpsys package com.ss.android29111 com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity</p></blockquote></li></ul><h3 id="屏幕截屏"><a href="#屏幕截屏" class="headerlink" title="屏幕截屏"></a>屏幕截屏</h3><p>adb shell screencap [保存路径]</p><blockquote><p>adb shell screencap &#x2F;sdcard&#x2F;screen.png</p></blockquote><h3 id="录制视频"><a href="#录制视频" class="headerlink" title="录制视频"></a>录制视频</h3><p>adb shell screenrecord [保存路径]</p><p>也可以使用（adb版本太老的话，需要更新adb）</p><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">exec</span><span class="operator">-</span><span class="keyword">out</span> screencap  <span class="operator">&gt;</span> sc.png</span><br></pre></td></tr></table></figure><h3 id="上传文件到手机"><a href="#上传文件到手机" class="headerlink" title="上传文件到手机"></a>上传文件到手机</h3><p>adb push [电脑文件路径] [手机文件保存路径]</p><blockquote><p>adb push douyin.apk sdcard&#x2F;douyin.apk</p></blockquote><h3 id="从手机端下载文件"><a href="#从手机端下载文件" class="headerlink" title="从手机端下载文件"></a>从手机端下载文件</h3><p>adb pull [手机上文件路径]<br><strong>注意：</strong>此时没有指定上传到电脑的路径，会默认上传到adb程序所在的路径</p><blockquote><p>adb pull sdcard&#x2F;douyin.apk</p></blockquote><p>指定上传路径：adb pull [手机上文件的路径] [电脑文件的路径]</p><blockquote><p>adb pull &#x2F;storage&#x2F;emulated&#x2F;0&#x2F;app&#x2F;txt.mp4 D:&#x2F;ADB&#x2F;tet.mp4</p></blockquote><h3 id="模拟屏幕点击事件"><a href="#模拟屏幕点击事件" class="headerlink" title="模拟屏幕点击事件"></a>模拟屏幕点击事件</h3><p>adb shell input tap x坐标轴 y坐标轴</p><blockquote><p>adb shell input tap 500 1450</p></blockquote><h3 id="模拟手势滑动事件"><a href="#模拟手势滑动事件" class="headerlink" title="模拟手势滑动事件"></a>模拟手势滑动事件</h3><p>adb shell input swipe 开始x轴 开始y轴 结束x轴 结束y轴 过程持续时间</p><blockquote><p>adb shell input swipe 100 500 100 1450 100</p></blockquote><h3 id="模拟点击键盘按钮"><a href="#模拟点击键盘按钮" class="headerlink" title="模拟点击键盘按钮"></a>模拟点击键盘按钮</h3><p>adb shell input keyevent [key值]</p><blockquote><p>adb shell input keyevent 25</p></blockquote><p>一些常用的keyevent键值信息</p><table><thead><tr><th>keyevent</th><th align="left">效果</th></tr></thead><tbody><tr><td>3</td><td align="left">Home键</td></tr><tr><td>5</td><td align="left">拨号键</td></tr><tr><td>6</td><td align="left">挂机键</td></tr><tr><td>19</td><td align="left">向上</td></tr><tr><td>20</td><td align="left">向下</td></tr><tr><td>21</td><td align="left">向左</td></tr><tr><td>22</td><td align="left">向右</td></tr><tr><td>24</td><td align="left">音量加</td></tr><tr><td>25</td><td align="left">音量减</td></tr><tr><td>26</td><td align="left">电源</td></tr><tr><td>27</td><td align="left">拍照键</td></tr><tr><td>66</td><td align="left">回车键</td></tr><tr><td>67</td><td align="left">退格键</td></tr><tr><td>82</td><td align="left">菜单键</td></tr><tr><td>83</td><td align="left">通知键</td></tr><tr><td>84</td><td align="left">搜索键</td></tr><tr><td>92</td><td align="left">向上翻页</td></tr><tr><td>93</td><td align="left">向下翻页</td></tr><tr><td>111</td><td align="left">esc键</td></tr><tr><td>112</td><td align="left">删除键</td></tr><tr><td>115</td><td align="left">大写锁定键</td></tr><tr><td>122</td><td align="left">光标移动到开始键</td></tr><tr><td>123</td><td align="left">光标移动到末尾键</td></tr><tr><td>143</td><td align="left">小键盘锁</td></tr><tr><td>168</td><td align="left">放大键</td></tr><tr><td>169</td><td align="left">缩小键</td></tr></tbody></table><h3 id="向屏幕输入一些信息"><a href="#向屏幕输入一些信息" class="headerlink" title="向屏幕输入一些信息"></a>向屏幕输入一些信息</h3><ul><li>db shell input text [字符串信息]</li><li>%s是空格<blockquote><p>db shell input text “insert%stext%shere”</p></blockquote></li></ul><h3 id="查看前台Activity"><a href="#查看前台Activity" class="headerlink" title="查看前台Activity"></a>查看前台Activity</h3><p>同时小编也是通过这种方式获取到应用包的入口<br>adb shell dumpsys activity activities | findstr mResumedActivity<br>获取到了QQ的启动入口<br><img src="https://upload-images.jianshu.io/upload_images/20123021-1584e1eac4dde441.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p><h3 id="启动某个app"><a href="#启动某个app" class="headerlink" title="启动某个app"></a>启动某个app</h3><p>adb shell am start -n [包名]&#x2F;[启动入口]</p><blockquote><p>adb shel am start -n com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity<br>Strating:Intent{cmp&#x3D;com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity}</p></blockquote><p>启动qq</p><blockquote><p>adb shell am start -n com.tencent.mobileqq&#x2F;.activity.SplashActivity</p></blockquote><p>启动有道词典<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-307c3a0c81650606.png" alt="image.png"></p><h3 id="发送广播"><a href="#发送广播" class="headerlink" title="发送广播"></a>发送广播</h3><p>adb shell am broadcast -a “broadcastactionfilter”</p><blockquote><p>adb shell am broadcast -a “broadcastactionfilter”</p></blockquote><h3 id="使用自带浏览器打开网页"><a href="#使用自带浏览器打开网页" class="headerlink" title="使用自带浏览器打开网页"></a>使用自带浏览器打开网页</h3><p>adb shell am start -a [浏览器包名] -d [网址]</p><blockquote><p>adb shell am start -a “android.intent.action.VIEW” -d <a href="https://www.google.com/">https://www.google.com</a></p></blockquote><h3 id="获取手机内部存储信息"><a href="#获取手机内部存储信息" class="headerlink" title="获取手机内部存储信息"></a>获取手机内部存储信息</h3><p>adb shell df &#x2F;data</p><h2 id="关于ADB-IDEA"><a href="#关于ADB-IDEA" class="headerlink" title="关于ADB IDEA"></a>关于ADB IDEA</h2><p>AS插件ADB IDEA，装了这款插件可以直接在AS中快速操作一些ADB命令</p><h3 id="使用方式"><a href="#使用方式" class="headerlink" title="使用方式"></a>使用方式</h3><p>1、双击shift -&gt; 点击action -&gt;搜索adb<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-5f962d67d5267c67.png" alt="image.png"></p><p>2、Ctrl + Shift + A，快捷键直接调用<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-0cb20333cd5ab9ca.png" alt="image.png"></p><h2 id="一些琐碎小问题"><a href="#一些琐碎小问题" class="headerlink" title="一些琐碎小问题"></a>一些琐碎小问题</h2><h4 id="不知应用包的入口Activity如何启动应用包"><a href="#不知应用包的入口Activity如何启动应用包" class="headerlink" title="不知应用包的入口Activity如何启动应用包"></a>不知应用包的入口Activity如何启动应用包</h4><p>1.通过category</p><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell monkey -<span class="selector-tag">p</span> &lt;packagename&gt; -c android<span class="selector-class">.intent</span><span class="selector-class">.category</span><span class="selector-class">.LAUNCHER</span> <span class="number">1</span></span><br></pre></td></tr></table></figure><ol start="2"><li><a href="https://www.jianshu.com/p/150139c8295a">adb获取应用包入口的方案</a></li></ol><h4 id="adb-shell-input-text无法响应中文输入的问题"><a href="#adb-shell-input-text无法响应中文输入的问题" class="headerlink" title="adb shell input text无法响应中文输入的问题"></a>adb shell input text无法响应中文输入的问题</h4><p><a href="http://banmaman.com/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">adb shell input text不能输入中文的解决方案</a></p><h2 id="adb部分总结"><a href="#adb部分总结" class="headerlink" title="adb部分总结"></a>adb部分总结</h2><p><a href="https://www.jianshu.com/p/f6fa6759e747">adb小结</a></p>]]></content>
+      
+      
       <categories>
-        <category>高级UI</category>
+          
+          <category> Android随笔 </category>
+          
       </categories>
-      <tags>
-        <tag>高级UI</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>adb小结</title>
-    <url>/2022/07/26/adb%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93/</url>
-    <content><![CDATA[<p><a href="http://banmaman.com/2022/07/19/adb%E5%91%BD%E4%BB%A4/">adb常用命令</a></p>
-<h2 id="与应用交互"><a href="#与应用交互" class="headerlink" title="与应用交互"></a>与应用交互</h2><p>主要是使用am<command>命令，常用的<command>如下</p>
-<table>
-<thead>
-<tr>
-<th>command</th>
-<th align="left">用途</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>start [options] <INTENT></td>
-<td align="left">启动 <INTENT> 指定的 Activity</td>
-</tr>
-<tr>
-<td>startservice [options] <INTENT></td>
-<td align="left">启动 <INTENT> 指定的 Service</td>
-</tr>
-<tr>
-<td>broadcast [options] <INTENT></td>
-<td align="left">发送 <INTENT> 指定的广播</td>
-</tr>
-<tr>
-<td>force-stop <packagename></td>
-<td align="left">停止 <packagename> 相关的进程</td>
-</tr>
-<tr>
-<td><INTENT> 参数很灵活，和写 Android 程序时代码里的 Intent 相对应。</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td>用于决定intent对象的选项如下：</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td>参数</td>
-<td align="left">含义</td>
-</tr>
-<tr>
-<td>—-</td>
-<td align="left">:—-</td>
-</tr>
-<tr>
-<td>-a <ACTION></td>
-<td align="left">指定 action，比如 android.intent.action.VIEW</td>
-</tr>
-<tr>
-<td>-c <CATEGORY></td>
-<td align="left">指定 category，比如 android.intent.category.APP_CONTACTS</td>
-</tr>
-<tr>
-<td>-n <COMPONENT></td>
-<td align="left">指定完整 component 名，用于明确指定启动哪个 Activity，如 com.example.app&#x2F;.ExampleActivity</td>
-</tr>
-</tbody></table>
-<p><INTENT> 里还能带数据，就像写代码时的 Bundle 一样：</p>
-<table>
-<thead>
-<tr>
-<th>参数</th>
-<th align="left">含义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>–esn <EXTRA_KEY></td>
-<td align="left">null 值（只有 key 名）</td>
-</tr>
-<tr>
-<td>–es <EXTRA_KEY> <EXTRA_BOOLEAN_VALUE></td>
-<td align="left">string 值</td>
-</tr>
-<tr>
-<td>–ez <EXTRA_KEY> <EXTRA_BOOLEAN_VALUE></td>
-<td align="left">boolean 值</td>
-</tr>
-<tr>
-<td>–ei <EXTRA_KEY> <EXTRA_INT_VALUE></td>
-<td align="left">integer 值</td>
-</tr>
-<tr>
-<td>–el <EXTRA_KEY> <EXTRA_LONG_VALUE></td>
-<td align="left">long 值</td>
-</tr>
-<tr>
-<td>–ef <EXTRA_KEY> <EXTRA_FLOAT_VALUE></td>
-<td align="left">float 值</td>
-</tr>
-<tr>
-<td>–eu <EXTRA_KEY> <EXTRA_URI_VALUE></td>
-<td align="left">URI</td>
-</tr>
-<tr>
-<td>–ecn <EXTRA_KEY> <EXTRA_COMPONENT_NAME_VALUE></td>
-<td align="left">component name</td>
-</tr>
-<tr>
-<td>–eia <EXTRA_KEY> <EXTRA_INT_VALUE>[,&lt;EXTRA_INT_VALUE…]</td>
-<td align="left">integer 数组</td>
-</tr>
-<tr>
-<td>–ela <EXTRA_KEY> <EXTRA_LONG_VALUE>[,&lt;EXTRA_LONG_VALUE…]</td>
-<td align="left">long 数组</td>
-</tr>
-</tbody></table>
-<h3 id="启动应用-x2F-调起Activity"><a href="#启动应用-x2F-调起Activity" class="headerlink" title="启动应用&#x2F;调起Activity"></a>启动应用&#x2F;调起Activity</h3><h4 id="指定Activity名称启动"><a href="#指定Activity名称启动" class="headerlink" title="指定Activity名称启动"></a>指定Activity名称启动</h4><p>命令格式：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> start [<span class="keyword">options</span>] <span class="symbol">&lt;INTENT&gt;</span></span><br></pre></td></tr></table></figure>
-<p>调起微信并传给它 string 数据键值对 <code>toast - hello, world</code>。<br><img src="https://upload-images.jianshu.io/upload_images/20123021-e42736fb5ede5c8a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
-<h4 id="不指定Activity名称启动-启动主Activity"><a href="#不指定Activity名称启动-启动主Activity" class="headerlink" title="不指定Activity名称启动(启动主Activity)"></a>不指定Activity名称启动(启动主Activity)</h4><p>命令格式：</p>
-<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell monkey -<span class="selector-tag">p</span> &lt;packagename&gt; -c android<span class="selector-class">.intent</span><span class="selector-class">.category</span><span class="selector-class">.LAUNCHER</span> <span class="number">1</span></span><br></pre></td></tr></table></figure>
-<p>启动QQ<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-a315569b2b8ab380.png" alt="image.png"></p>
-<h3 id="调起Service"><a href="#调起Service" class="headerlink" title="调起Service"></a>调起Service</h3><p>命令格式：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> startservice [<span class="keyword">options</span>] <span class="symbol">&lt;INTENT&gt;</span></span><br></pre></td></tr></table></figure>
-<p>例如：<br>调起微信的某Service</p>
-<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell am startservice -n com<span class="selector-class">.tencent</span>.mm/<span class="selector-class">.plugin</span><span class="selector-class">.accountsync</span><span class="selector-class">.model</span>.AccountAuthenticatorService</span><br></pre></td></tr></table></figure>
-<p>另外一个典型的用例是如果设备上原本应该显示虚拟按键但是没有显示，可以试试这个：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> startservice -n <span class="keyword">com</span>.android.systemui/.SystemUIService</span><br></pre></td></tr></table></figure>
-<h3 id="停止Service"><a href="#停止Service" class="headerlink" title="停止Service"></a>停止Service</h3><p>命令格式：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> stopservice [<span class="keyword">options</span>] <span class="symbol">&lt;INTENT&gt;</span></span><br></pre></td></tr></table></figure>
-<h3 id="发送广播"><a href="#发送广播" class="headerlink" title="发送广播"></a>发送广播</h3><p>命令格式：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> broadcast [<span class="keyword">options</span>] <span class="symbol">&lt;INTENT&gt;</span></span><br></pre></td></tr></table></figure>
-<p>可以向所有组件广播，也可以向指定组件广播<br>例如，向所有组件广播：</p>
-<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell am broadcast -<span class="selector-tag">a</span> android<span class="selector-class">.intent</span><span class="selector-class">.action</span>.BOOT_COMPLETED</span><br></pre></td></tr></table></figure>
-<p>又例如，只向<code>org.mazhuang.boottimemeasure/.BootCompletedReceiver</code>广播</p>
-<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell am broadcast -<span class="selector-tag">a</span> android<span class="selector-class">.intent</span><span class="selector-class">.action</span><span class="selector-class">.BOOT_COMPLETED</span> -n org<span class="selector-class">.mazhuang</span>.boottimemeasure/.BootCompletedReceiver</span><br></pre></td></tr></table></figure>
-<p>这类用法在测试的时候很实用，比如某个广播的场景很难制造，可以考虑通过这种方式来发送广播。<br>既能发送系统预定义的广播，也能发送自定义广播。如下是部分系统预定义广播及正常触发时机：<br>（均可使用adb触发）</p>
-<table>
-<thead>
-<tr>
-<th>action</th>
-<th align="left">触发时机</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>android.net.conn.CONNECTIVITY_CHANGE</td>
-<td align="left">网络连接发生变化</td>
-</tr>
-<tr>
-<td>android.intent.action.SCREEN_ON</td>
-<td align="left">屏幕点亮</td>
-</tr>
-<tr>
-<td>android.intent.action.SCREEN_OFF</td>
-<td align="left">屏幕熄灭</td>
-</tr>
-<tr>
-<td>android.intent.action.BATTERY_LOW</td>
-<td align="left">电量低，会弹出电量低提示框</td>
-</tr>
-<tr>
-<td>android.intent.action.BATTERY_OKAY</td>
-<td align="left">电量恢复了</td>
-</tr>
-<tr>
-<td>android.intent.action.BOOT_COMPLETED</td>
-<td align="left">设备启动完毕</td>
-</tr>
-<tr>
-<td>android.intent.action.DEVICE_STORAGE_LOW</td>
-<td align="left">存储空间过低</td>
-</tr>
-<tr>
-<td>android.intent.action.DEVICE_STORAGE_OK</td>
-<td align="left">存储空间恢复</td>
-</tr>
-<tr>
-<td>android.intent.action.PACKAGE_ADDED</td>
-<td align="left">安装了新的应用</td>
-</tr>
-<tr>
-<td>android.net.wifi.STATE_CHANGE</td>
-<td align="left">WiFi 连接状态发生变化</td>
-</tr>
-<tr>
-<td>android.net.wifi.WIFI_STATE_CHANGED</td>
-<td align="left">WiFi 状态变为启用&#x2F;关闭&#x2F;正在启动&#x2F;正在关闭&#x2F;未知</td>
-</tr>
-<tr>
-<td>android.intent.action.BATTERY_CHANGED</td>
-<td align="left">电池电量发生变化</td>
-</tr>
-<tr>
-<td>android.intent.action.INPUT_METHOD_CHANGED</td>
-<td align="left">系统输入法发生变化</td>
-</tr>
-<tr>
-<td>android.intent.action.ACTION_POWER_CONNECTED</td>
-<td align="left">外部电源连接</td>
-</tr>
-<tr>
-<td>android.intent.action.ACTION_POWER_DISCONNECTED</td>
-<td align="left">外部电源断开连接</td>
-</tr>
-<tr>
-<td>android.intent.action.DREAMING_STARTED</td>
-<td align="left">系统开始休眠</td>
-</tr>
-<tr>
-<td>android.intent.action.DREAMING_STOPPED</td>
-<td align="left">系统停止休眠</td>
-</tr>
-<tr>
-<td>android.intent.action.HEADSET_PLUG</td>
-<td align="left">插入耳机</td>
-</tr>
-<tr>
-<td>android.intent.action.MEDIA_UNMOUNTED</td>
-<td align="left">卸载外部介质</td>
-</tr>
-<tr>
-<td>android.intent.action.MEDIA_MOUNTED</td>
-<td align="left">挂载外部介质</td>
-</tr>
-<tr>
-<td>android.os.action.POWER_SAVE_MODE_CHANGED</td>
-<td align="left">省电模式开启</td>
-</tr>
-</tbody></table>
-<h3 id="强制停止应用"><a href="#强制停止应用" class="headerlink" title="强制停止应用"></a>强制停止应用</h3><p>命令：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> <span class="keyword">am</span> force-<span class="keyword">stop</span> <span class="symbol">&lt;packagename&gt;</span></span><br></pre></td></tr></table></figure>
-<p>命令示例：<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-f509618cec978dc1.png" alt="image.png"></p>
-<h3 id="收紧内存"><a href="#收紧内存" class="headerlink" title="收紧内存"></a>收紧内存</h3><figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span>  <span class="keyword">am</span> send-trim-memory <span class="symbol">&lt;pid&gt;</span> <span class="symbol">&lt;level&gt;</span></span><br></pre></td></tr></table></figure>
-<p>pid: 进程 ID level: HIDDEN、RUNNING_MODERATE、BACKGROUND、 RUNNING_LOW、MODERATE、RUNNING_CRITICAL、COMPLETE<br>命令示例：</p>
-<figure class="highlight stata"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> am send-<span class="keyword">trim</span>-<span class="keyword">memory</span> 12345 RUNNING_LOW</span><br></pre></td></tr></table></figure>
-<p>表示向 pid&#x3D;12345 的进程，发出 level&#x3D;RUNNING_LOW 的收紧内存命令。 </p>
-<h2 id="修改设置"><a href="#修改设置" class="headerlink" title="修改设置"></a>修改设置</h2><p><strong>注：</strong> 修改设置之后，运行恢复命令有可能显示仍然不太正常，可以运行 adb reboot 重启设备，或手动重启。<br>修改设置的原理主要是通过 settings 命令修改 &#x2F;data&#x2F;data&#x2F;com.android.providers.settings&#x2F;databases&#x2F;settings.db 里存放的设置值。</p>
-<h3 id="分辨率"><a href="#分辨率" class="headerlink" title="分辨率"></a>分辨率</h3><figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">adb</span> shell wm size <span class="number">480</span>x1024</span><br></pre></td></tr></table></figure>
-<p>表示将分辨率修改为 480px * 1024px。<br>恢复：</p>
-<figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line">adb shell wm size reset</span><br></pre></td></tr></table></figure>
-<h3 id="屏幕密度"><a href="#屏幕密度" class="headerlink" title="屏幕密度"></a>屏幕密度</h3><figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">adb</span> shell wm density <span class="number">160</span></span><br></pre></td></tr></table></figure>
-<p>表示将屏幕密度修改为 160dpi。<br>恢复：</p>
-<figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span><span class="language-bash"> wm density reset</span></span><br></pre></td></tr></table></figure>
-<h3 id="显示区域"><a href="#显示区域" class="headerlink" title="显示区域"></a>显示区域</h3><figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">adb</span> shell wm overscan <span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">200</span></span><br></pre></td></tr></table></figure>
-<p>四个数字分别表示距离左、上、右、下边缘的留白像素，以上命令表示将屏幕底部 200px 留白。<br>恢复：</p>
-<figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span><span class="language-bash"> wm overscan reset</span></span><br></pre></td></tr></table></figure>
-<h3 id="关闭USB调试"><a href="#关闭USB调试" class="headerlink" title="关闭USB调试"></a>关闭USB调试</h3><figure class="highlight livecodeserver"><table><tr><td class="code"><pre><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">put</span> <span class="built_in">global</span> adb_enabled <span class="number">0</span></span><br></pre></td></tr></table></figure>
-<p>恢复：<br>用命令恢复不了了，毕竟关闭了 USB 调试 adb 就连接不上 Android 设备了。<br>去设备上手动恢复吧：「设置」-「开发者选项」-「Android 调试」。</p>
-<h3 id="允许-x2F-禁止访问非-SDK-API："><a href="#允许-x2F-禁止访问非-SDK-API：" class="headerlink" title="允许&#x2F;禁止访问非 SDK API："></a>允许&#x2F;禁止访问非 SDK API：</h3><p>不需要设备获得Root权限。<br>允许访问非 SDK API：</p>
-<figure class="highlight livecodeserver"><table><tr><td class="code"><pre><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">put</span> <span class="built_in">global</span> hidden_api_policy_pre_p_apps <span class="number">1</span></span><br><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">put</span> <span class="built_in">global</span> hidden_api_policy_p_apps <span class="number">1</span></span><br></pre></td></tr></table></figure>
-<p>禁止访问非 SDK API</p>
-<figure class="highlight livecodeserver"><table><tr><td class="code"><pre><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">delete</span> <span class="built_in">global</span> hidden_api_policy_pre_p_apps</span><br><span class="line">adb <span class="built_in">shell</span> settings <span class="built_in">delete</span> <span class="built_in">global</span> hidden_api_policy_p_apps</span><br></pre></td></tr></table></figure>
-<p>命令最后的数字的含义：</p>
-<table>
-<thead>
-<tr>
-<th>值</th>
-<th align="left">含义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>0</td>
-<td align="left">禁止检测非 SDK 接口的调用。该情况下，日志记录功能被禁用，并且令 strict mode API，即 detectNonSdkApiUsage() 无效。不推荐。</td>
-</tr>
-<tr>
-<td>1</td>
-<td align="left">仅警告——允许访问所有非 SDK 接口，但保留日志中的警告信息，可继续使用 strick mode API。</td>
-</tr>
-<tr>
-<td>2</td>
-<td align="left">禁止调用深灰名单和黑名单中的接口。</td>
-</tr>
-<tr>
-<td>3</td>
-<td align="left">禁止调用黑名单中的接口，但允许调用深灰名单中的接口。</td>
-</tr>
-</tbody></table>
-<h2 id="实用功能"><a href="#实用功能" class="headerlink" title="实用功能"></a>实用功能</h2><h3 id="屏幕截图"><a href="#屏幕截图" class="headerlink" title="屏幕截图"></a>屏幕截图</h3><p><strong>注：</strong>未指定路径则，默认为adb所在的文件夹<br>截图保存到电脑：</p>
-<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">exec</span><span class="operator">-</span><span class="keyword">out</span> screencap <span class="operator">-</span>p <span class="operator">&gt;</span> sc.png</span><br></pre></td></tr></table></figure>
-<p>如果 adb 版本较老，无法使用 exec-out 命令，这时候建议更新 adb 版本。无法更新的话可以使用以下麻烦点的办法：<br>先截图保存到设备里：</p>
-<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">adb shell screencap -p <span class="regexp">/sdcard/</span>sc.png</span><br></pre></td></tr></table></figure>
-<p>然后将 png 文件导出到电脑：<br>adb pull &#x2F;sdcard&#x2F;sc.png<br>可以使用<code>adb shell screencap -h</code> 查看 screencap 命令的帮助信息，下面是两个有意义的参数及含义：</p>
-<table>
-<thead>
-<tr>
-<th>参数</th>
-<th align="left">含义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>-p</td>
-<td align="left">指定保存文件为 png 格式（如果指定文件后缀png，则可省略）</td>
-</tr>
-<tr>
-<td>-d display-id</td>
-<td align="left">指定截图的显示屏编号（有多显示屏的情况下）</td>
-</tr>
-</tbody></table>
-<h3 id="录制屏幕"><a href="#录制屏幕" class="headerlink" title="录制屏幕"></a>录制屏幕</h3><p>录制屏幕以mp4格式保存到 &#x2F;sdcard：</p>
-<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">adb shell screenrecord <span class="regexp">/sdcard/</span>filename.mp4</span><br></pre></td></tr></table></figure>
-<p>需要停止时按 <code>Ctrl-C</code>，默认录制时间和最长录制时间都是 180 秒。<br>如果需要导出到电脑：</p>
-<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">adb pull <span class="regexp">/sdcard/</span>filename.mp4</span><br></pre></td></tr></table></figure>
-<p>可以使用 <code>adb shell screenrecord --help</code> 查看 screenrecord 命令的帮助信息，下面是常见参数及含义：</p>
-<table>
-<thead>
-<tr>
-<th>参数</th>
-<th align="left">含义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>–size WIDTHxHEIGHT</td>
-<td align="left">视频的尺寸，比如 1280x720，默认是屏幕分辨率。</td>
-</tr>
-<tr>
-<td>–bit-rate RATE</td>
-<td align="left">视频的比特率，默认是 4Mbps。</td>
-</tr>
-<tr>
-<td>–time-limit TIME</td>
-<td align="left">录制时长，单位秒。</td>
-</tr>
-<tr>
-<td>–verbose</td>
-<td align="left">输出更多信息。</td>
-</tr>
-</tbody></table>
-<h3 id="开启-x2F-关闭wifi"><a href="#开启-x2F-关闭wifi" class="headerlink" title="开启&#x2F;关闭wifi"></a>开启&#x2F;关闭wifi</h3><p>开启</p>
-<figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span><span class="language-bash"> svc wifi <span class="built_in">enable</span></span></span><br></pre></td></tr></table></figure>
-<p>关闭</p>
-<figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span><span class="language-bash"> svc wifi <span class="built_in">disable</span></span></span><br></pre></td></tr></table></figure>
-<h3 id="使用Monkey进行压力测试"><a href="#使用Monkey进行压力测试" class="headerlink" title="使用Monkey进行压力测试"></a>使用Monkey进行压力测试</h3><p>Monkey 可以生成伪随机用户事件来模拟单击、触摸、手势等操作，可以对正在开发中的程序进行随机压力测试。<br>简单用法：</p>
-<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">shell</span> monkey -<span class="keyword">p</span> <span class="symbol">&lt;packagename&gt;</span> -v <span class="number">500</span></span><br></pre></td></tr></table></figure>
-<p>表示向 <code>&lt;packagename&gt;</code> 指定的应用程序发送 500 个伪随机事件。<br>更多内容可见<a href="https://developer.android.google.cn/studio/test/monkey.html">monkey官网</a></p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> adb </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>RecyclerView高级用法——吸顶效果</title>
+      <link href="/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/"/>
+      <url>/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/</url>
+      
+        <content type="html"><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>我们对RecyclerView的使用不能仅仅停留在表面，可以探索一些高级的用法——自定义，不过要实现这些的前提是必须对RecycleView的源码流程有所了解。今天小编就略讲一下，主要是和今天的主体有关的内容。我们今天就来实现如下的吸顶效果。</p><h3 id="通过绘制实现RecyclerView的吸顶效果"><a href="#通过绘制实现RecyclerView的吸顶效果" class="headerlink" title="通过绘制实现RecyclerView的吸顶效果"></a>通过绘制实现RecyclerView的吸顶效果</h3><p>ItemDecoration</p><p>ItemDecoration允许应用给具体的View添加具体的图画或者layout的偏移，对于绘制View之间的分割线，视觉分组边界等等是非常有用的。</p><p>当我们调用addItemDecoration()方法添加decoration的时候，RecyclerView就会调用该类的onDraw方法区绘制分割线，也就是说：分割线是绘制出来的。</p><blockquote><p>RecyclerView.ItemDecoration，该类为抽象类，官方目前只提供了一个实现类DividerItemDecoration。</p><p>并且只有LinearLayoutManager能够使用</p></blockquote><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719205304144.png" alt="image-20220719205304144"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C.gif" alt="吸顶效果"></p><p>要实现这样的吸顶效果，首先，就需要了解一下RecyclerView.ItemDecoration的绘制流程。</p><p>1.onDraw</p><p>在绘制每个itemView之前绘制，上图中的每个跟着滑动的头部就是在此处绘制</p><p>2.onDrawOver</p><p>在绘制了每个ItemView之后绘制，上图中固定的顶部在此处绘制</p><p>3.getItemOffsets</p><p>设置偏移值，可以在绘制itemView时设置偏移值，其实上demo中的每个头部（红色区域）就是在绘制itemView预留了部分空间用于绘制头部。</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719210625576.png" alt="image-20220719210625576"></p><blockquote><p>也就是说绘制流程是：onDraw()-&gt;ItemView-&gt;onDrawOver</p></blockquote><h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ul><li>在Adapter中创建两个方法<ul><li>1.获取组名</li><li>2.判断是否是组的头部<ul><li>首先，position&#x3D;0一定是组的头部</li><li>其次，可以通过前后两次组名判断当前item是不是组的头部</li></ul></li></ul></li></ul><figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line"><span class="comment">//是否是 组的第一个</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Boolean <span class="title">isGroupHeader</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (position==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="type">String</span> currentName = <span class="built_in">getGroupName</span>(position);</span><br><span class="line">            <span class="type">String</span> preGroupName = <span class="built_in">getGroupName</span>(position<span class="number">-1</span>);</span><br><span class="line">            <span class="keyword">if</span> (preGroupName.<span class="built_in">equals</span>(currentName))&#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="type">String</span> <span class="title">getGroupName</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> modelList.<span class="built_in">get</span>(position).<span class="built_in">getGroupName</span>();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure><ul><li><p>自定义分割线</p><figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void on<span class="constructor">Draw(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">        super.on<span class="constructor">Draw(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">        <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">            <span class="built_in">int</span> count  = parent.get<span class="constructor">ChildCount()</span>;</span><br><span class="line">            <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">            <span class="built_in">int</span> right  = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">                <span class="comment">//获取对应的View</span></span><br><span class="line">                View view = parent.get<span class="constructor">ChildAt(<span class="params">i</span>)</span>;</span><br><span class="line">                <span class="comment">//获取View的布局位置</span></span><br><span class="line">                <span class="built_in">int</span> position = parent.get<span class="constructor">ChildLayoutPosition(<span class="params">view</span>)</span>;</span><br><span class="line">                <span class="comment">//判断是不是头部</span></span><br><span class="line">                boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>)</span>;</span><br><span class="line">                <span class="keyword">if</span> (isGroupHeader<span class="operator"> &amp;&amp; </span>view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                    String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">                    textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>, 0, <span class="params">groupName</span>.<span class="params">length</span>()</span>, textRect);</span><br><span class="line">                    c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight/<span class="number">2</span>+textRect.height<span class="literal">()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line"></span><br><span class="line">                &#125;<span class="keyword">else</span> <span class="keyword">if</span> (view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="comment">//分割线</span></span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-<span class="number">4</span>,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure><figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">   public void on<span class="constructor">DrawOver(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">       super.on<span class="constructor">DrawOver(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">       <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">           ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">           <span class="comment">//返回可见区域的第一个item的position</span></span><br><span class="line">           <span class="built_in">int</span> position = ((LinearLayoutManager)parent.get<span class="constructor">LayoutManager()</span>).find<span class="constructor">FirstVisibleItemPosition()</span>;</span><br><span class="line">           <span class="comment">//获取对应的position的View</span></span><br><span class="line">           View itemView = parent.find<span class="constructor">ViewHolderForAdapterPosition(<span class="params">position</span>)</span>.itemView;</span><br><span class="line">           <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">           <span class="built_in">int</span> right = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">           <span class="built_in">int</span> top = parent.get<span class="constructor">PaddingTop()</span>;</span><br><span class="line">           <span class="comment">//当下一个是组的头部时</span></span><br><span class="line">           boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>+1)</span>;</span><br><span class="line">           String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">           textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>,0,<span class="params">groupName</span>.<span class="params">length</span>()</span>,textRect);</span><br><span class="line">           <span class="keyword">if</span> (isGroupHeader)&#123;</span><br><span class="line">               <span class="comment">//对顶部进行缩小效果，在视觉上是被下一个组的顶部推进去的</span></span><br><span class="line">               <span class="built_in">int</span> bottom = <span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>min(groupHeaderHeight,itemView.get<span class="constructor">Bottom()</span>-parent.get<span class="constructor">PaddingTop()</span>);</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.clip<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">bottom</span>-<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">groupHeaderHeight</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure><figure class="highlight pf"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void getItemOffsets(@N<span class="keyword">on</span>Null Rect <span class="keyword">out</span>Rect, @N<span class="keyword">on</span>Null View view, @N<span class="keyword">on</span>Null RecyclerView <span class="keyword">parent</span>, @N<span class="keyword">on</span>Null RecyclerView.State <span class="keyword">state</span>) &#123;</span><br><span class="line">        super.getItemOffsets(<span class="keyword">out</span>Rect, view, <span class="keyword">parent</span>, <span class="keyword">state</span>);</span><br><span class="line">        if (<span class="keyword">parent</span>.getAdapter() instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) <span class="keyword">parent</span>.getAdapter();</span><br><span class="line">            int position = <span class="keyword">parent</span>.getChildAdapterPosition(view);</span><br><span class="line">            boolean isGroupHeader = adapter.isGroupHeader(position);</span><br><span class="line">            //判断itemView是不是头部</span><br><span class="line">            if (isGroupHeader)&#123;</span><br><span class="line">                //如果是头部，预留更大的地方</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="keyword">group</span>HeaderHeight,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="number">4</span>,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></li></ul><h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>其实这部分的重点就是自定义分割线（ItemDecoration），弄清绘制顺序以及设置偏移值的作用就简单多了。当然，难点（也不是难点）就是弄清除尺寸参数,特别是尺寸变化引起的换组顶部推动效果。</p><p>其次就是特别注意有padding的情况，相信大家看出小编在这设置了顶部padding，有padding的时候需要注意尺寸。（不过有设置padding的情况很少）</p><p><a href="https://github.com/gun-ctrl/RecyclerViewPro">全部代码</a></p>]]></content>
+      
+      
       <categories>
-        <category>Android随笔</category>
+          
+          <category> Android高级UI </category>
+          
       </categories>
-      <tags>
-        <tag>adb</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>第一次上传测试</title>
-    <url>/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-]]></content>
-  </entry>
-  <entry>
-    <title>括号问题</title>
-    <url>/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/</url>
-    <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给出n对括号，请编写一个函数来生成所有的由n对括号组成的合法组合。</p>
-<p>例如，给出n&#x3D;3，解集为：</p>
-<p>“((()))”, “(()())”, “(())()”, “()()()”, “()(())”</p>
-<p>数据范围：0&lt;&#x3D;n&lt;&#x3D;10</p>
-<p>要求：空间复杂度O(n)，时间复杂度O(2^n)</p>
-<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><h4 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h4><blockquote>
-<p>输入：1</p>
-<p>返回值：[“()”]</p>
-</blockquote>
-<h4 id="示例2"><a href="#示例2" class="headerlink" title="示例2"></a>示例2</h4><blockquote>
-<p>输入：2</p>
-<p>返回值：[“(())”，”()()”]</p>
-</blockquote>
-<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>相当于一共n个左括号和n个右括号，可以给我们使用，我们需要依次组装这些括号。每当我们使用一个左括号之后，就剩下n-1个左括号和n个右括号给我们使用，结果拼在使用的左括号之后就行了，因此后者就是一个子问题，可以使用递归：</p>
-<ul>
-<li>终止条件：左右括号都使用了n个，将结果加入数组。</li>
-<li>返回值：每一级向上一级返回后续组装后的字符串，即子问题中搭配出来的括号序列。</li>
-<li>本级任务：每一级就是保证左括号还有剩余的情况下，使用一次左括号进入子问题，或者右括号还有剩余且右括号使用次数少于左括号的情况下使用一次右括号进入子问题。</li>
-<li><strong>注意：</strong>我们需要保证左括号出现的次数比右括号多时我们再使用右括号就一定能保证括号合法了，因此每次需要检查左括号和右括号的使用次数。</li>
-</ul>
-<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight processing"><table><tr><td class="code"><pre><span class="line">```</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 代码中的类名、方法名、参数名已经指定，请勿修改，直接返回方法规定的值即可</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * </span></span><br><span class="line"><span class="comment">     * @param n int整型 </span></span><br><span class="line"><span class="comment">     * @return string字符串ArrayList</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">recursion</span>(<span class="type">int</span> left,<span class="type">int</span> right,<span class="built_in">String</span> temp,<span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res,<span class="type">int</span> n)&#123;</span><br><span class="line">        <span class="comment">//左右括号都用完了，就加入结果</span></span><br><span class="line">        <span class="keyword">if</span>(left==n&amp;&amp;right==n)&#123;</span><br><span class="line">            res.<span class="property">add</span>(temp);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次左括号</span></span><br><span class="line">        <span class="keyword">if</span>(left&lt;n)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left+<span class="number">1</span>,right,temp + <span class="string">&quot;（&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次有括号</span></span><br><span class="line">        <span class="keyword">if</span>(right&lt;n&amp;&amp;right&lt;left)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left,right+<span class="number">1</span>,temp + <span class="string">&quot;）&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; <span class="title function_">generateParenthesis</span> (<span class="type">int</span> n) &#123;</span><br><span class="line">        <span class="comment">//记录结果</span></span><br><span class="line">        <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res = <span class="keyword">new </span><span class="class title_">ArrayList</span>&lt;<span class="built_in">String</span>&gt;();</span><br><span class="line">        <span class="comment">//递归</span></span><br><span class="line">        <span class="title function_">recursion</span>(<span class="number">0</span>,<span class="number">0</span>,<span class="string">&quot;&quot;</span>,res,n);</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> 高级UI </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>京东淘宝首页二级联动</title>
+      <link href="/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/"/>
+      <url>/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/</url>
+      
+        <content type="html"><![CDATA[<p><strong>说明：</strong>这篇文章主要用于作者临时观看，因为涉及版权问题，所以短时间内会删除</p><h2 id="京东淘宝首页二级联动"><a href="#京东淘宝首页二级联动" class="headerlink" title="京东淘宝首页二级联动"></a>京东淘宝首页二级联动</h2><h3 id="单点触摸与多点触摸"><a href="#单点触摸与多点触摸" class="headerlink" title="单点触摸与多点触摸"></a>单点触摸与多点触摸</h3><p>####单点触摸</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212127652.png" alt="image-20220718212127652"></p><p>####多点触摸</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212142549.png" alt="image-20220718212142549"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212203113.png" alt="image-20220718212203113"></p><blockquote><p>面试题</p><p>一个move事件 中间有多少个手指的信息-&gt;有多少个手指就有多少个手指信息-&gt;最多32个</p></blockquote><h3 id="Touch事件源码"><a href="#Touch事件源码" class="headerlink" title="Touch事件源码"></a>Touch事件源码</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212217242.png" alt="image-20220718212217242"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212232559.png" alt="image-20220718212232559"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212254074.png" alt="image-20220718212254074"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212316235.png" alt="image-20220718212316235"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212335895.png" alt="image-20220718212335895"></p><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212349700.png" alt="image-20220718212349700"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212414454.png" alt="image-20220718212414454"></p><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212432841.png" alt="image-20220718212432841"></p><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212452115.png" alt="image-20220718212452115"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212515213.png" alt="image-20220718212515213"></p><p>上述的disallowIntercept及相关内容就是所谓的“尚方宝剑”</p><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212536424.png" alt="image-20220718212536424"></p><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212555410.png" alt="image-20220718212555410"></p><p> <img src="C:\Users\15786\AppData\Roaming\Typora\typora-user-images\image-20220718212609465.png" alt="image-20220718212609465"></p><h3 id="嵌套滑动"><a href="#嵌套滑动" class="headerlink" title="嵌套滑动"></a>嵌套滑动</h3><blockquote><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212649556.png" alt="image-20220718212649556"></p></blockquote><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212704210.png" alt="image-20220718212704210"></p><p>并且从上面可以看出NestedScrollView既可以做“父亲”，也可以做“孩子”</p><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212718655.png" alt="image-20220718212718655"></p><p>“孩子”有三个版本</p><p>三个版本之间是的关系  同样“父亲”也是一样</p><blockquote><p>版本2与版本1相比  增加了type 如惯性滑动效果</p></blockquote><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212737829.png" alt="image-20220718212737829"></p><h4 id="吸顶效果"><a href="#吸顶效果" class="headerlink" title="吸顶效果"></a>吸顶效果</h4><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212758009.png" alt="image-20220718212758009"></p><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212818443.png" alt="image-20220718212818443"></p><p>onFinishInflate()中获取第一个孩子的第二个孩子，从下图可以看出也就是是第二个LinearLayout</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212839006.png" alt="image-20220718212839006"></p><h4 id="继续嵌套滑动"><a href="#继续嵌套滑动" class="headerlink" title="继续嵌套滑动"></a>继续嵌套滑动</h4><p>嵌套滑动-&gt;是由孩子主动的   触发的</p><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212906775.png" alt="image-20220718212906775"></p><p>google为了方便我们处理嵌套滑动，所以提供了这个帮助类 -&gt; getScrollingChildHelper()</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212928635.png" alt="image-20220718212928635"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212942972.png" alt="image-20220718212942972"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213001121.png" alt="image-20220718213001121"></p><p>while(p!&#x3D;null)一直找，直到找到支持嵌套滑动</p><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213017801.png" alt="image-20220718213017801"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213043191.png" alt="image-20220718213043191"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213058717.png" alt="image-20220718213058717"></p><p>所以它没有滑，“父亲”划不动的时候，它(NestedScrollView)才动</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213122243.png" alt="image-20220718213122243"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213138627.png" alt="image-20220718213138627"></p><p>问题描述：需求是整个页面滑动，当父View滑不动的时候，子View才动。问题出现的原因就是上面的文字描述，要想解决</p><p>问题的解决：重写onNestedPreScroll()方法，做一些设置，如果自己还能滑，那么就自己滑，并且需要记录一下（consumed[1]，0记录的x，1记录的y）</p><ul><li><p>注意：NetestScrollLayout是自定义继承NetestScrollView的</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213208543.png" alt="image-20220718213208543"></p></li></ul><h3 id="惯性滑动"><a href="#惯性滑动" class="headerlink" title="惯性滑动"></a>惯性滑动</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213227462.png" alt="image-20220718213227462"></p><p>记录下速度 velocityY</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213246067.png" alt="image-20220718213246067"></p><blockquote><ul><li>1、记下来速度 velocity</li><li>2、转化成 距离</li><li>3、自己滑了多少距离 根据速度转换后的距离 -&gt; 我自己的滑动距离 &#x3D; 孩子应该滑的距离</li><li>4、孩子应该滑的距离又要转化成速度</li></ul></blockquote><ul><li>google提供的速度转距离的工具</li></ul><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213300370.png" alt="image-20220718213300370"></p><p>孩子 -&gt;如recyclerView又会将距离转换成速度(因为RecyclerView只支持fling，所以需要转化成速度再转成距离)</p><p>下面两个方法分别对应上述步骤中的第3步和第4步</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213317734.png" alt="image-20220718213317734"></p><p><strong>关于totalDy</strong></p><p>下面注解一处错误：第一个，其实是Viewpager2，不是RecyclerView，通过前面有一张布局截图可以看出最后下面那个是ViewPager2</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213340340.png" alt="image-20220718213340340"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213358954.png" alt="image-20220718213358954"></p><h3 id="关于内部拦截"><a href="#关于内部拦截" class="headerlink" title="关于内部拦截"></a>关于内部拦截</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213415057.png" alt="image-20220718213415057"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213428785.png" alt="image-20220718213428785"></p>]]></content>
+      
+      
       <categories>
-        <category>算法</category>
+          
+          <category> 高级UI </category>
+          
       </categories>
-      <tags>
-        <tag>算法</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>按Z字形顺序打印二叉树</title>
-    <url>/2022/07/17/%E6%8C%89Z%E5%AD%97%E5%BD%A2%E9%A1%BA%E5%BA%8F%E6%89%93%E5%8D%B0%E4%BA%8C%E5%8F%89%E6%A0%91/</url>
-    <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给定一个二叉树，返回该二叉树的之字形层序遍历，（第一层从左向右，下一层从右向左，一直这样交替）<br>数据范围：0≤n≤1500,树上每个节点的val满足∣val∣≤1500<br>要求：空间复杂度：O(n)，时间复杂度：O(n)</p>
-<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717104011278.png" alt="image-20220717104011278"></p>
-<h4 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h4><blockquote>
-<p>输入：{1,2,3,#,#,4,5}<br>输出： [[1],[3,2],[4,5]]<br>说明：如题面解释，第一层是根节点，从左到右打印结果，第二层从右到左，第三层从左到右。</p>
-</blockquote>
-<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>这其实就是一个升级版的层序遍历.<br>观察其特点,无非就是奇数层和偶数层的输出顺序不一样. 这样就有了初步的解题思路,设置标识符flag(可以为整数型,也可以为boolean类型,整数类型无非就是对奇偶数的判断).<br>其余的思路就是层序遍历的思路,在每遍历新的一层之前,改变flag的值!flag(这里以boolean类型为例),然后就是利用Collections.reverse(list)对链表进行翻转.<br>详情可看代码</p>
-<blockquote>
-<p>这里,小编再提一下我初次遇到这道题的思路,前面的几乎一样,就是在实现链表反转这里,小编不熟悉Java库,没想到还有Colection.reverse这个方法可以用.<br>所以,小编在想反转的时候首先就想到了咱们的栈,也就是根据flag的值判断,从队列出来的值是否需要进一次栈实现反转</p>
-</blockquote>
-<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.*;</span><br><span class="line"><span class="keyword">import</span> java.util.ArrayList;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">public class TreeNode &#123;</span></span><br><span class="line"><span class="comment">    int val = 0;</span></span><br><span class="line"><span class="comment">    TreeNode left = null;</span></span><br><span class="line"><span class="comment">    TreeNode right = null;</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">    public TreeNode(int val) &#123;</span></span><br><span class="line"><span class="comment">        this.val = val;</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">    &#125;</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">&#125;</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> ArrayList&lt;ArrayList&lt;Integer&gt; &gt; Print(TreeNode pRoot) &#123;</span><br><span class="line">        ArrayList&lt;ArrayList&lt;Integer&gt;&gt; res = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;ArrayList&lt;Integer&gt;&gt;();</span><br><span class="line">        <span class="type">TreeNode</span> <span class="variable">head</span> <span class="operator">=</span> pRoot;</span><br><span class="line">        <span class="keyword">if</span>(head==<span class="literal">null</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> res;</span><br><span class="line">        &#125;</span><br><span class="line">        Queue&lt;TreeNode&gt; temp = <span class="keyword">new</span> <span class="title class_">LinkedList</span>&lt;TreeNode&gt;();</span><br><span class="line">        temp.offer(head);</span><br><span class="line">        TreeNode p;</span><br><span class="line">        <span class="type">boolean</span> <span class="variable">flag</span> <span class="operator">=</span> <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">while</span>(!temp.isEmpty())&#123;</span><br><span class="line">            ArrayList&lt;Integer&gt; list = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;Integer&gt;();</span><br><span class="line">            <span class="type">int</span> <span class="variable">size</span> <span class="operator">=</span> temp.size();</span><br><span class="line">            flag = !flag;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;size;++i)&#123;</span><br><span class="line">                p = temp.poll();</span><br><span class="line">                <span class="keyword">if</span>(p.left!=<span class="literal">null</span>)&#123;</span><br><span class="line">                    temp.offer(p.left);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">if</span>(p.right!=<span class="literal">null</span>)&#123;</span><br><span class="line">                    temp.offer(p.right);</span><br><span class="line">                &#125;</span><br><span class="line">                list.add(p.val);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(flag)&#123;</span><br><span class="line">                Collections.reverse(list);</span><br><span class="line">            &#125;</span><br><span class="line">            res.add(list);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这次是小编完善Hexo搭建后的第一篇博客，前面的都是在没完全搭建好的时候测试发送的。</p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> 高级UI </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>按Z字形顺序打印二叉树</title>
+      <link href="/2022/07/17/%E6%8C%89Z%E5%AD%97%E5%BD%A2%E9%A1%BA%E5%BA%8F%E6%89%93%E5%8D%B0%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
+      <url>/2022/07/17/%E6%8C%89Z%E5%AD%97%E5%BD%A2%E9%A1%BA%E5%BA%8F%E6%89%93%E5%8D%B0%E4%BA%8C%E5%8F%89%E6%A0%91/</url>
+      
+        <content type="html"><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给定一个二叉树，返回该二叉树的之字形层序遍历，（第一层从左向右，下一层从右向左，一直这样交替）<br>数据范围：0≤n≤1500,树上每个节点的val满足∣val∣≤1500<br>要求：空间复杂度：O(n)，时间复杂度：O(n)</p><h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717104011278.png" alt="image-20220717104011278"></p><h4 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h4><blockquote><p>输入：{1,2,3,#,#,4,5}<br>输出： [[1],[3,2],[4,5]]<br>说明：如题面解释，第一层是根节点，从左到右打印结果，第二层从右到左，第三层从左到右。</p></blockquote><h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>这其实就是一个升级版的层序遍历.<br>观察其特点,无非就是奇数层和偶数层的输出顺序不一样. 这样就有了初步的解题思路,设置标识符flag(可以为整数型,也可以为boolean类型,整数类型无非就是对奇偶数的判断).<br>其余的思路就是层序遍历的思路,在每遍历新的一层之前,改变flag的值!flag(这里以boolean类型为例),然后就是利用Collections.reverse(list)对链表进行翻转.<br>详情可看代码</p><blockquote><p>这里,小编再提一下我初次遇到这道题的思路,前面的几乎一样,就是在实现链表反转这里,小编不熟悉Java库,没想到还有Colection.reverse这个方法可以用.<br>所以,小编在想反转的时候首先就想到了咱们的栈,也就是根据flag的值判断,从队列出来的值是否需要进一次栈实现反转</p></blockquote><h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.*;</span><br><span class="line"><span class="keyword">import</span> java.util.ArrayList;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">public class TreeNode &#123;</span></span><br><span class="line"><span class="comment">    int val = 0;</span></span><br><span class="line"><span class="comment">    TreeNode left = null;</span></span><br><span class="line"><span class="comment">    TreeNode right = null;</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">    public TreeNode(int val) &#123;</span></span><br><span class="line"><span class="comment">        this.val = val;</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">    &#125;</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">&#125;</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> ArrayList&lt;ArrayList&lt;Integer&gt; &gt; Print(TreeNode pRoot) &#123;</span><br><span class="line">        ArrayList&lt;ArrayList&lt;Integer&gt;&gt; res = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;ArrayList&lt;Integer&gt;&gt;();</span><br><span class="line">        <span class="type">TreeNode</span> <span class="variable">head</span> <span class="operator">=</span> pRoot;</span><br><span class="line">        <span class="keyword">if</span>(head==<span class="literal">null</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> res;</span><br><span class="line">        &#125;</span><br><span class="line">        Queue&lt;TreeNode&gt; temp = <span class="keyword">new</span> <span class="title class_">LinkedList</span>&lt;TreeNode&gt;();</span><br><span class="line">        temp.offer(head);</span><br><span class="line">        TreeNode p;</span><br><span class="line">        <span class="type">boolean</span> <span class="variable">flag</span> <span class="operator">=</span> <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">while</span>(!temp.isEmpty())&#123;</span><br><span class="line">            ArrayList&lt;Integer&gt; list = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;Integer&gt;();</span><br><span class="line">            <span class="type">int</span> <span class="variable">size</span> <span class="operator">=</span> temp.size();</span><br><span class="line">            flag = !flag;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;size;++i)&#123;</span><br><span class="line">                p = temp.poll();</span><br><span class="line">                <span class="keyword">if</span>(p.left!=<span class="literal">null</span>)&#123;</span><br><span class="line">                    temp.offer(p.left);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">if</span>(p.right!=<span class="literal">null</span>)&#123;</span><br><span class="line">                    temp.offer(p.right);</span><br><span class="line">                &#125;</span><br><span class="line">                list.add(p.val);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(flag)&#123;</span><br><span class="line">                Collections.reverse(list);</span><br><span class="line">            &#125;</span><br><span class="line">            res.add(list);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>这次是小编完善Hexo搭建后的第一篇博客，前面的都是在没完全搭建好的时候测试发送的。</p>]]></content>
+      
+      
       <categories>
-        <category>算法</category>
+          
+          <category> 算法 </category>
+          
       </categories>
-      <tags>
-        <tag>算法</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>测试</title>
-    <url>/2022/07/12/%E6%B5%8B%E8%AF%95/</url>
-    <content><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3><p><img src="/%E6%B5%8B%E8%AF%95.assets/1657615742531.png" alt="1657615742531"></p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> 算法 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>括号问题</title>
+      <link href="/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/"/>
+      <url>/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/</url>
+      
+        <content type="html"><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给出n对括号，请编写一个函数来生成所有的由n对括号组成的合法组合。</p><p>例如，给出n&#x3D;3，解集为：</p><p>“((()))”, “(()())”, “(())()”, “()()()”, “()(())”</p><p>数据范围：0&lt;&#x3D;n&lt;&#x3D;10</p><p>要求：空间复杂度O(n)，时间复杂度O(2^n)</p><h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><h4 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h4><blockquote><p>输入：1</p><p>返回值：[“()”]</p></blockquote><h4 id="示例2"><a href="#示例2" class="headerlink" title="示例2"></a>示例2</h4><blockquote><p>输入：2</p><p>返回值：[“(())”，”()()”]</p></blockquote><h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>相当于一共n个左括号和n个右括号，可以给我们使用，我们需要依次组装这些括号。每当我们使用一个左括号之后，就剩下n-1个左括号和n个右括号给我们使用，结果拼在使用的左括号之后就行了，因此后者就是一个子问题，可以使用递归：</p><ul><li>终止条件：左右括号都使用了n个，将结果加入数组。</li><li>返回值：每一级向上一级返回后续组装后的字符串，即子问题中搭配出来的括号序列。</li><li>本级任务：每一级就是保证左括号还有剩余的情况下，使用一次左括号进入子问题，或者右括号还有剩余且右括号使用次数少于左括号的情况下使用一次右括号进入子问题。</li><li><strong>注意：</strong>我们需要保证左括号出现的次数比右括号多时我们再使用右括号就一定能保证括号合法了，因此每次需要检查左括号和右括号的使用次数。</li></ul><h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight processing"><table><tr><td class="code"><pre><span class="line">```</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 代码中的类名、方法名、参数名已经指定，请勿修改，直接返回方法规定的值即可</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * </span></span><br><span class="line"><span class="comment">     * @param n int整型 </span></span><br><span class="line"><span class="comment">     * @return string字符串ArrayList</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">recursion</span>(<span class="type">int</span> left,<span class="type">int</span> right,<span class="built_in">String</span> temp,<span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res,<span class="type">int</span> n)&#123;</span><br><span class="line">        <span class="comment">//左右括号都用完了，就加入结果</span></span><br><span class="line">        <span class="keyword">if</span>(left==n&amp;&amp;right==n)&#123;</span><br><span class="line">            res.<span class="property">add</span>(temp);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次左括号</span></span><br><span class="line">        <span class="keyword">if</span>(left&lt;n)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left+<span class="number">1</span>,right,temp + <span class="string">&quot;（&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次有括号</span></span><br><span class="line">        <span class="keyword">if</span>(right&lt;n&amp;&amp;right&lt;left)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left,right+<span class="number">1</span>,temp + <span class="string">&quot;）&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; <span class="title function_">generateParenthesis</span> (<span class="type">int</span> n) &#123;</span><br><span class="line">        <span class="comment">//记录结果</span></span><br><span class="line">        <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res = <span class="keyword">new </span><span class="class title_">ArrayList</span>&lt;<span class="built_in">String</span>&gt;();</span><br><span class="line">        <span class="comment">//递归</span></span><br><span class="line">        <span class="title function_">recursion</span>(<span class="number">0</span>,<span class="number">0</span>,<span class="string">&quot;&quot;</span>,res,n);</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+      
+      
       <categories>
-        <category>其他</category>
+          
+          <category> 算法 </category>
+          
       </categories>
-      <tags>
-        <tag>测试</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>自定义LayoutManager实现卡片滑动</title>
-    <url>/2022/07/23/%E8%87%AA%E5%AE%9A%E4%B9%89LayoutManager%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E6%BB%91%E5%8A%A8/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
-<p>前面介绍了利用自定义ItemDecoration实现RecyclerView吸顶效果，重点就在onDraw -&gt; ItemView -&gt; onDrawOver的绘制流程，同时注意预留空间的利用。</p>
-<p>今天介绍一个新的知识点与demo，利用自定义LayoutManager的方式实现卡片滑动。有时候系统提供的LayoutManager已经不能够满足我们的需求，这个时候我们就需要自定义LayoutManager。</p>
-</blockquote>
-<h2 id="卡片滑动效果介绍"><a href="#卡片滑动效果介绍" class="headerlink" title="卡片滑动效果介绍"></a>卡片滑动效果介绍</h2><p>卡片滑动的效果如下图所示。</p>
-<p>分析一下卡片效果，顶部的卡片是正常摆放，接着的后面两张会随着位置变化缩小、下移，产生视觉上的叠层效果，再然后的卡片就与第三张重叠摆放。可以滑动移除图片，下面的卡片会自动补全。</p>
-<ul>
-<li>实现这样的效果突破点在于两点：</li>
-</ul>
-<ol>
-<li>要实现这样重叠式布局的效果，我们就需要自定义LayoutManager，就像系统自带的<code>LinearLayoutManager</code>、<code>GridLayoutManager</code>一样。</li>
-<li>滑动移除效果的实现，没有重写<code>scrollVerticallyBy</code>以及<code>scrollHorizontallyBy</code>，这就需要一个重要的帮助类<code>ItemTouchHelper</code></li>
-</ol>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/SlideCard.gif" alt="SlideCard"></p>
-<h2 id="卡片滑动实现"><a href="#卡片滑动实现" class="headerlink" title="卡片滑动实现"></a>卡片滑动实现</h2><ul>
-<li><p>实现思路</p>
-<blockquote>
-<ol>
-<li>摆放策略交给LayoutManager-&gt;具体怎么摆，每一个卡片布局策略和数据绑定由Adapter负责</li>
-<li>LayoutManager必须重写<code>onLayoutChildren</code>方法，当数据发生改变时，会重新布局，detachAndScrapAttachedViews处理回收，recycler.getViewForPosition(i)获取对应位置的View。</li>
-<li>测量view，摆放时需要考虑通过ItemDecoration预留的间距<code>layoutDecoratedWithMargins</code></li>
-<li>卡片采用的是倒序摆放，即从第8张到第一张的顺序摆放</li>
-<li>利用<code>ItemTouchHelper</code>实现滑动移除，并且需要重写onChildDraw，实现滑动动画开始时，下方图片缩放效果。TouchHelper是ItemDecoration的子类，在onDraw时根据滑动距离来影响后面view的大小</li>
-</ol>
-</blockquote>
-</li>
-<li><p>关键代码块：</p>
-</li>
-</ul>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SlideCardLayoutManager</span>:RecyclerView.LayoutManager() &#123;</span><br><span class="line">    override fun <span class="title function_">generateDefaultLayoutParams</span><span class="params">()</span>: RecyclerView.LayoutParams &#123;</span><br><span class="line">        <span class="keyword">return</span> RecyclerView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,</span><br><span class="line">        ViewGroup.LayoutParams.WRAP_CONTENT)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun <span class="title function_">onLayoutChildren</span><span class="params">(recycler: RecyclerView.Recycler?, state: RecyclerView.State?)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onLayoutChildren(recycler, state)</span><br><span class="line">        detachAndScrapAttachedViews(recycler!!)</span><br><span class="line">        <span class="type">val</span> <span class="variable">itemCount</span> <span class="operator">=</span> itemCount</span><br><span class="line">        <span class="type">var</span> <span class="variable">bottomPosition</span> <span class="operator">=</span> <span class="number">0</span></span><br><span class="line">        <span class="keyword">if</span> (itemCount&lt;CardConfig.MAX_SHOW_COUNT)&#123;</span><br><span class="line">            bottomPosition = <span class="number">0</span></span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            bottomPosition = itemCount - CardConfig.MAX_SHOW_COUNT</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (i in bottomPosition until  itemCount)&#123;</span><br><span class="line">            <span class="type">val</span> <span class="variable">view</span> <span class="operator">=</span> recycler.getViewForPosition(i)</span><br><span class="line">            addView(view)</span><br><span class="line">            <span class="comment">//测量</span></span><br><span class="line">            measureChildWithMargins(view,<span class="number">0</span>,<span class="number">0</span>)</span><br><span class="line">            <span class="type">val</span> <span class="variable">widthSpace</span> <span class="operator">=</span> width - getDecoratedMeasuredHeight(view)</span><br><span class="line">            <span class="type">val</span> <span class="variable">heightSpace</span> <span class="operator">=</span> height - getDecoratedMeasuredHeight(view)</span><br><span class="line">            <span class="comment">//布局</span></span><br><span class="line">            layoutDecoratedWithMargins(view,</span><br><span class="line">            widthSpace/<span class="number">2</span>,</span><br><span class="line">            heightSpace/<span class="number">2</span>,</span><br><span class="line">            widthSpace/<span class="number">2</span>+getDecoratedMeasuredWidth(view),</span><br><span class="line">            heightSpace/<span class="number">2</span>+getDecoratedMeasuredHeight(view))</span><br><span class="line">            <span class="type">var</span> <span class="variable">level</span> <span class="operator">=</span> itemCount -i -<span class="number">1</span></span><br><span class="line">            <span class="keyword">if</span> (level&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                <span class="keyword">if</span> (level&lt;CardConfig.MAX_SHOW_COUNT-<span class="number">1</span>)&#123;<span class="comment">//提示，这里CardConfig.MAX_SHOW_COUNT=4，可见小编所有代码</span></span><br><span class="line">                    view.translationY = CardConfig.TRANS_Y_GAP * level</span><br><span class="line">                    view.scaleX = <span class="number">1</span>-CardConfig.SCALE_GAP*level</span><br><span class="line">                    view.scaleY = <span class="number">1</span>-CardConfig.SCALE_GAP*level</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    view.translationY = CardConfig.TRANS_Y_GAP * (level-<span class="number">1</span>)</span><br><span class="line">                    view.scaleX = <span class="number">1</span>-CardConfig.SCALE_GAP*(level-<span class="number">1</span>)</span><br><span class="line">                    view.scaleY = <span class="number">1</span>-CardConfig.SCALE_GAP*(level-<span class="number">1</span>)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>注意：这里继承的是<code>ItemTouchHelper.SimpleCallback</code>，<code>ItemTouchHelper.Callback</code>需要重写的方法太多。</li>
-<li>重写onChildDraw，因为notifyDataSetChanged()会走onDraw流程，而onDraw又会调用onChildDraw。</li>
-</ul>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SlideCallBack</span>(</span><br><span class="line">    <span class="keyword">private</span> val adapter:SlideCardAdapter,</span><br><span class="line">    <span class="keyword">private</span> val mData:MutableList&lt;SlideCardBean&gt;</span><br><span class="line">):ItemTouchHelper.SimpleCallback(<span class="number">0</span>,<span class="number">15</span>) &#123;</span><br><span class="line">    override fun <span class="title function_">onMove</span><span class="params">(</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        viewHolder: RecyclerView.ViewHolder,</span></span><br><span class="line"><span class="params">        target: RecyclerView.ViewHolder</span></span><br><span class="line"><span class="params">    )</span>: Boolean &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@SuppressLint(&quot;NotifyDataSetChanged&quot;)</span></span><br><span class="line">    override fun <span class="title function_">onSwiped</span><span class="params">(viewHolder: RecyclerView.ViewHolder, direction: Int)</span> &#123;</span><br><span class="line">        <span class="type">val</span> <span class="variable">remove</span> <span class="operator">=</span> mData.removeAt(viewHolder.layoutPosition)</span><br><span class="line">        mData.add(<span class="number">0</span>,remove)</span><br><span class="line">        adapter.notifyDataSetChanged()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun <span class="title function_">onChildDraw</span><span class="params">(</span></span><br><span class="line"><span class="params">        c: Canvas,</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        viewHolder: RecyclerView.ViewHolder,</span></span><br><span class="line"><span class="params">        dX: Float,</span></span><br><span class="line"><span class="params">        dY: Float,</span></span><br><span class="line"><span class="params">        actionState: Int,</span></span><br><span class="line"><span class="params">        isCurrentlyActive: Boolean</span></span><br><span class="line"><span class="params">    )</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)</span><br><span class="line">        <span class="type">val</span> <span class="variable">maxDistance</span> <span class="operator">=</span> recyclerView.width * <span class="number">0.5f</span></span><br><span class="line">        <span class="type">val</span> <span class="variable">distance</span> <span class="operator">=</span> sqrt((dX*dX+dY*dY).toDouble())</span><br><span class="line">        <span class="type">var</span> <span class="variable">fraction</span> <span class="operator">=</span> distance/maxDistance</span><br><span class="line">        <span class="title function_">if</span> <span class="params">(fraction&gt;<span class="number">1</span>)</span>&#123;</span><br><span class="line">            fraction= <span class="number">1.0</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">val</span> <span class="variable">itemCount</span> <span class="operator">=</span> recyclerView.childCount</span><br><span class="line">        Log.v(<span class="string">&quot;ppp&quot;</span>,<span class="string">&quot;itemCount: $itemCount&quot;</span>)</span><br><span class="line">        <span class="keyword">for</span>(i in <span class="number">0</span> until itemCount)&#123;</span><br><span class="line">            <span class="type">val</span> <span class="variable">view</span> <span class="operator">=</span> recyclerView.getChildAt(i)</span><br><span class="line">            <span class="type">val</span> <span class="variable">level</span> <span class="operator">=</span> itemCount - i - <span class="number">1</span></span><br><span class="line">            Log.v(<span class="string">&quot;pc&quot;</span>,<span class="string">&quot;level: $level&quot;</span>)</span><br><span class="line">            <span class="keyword">if</span> (level&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                <span class="comment">//重绘level=1，2 -&gt;也就是i=5,6</span></span><br><span class="line">                <span class="keyword">if</span> (level&lt;CardConfig.MAX_SHOW_COUNT-<span class="number">1</span>)&#123;</span><br><span class="line">                    view.translationY = (CardConfig.TRANS_Y_GAP * (level-fraction)).toFloat()</span><br><span class="line">                    view.scaleX = (<span class="number">1</span>-CardConfig.SCALE_GAP*level+fraction*CardConfig.SCALE_GAP).toFloat()</span><br><span class="line">                    view.scaleY = (<span class="number">1</span>-CardConfig.SCALE_GAP*level+fraction*CardConfig.SCALE_GAP).toFloat()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//s时间</span></span><br><span class="line">    override fun <span class="title function_">getAnimationDuration</span><span class="params">(</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        animationType: Int,</span></span><br><span class="line"><span class="params">        animateDx: Float,</span></span><br><span class="line"><span class="params">        animateDy: Float</span></span><br><span class="line"><span class="params">    )</span>: Long &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">500</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>目前为止，小编已经介绍了RecyclerView自定义用法的两种，自定义ItemDecoration和自定义LayoutManager。这里有一个逻辑上的坑点：顶部的卡片是正常摆放，我们自定义LayoutManager中不用管它，所以在上方两个代码块中都有<code>level&gt;0</code>和<code>level&lt;CardConfig.MAX_SHOW_COUNT-1</code>，也就是重绘索引值<code>i=5,6</code>即第6和7个，在<code>SlideCardLayoutManager</code>中，第5张卡片即一下的重叠在第6张的下面。这个点烦恼了小编好久，刚开始一直不明白顶部的摆放去哪了，从这点可以看出了解原理看源码的重要性。下一章，我们将对RecyclerView源码机制进行解读，再结合这一章的内容，将会对RecyclerView的原理有个更深层次的理解。</p>
-<p><a href="https://github.com/gun-ctrl/SlideCard">全部代码地址</a></p>
-]]></content>
+      
+      
+        <tags>
+            
+            <tag> 算法 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>测试</title>
+      <link href="/2022/07/12/%E6%B5%8B%E8%AF%95/"/>
+      <url>/2022/07/12/%E6%B5%8B%E8%AF%95/</url>
+      
+        <content type="html"><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3><p><img src="/%E6%B5%8B%E8%AF%95.assets/1657615742531.png" alt="1657615742531"></p>]]></content>
+      
+      
       <categories>
-        <category>高级UI</category>
+          
+          <category> 其他 </category>
+          
       </categories>
-      <tags>
-        <tag>高级UI</tag>
-      </tags>
-  </entry>
+      
+      
+        <tags>
+            
+            <tag> 测试 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>第一次上传测试</title>
+      <link href="/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/"/>
+      <url>/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/</url>
+      
+        <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+  
+  
 </search>
