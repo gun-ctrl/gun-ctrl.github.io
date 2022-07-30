@@ -57,6 +57,23 @@
       </tags>
   </entry>
   <entry>
+    <title>adb shell input text不能输入中文的解决方案</title>
+    <url>/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</url>
+    <content><![CDATA[<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><p>adb默认是不支持Unicode编码的，无法通过adb shell input text 命令输入中文到手机或者模拟器。</p>
+<h3 id="解决步骤"><a href="#解决步骤" class="headerlink" title="解决步骤"></a>解决步骤</h3><ul>
+<li>1、安装ADBKeyBoard.apk文件(直接搜索就能找到)<br>打开手机或模拟器，adb install ADBKeyBoard.apk安装该输入法<br>在手机上直接安装也可</li>
+<li>2、设置默认输入法<br>打开手机设置 -&gt; 点击语法与输入法 -&gt; 点击输入法管理 -&gt; 启用ADBKeyboard<br>重启手机后即可使用该输入法</li>
+<li>3、输入adb命令测试中文输入<br>adb shell am broadcast -a ADB_INPUT_TEXT –es msg ‘这是一段adb中文测试’</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Android随笔</category>
+      </categories>
+      <tags>
+        <tag>adb</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>RecyclerView的回收复用机制</title>
     <url>/2022/07/24/RecyclerView%E7%9A%84%E5%9B%9E%E6%94%B6%E5%A4%8D%E7%94%A8%E6%9C%BA%E5%88%B6/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一章，小编介绍了RecyclerView的高级用法——自定义LayoutManager。今天，我们来从源码的角度深度剖析RecyclerView，主要是对RecyclerView的回收复用机制熟悉掌握。</p>
@@ -152,23 +169,6 @@
       </categories>
       <tags>
         <tag>RecyclerView</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>adb shell input text不能输入中文的解决方案</title>
-    <url>/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</url>
-    <content><![CDATA[<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><p>adb默认是不支持Unicode编码的，无法通过adb shell input text 命令输入中文到手机或者模拟器。</p>
-<h3 id="解决步骤"><a href="#解决步骤" class="headerlink" title="解决步骤"></a>解决步骤</h3><ul>
-<li>1、安装ADBKeyBoard.apk文件(直接搜索就能找到)<br>打开手机或模拟器，adb install ADBKeyBoard.apk安装该输入法<br>在手机上直接安装也可</li>
-<li>2、设置默认输入法<br>打开手机设置 -&gt; 点击语法与输入法 -&gt; 点击输入法管理 -&gt; 启用ADBKeyboard<br>重启手机后即可使用该输入法</li>
-<li>3、输入adb命令测试中文输入<br>adb shell am broadcast -a ADB_INPUT_TEXT –es msg ‘这是一段adb中文测试’</li>
-</ul>
-]]></content>
-      <categories>
-        <category>Android随笔</category>
-      </categories>
-      <tags>
-        <tag>adb</tag>
       </tags>
   </entry>
   <entry>
