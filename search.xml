@@ -1,177 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>RecyclerView的回收复用机制</title>
-    <url>/2022/07/24/RecyclerView%E7%9A%84%E5%9B%9E%E6%94%B6%E5%A4%8D%E7%94%A8%E6%9C%BA%E5%88%B6/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一章，小编介绍了RecyclerView的高级用法——自定义LayoutManager。今天，我们来从源码的角度深度剖析RecyclerView，主要是对RecyclerView的回收复用机制熟悉掌握。</p>
-<h2 id="RecyclerView介绍"><a href="#RecyclerView介绍" class="headerlink" title="RecyclerView介绍"></a>RecyclerView介绍</h2><blockquote>
-<p>RecyclerView可以说是项目必备的系统高级控件，相比于传统的ListVIew，RecyclerView最大的优势就是四级缓存机制，ListView是两级缓存机制（屏幕内可见、屏幕外）。</p>
-</blockquote>
-<h3 id="四级缓存机制"><a href="#四级缓存机制" class="headerlink" title="四级缓存机制"></a>四级缓存机制</h3><ul>
-<li><p>mChangeScrap（主要与动画相关）与mAttachedScrap（一般这两算一级）</p>
-<p>用来缓存还在屏幕内的ViewHolder</p>
-</li>
-<li><p>mCachedViews</p>
-<p>用来缓存移除屏幕之外的ViewHolder</p>
-</li>
-<li><p>mViewCacheExtension</p>
-<p>用户的自定义扩展缓存，需要用户自己管理View的创建和缓存</p>
-</li>
-<li><p>RecyclerViewPool</p>
-<p>ViewHolder缓存池</p>
-</li>
-</ul>
-<h3 id="回收复用的入口"><a href="#回收复用的入口" class="headerlink" title="回收复用的入口"></a>回收复用的入口</h3><p>上一章中自定义LayoutManager中有<code> detachAndScrapAttachedViews(recycler!!)</code>这样一个方法，用于回收ViewHolder。下面就来介绍一下RecyclerView的回收。</p>
-<p>回收有两个入口，一是布局onLayout时，二是在fill填充itemVIew时</p>
-<ul>
-<li>onLayout</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220724172908391.png" alt="image-20220724172908391"></p>
-<p>1.因为RecyclerView的具体onLayout是交给具体的LayoutManager来实现的，所以回收复用的具体操作是由LayoutManager来完成，在自定义LayoutManager时需考虑这一点，参考系统提供的LinearLayoutManager</p>
-<p>2.上图的两个重心是LinearLayoutManager中回收入口的分叉和Recycler中的实际回收情况，而我们在自定义LayoutManager时，回收Holder只需要通过detachAndScrapAttachedViews这一个方法即可，具体是如何进行回收的我们不关心，但需要知道有哪几种，因为这对应了几种缓存，上面已经介绍了四级缓存。</p>
-<p>3.缓存池与mCacheViews的关系：</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144808720.png" alt="image-20220717144808720"></p>
-<blockquote>
-<p> <strong>注意：</strong>缓存池中保存的只是ViewHolder，没有数据，所以缓存池中的ViewHolder复用还需要绑定</p>
-</blockquote>
-<ul>
-<li><p>fill</p>
-<p>在fill中只考虑了recycleViewHolderInternal这种情况，滑动过程中会触发</p>
-</li>
-</ul>
-<p><strong>回收重要源码截图</strong></p>
-<blockquote>
-<p>如果觉得上述回收流程图理解起来抽象的，可见结合部分源码截图理解。</p>
-</blockquote>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717115957690.png" alt="image-20220717115957690"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717121349370.png" alt="image-20220717121349370"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717141954608.png" alt="image-20220717141954608"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717142707778.png"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717142831116.png" alt="image-20220717142831116"></p>
-<blockquote>
-<p>如果超过mCacheView最大值（2），就加入到缓存池</p>
-<p>缓存到缓存池之后，就从mCacheView中移除</p>
-<p>从“0”拿出，说明是先进先出的</p>
-</blockquote>
-<ul>
-<li>否则，直接进缓存池  和上面一样都是调用<code>addViewHolderToRecycledViewPool</code></li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717143953794.png" alt="image-20220717143953794"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144255403.png" alt="image-20220717144255403"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144354585.png" alt="image-20220717144354585"></p>
-<blockquote>
-<p>ScrapData -&gt; ArrayList<ViewHolder></p>
-<p>mScrap-&gt;SpareArray<ScrapData></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144443187.png" alt="image-20220717144443187"></p>
-</blockquote>
-<p><strong>recycler.scrapView()</strong></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717153414420.png" alt="image-20220717153414420"></p>
-<p><strong>ViewHolder的包装源码</strong></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120045307.png" alt="image-20220717120045307"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120201306.png" alt="image-20220717120201306"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120910841.png" alt="image-20220717120910841"></p>
-<h3 id="复用入口"><a href="#复用入口" class="headerlink" title="复用入口"></a>复用入口</h3><blockquote>
-<p>复用的入口点同样也是两个，分别是布局时与滑动时。</p>
-</blockquote>
-<ul>
-<li><p>onLayout</p>
-<p>上一章中我们在自定义LayoutManager中就是重写的下面的<code>4.onLayoutChildren</code></p>
-</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717165422042.png" alt="image-20220717165422042"></p>
-<ul>
-<li>onTouch</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220724174858215.png" alt="image-20220724174858215"></p>
-<p>其实二者雷同，从fill入口开始，onLayout与onTouch几乎一样，只是第一张图用的时序图，绘制的比较详细。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>其实我们阅读源码了解原理机制，不用记住每个方法的入口、流程细节等，只需要记住大致过程，并理解重要部分。比如RecyclerView的四级缓存，以及回收复用的大致过程。</p>
-<p>这章的几个重点：</p>
-<p>1.从mAttachedScrap、mChangedScrap、mCachedViews中取出的holder不需要再绑定数据</p>
-<p>2.从RecyclerPool取出的holder需要重新绑定数据</p>
-<p>3.mAttachedScrap、mChangedScrap缓存的是屏幕看到的holder</p>
-<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a href="https://wiwiyiyi.com/RecyclerView%E5%9B%9E%E6%94%B6%E4%B8%8E%E5%A4%8D%E7%94%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html#%E5%9B%9B-%E6%80%BB%E7%BB%93">https://wiwiyiyi.com/RecyclerView%E5%9B%9E%E6%94%B6%E4%B8%8E%E5%A4%8D%E7%94%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html#%E5%9B%9B-%E6%80%BB%E7%BB%93</a></p>
-]]></content>
-      <categories>
-        <category>高级UI</category>
-      </categories>
-      <tags>
-        <tag>RecyclerView</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>adb shell input text不能输入中文的解决方案</title>
-    <url>/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</url>
-    <content><![CDATA[<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><p>adb默认是不支持Unicode编码的，无法通过adb shell input text 命令输入中文到手机或者模拟器。</p>
-<h3 id="解决步骤"><a href="#解决步骤" class="headerlink" title="解决步骤"></a>解决步骤</h3><ul>
-<li>1、安装ADBKeyBoard.apk文件(直接搜索就能找到)<br>打开手机或模拟器，adb install ADBKeyBoard.apk安装该输入法<br>在手机上直接安装也可</li>
-<li>2、设置默认输入法<br>打开手机设置 -&gt; 点击语法与输入法 -&gt; 点击输入法管理 -&gt; 启用ADBKeyboard<br>重启手机后即可使用该输入法</li>
-<li>3、输入adb命令测试中文输入<br>adb shell am broadcast -a ADB_INPUT_TEXT –es msg ‘这是一段adb中文测试’</li>
-</ul>
-]]></content>
-      <categories>
-        <category>Android随笔</category>
-      </categories>
-      <tags>
-        <tag>adb</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>RecyclerView高级用法——吸顶效果</title>
-    <url>/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/</url>
-    <content><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>我们对RecyclerView的使用不能仅仅停留在表面，可以探索一些高级的用法——自定义，不过要实现这些的前提是必须对RecycleView的源码流程有所了解。今天小编就略讲一下，主要是和今天的主体有关的内容。我们今天就来实现如下的吸顶效果。</p>
-<h3 id="通过绘制实现RecyclerView的吸顶效果"><a href="#通过绘制实现RecyclerView的吸顶效果" class="headerlink" title="通过绘制实现RecyclerView的吸顶效果"></a>通过绘制实现RecyclerView的吸顶效果</h3><p>ItemDecoration</p>
-<p>ItemDecoration允许应用给具体的View添加具体的图画或者layout的偏移，对于绘制View之间的分割线，视觉分组边界等等是非常有用的。</p>
-<p>当我们调用addItemDecoration()方法添加decoration的时候，RecyclerView就会调用该类的onDraw方法区绘制分割线，也就是说：分割线是绘制出来的。</p>
-<blockquote>
-<p>RecyclerView.ItemDecoration，该类为抽象类，官方目前只提供了一个实现类DividerItemDecoration。</p>
-<p>并且只有LinearLayoutManager能够使用</p>
-</blockquote>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719205304144.png" alt="image-20220719205304144"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C.gif" alt="吸顶效果"></p>
-<p>要实现这样的吸顶效果，首先，就需要了解一下RecyclerView.ItemDecoration的绘制流程。</p>
-<p>1.onDraw</p>
-<p>在绘制每个itemView之前绘制，上图中的每个跟着滑动的头部就是在此处绘制</p>
-<p>2.onDrawOver</p>
-<p>在绘制了每个ItemView之后绘制，上图中固定的顶部在此处绘制</p>
-<p>3.getItemOffsets</p>
-<p>设置偏移值，可以在绘制itemView时设置偏移值，其实上demo中的每个头部（红色区域）就是在绘制itemView预留了部分空间用于绘制头部。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719210625576.png" alt="image-20220719210625576"></p>
-<blockquote>
-<p>也就是说绘制流程是：onDraw()-&gt;ItemView-&gt;onDrawOver</p>
-</blockquote>
-<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ul>
-<li>在Adapter中创建两个方法<ul>
-<li>1.获取组名</li>
-<li>2.判断是否是组的头部<ul>
-<li>首先，position&#x3D;0一定是组的头部</li>
-<li>其次，可以通过前后两次组名判断当前item是不是组的头部</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line"><span class="comment">//是否是 组的第一个</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Boolean <span class="title">isGroupHeader</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (position==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="type">String</span> currentName = <span class="built_in">getGroupName</span>(position);</span><br><span class="line">            <span class="type">String</span> preGroupName = <span class="built_in">getGroupName</span>(position<span class="number">-1</span>);</span><br><span class="line">            <span class="keyword">if</span> (preGroupName.<span class="built_in">equals</span>(currentName))&#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="type">String</span> <span class="title">getGroupName</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> modelList.<span class="built_in">get</span>(position).<span class="built_in">getGroupName</span>();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>自定义分割线</p>
-<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void on<span class="constructor">Draw(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">        super.on<span class="constructor">Draw(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">        <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">            <span class="built_in">int</span> count  = parent.get<span class="constructor">ChildCount()</span>;</span><br><span class="line">            <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">            <span class="built_in">int</span> right  = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">                <span class="comment">//获取对应的View</span></span><br><span class="line">                View view = parent.get<span class="constructor">ChildAt(<span class="params">i</span>)</span>;</span><br><span class="line">                <span class="comment">//获取View的布局位置</span></span><br><span class="line">                <span class="built_in">int</span> position = parent.get<span class="constructor">ChildLayoutPosition(<span class="params">view</span>)</span>;</span><br><span class="line">                <span class="comment">//判断是不是头部</span></span><br><span class="line">                boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>)</span>;</span><br><span class="line">                <span class="keyword">if</span> (isGroupHeader<span class="operator"> &amp;&amp; </span>view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                    String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">                    textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>, 0, <span class="params">groupName</span>.<span class="params">length</span>()</span>, textRect);</span><br><span class="line">                    c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight/<span class="number">2</span>+textRect.height<span class="literal">()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line"></span><br><span class="line">                &#125;<span class="keyword">else</span> <span class="keyword">if</span> (view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="comment">//分割线</span></span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-<span class="number">4</span>,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">   public void on<span class="constructor">DrawOver(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">       super.on<span class="constructor">DrawOver(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">       <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">           ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">           <span class="comment">//返回可见区域的第一个item的position</span></span><br><span class="line">           <span class="built_in">int</span> position = ((LinearLayoutManager)parent.get<span class="constructor">LayoutManager()</span>).find<span class="constructor">FirstVisibleItemPosition()</span>;</span><br><span class="line">           <span class="comment">//获取对应的position的View</span></span><br><span class="line">           View itemView = parent.find<span class="constructor">ViewHolderForAdapterPosition(<span class="params">position</span>)</span>.itemView;</span><br><span class="line">           <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">           <span class="built_in">int</span> right = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">           <span class="built_in">int</span> top = parent.get<span class="constructor">PaddingTop()</span>;</span><br><span class="line">           <span class="comment">//当下一个是组的头部时</span></span><br><span class="line">           boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>+1)</span>;</span><br><span class="line">           String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">           textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>,0,<span class="params">groupName</span>.<span class="params">length</span>()</span>,textRect);</span><br><span class="line">           <span class="keyword">if</span> (isGroupHeader)&#123;</span><br><span class="line">               <span class="comment">//对顶部进行缩小效果，在视觉上是被下一个组的顶部推进去的</span></span><br><span class="line">               <span class="built_in">int</span> bottom = <span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>min(groupHeaderHeight,itemView.get<span class="constructor">Bottom()</span>-parent.get<span class="constructor">PaddingTop()</span>);</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.clip<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">bottom</span>-<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">groupHeaderHeight</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight pf"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void getItemOffsets(@N<span class="keyword">on</span>Null Rect <span class="keyword">out</span>Rect, @N<span class="keyword">on</span>Null View view, @N<span class="keyword">on</span>Null RecyclerView <span class="keyword">parent</span>, @N<span class="keyword">on</span>Null RecyclerView.State <span class="keyword">state</span>) &#123;</span><br><span class="line">        super.getItemOffsets(<span class="keyword">out</span>Rect, view, <span class="keyword">parent</span>, <span class="keyword">state</span>);</span><br><span class="line">        if (<span class="keyword">parent</span>.getAdapter() instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) <span class="keyword">parent</span>.getAdapter();</span><br><span class="line">            int position = <span class="keyword">parent</span>.getChildAdapterPosition(view);</span><br><span class="line">            boolean isGroupHeader = adapter.isGroupHeader(position);</span><br><span class="line">            //判断itemView是不是头部</span><br><span class="line">            if (isGroupHeader)&#123;</span><br><span class="line">                //如果是头部，预留更大的地方</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="keyword">group</span>HeaderHeight,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="number">4</span>,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></li>
-</ul>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>其实这部分的重点就是自定义分割线（ItemDecoration），弄清绘制顺序以及设置偏移值的作用就简单多了。当然，难点（也不是难点）就是弄清除尺寸参数,特别是尺寸变化引起的换组顶部推动效果。</p>
-<p>其次就是特别注意有padding的情况，相信大家看出小编在这设置了顶部padding，有padding的时候需要注意尺寸。（不过有设置padding的情况很少）</p>
-<p><a href="https://github.com/gun-ctrl/RecyclerViewPro">全部代码</a></p>
-]]></content>
-      <categories>
-        <category>Android高级UI</category>
-      </categories>
-      <tags>
-        <tag>高级UI</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>adb命令</title>
     <url>/2022/07/19/adb%E5%91%BD%E4%BB%A4/</url>
     <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>本文为小编学习总结的一些adb的常用命令，可能一些命令有待验证，更多内容可以参考<a href="https://github.com/mzlogin/awesome-adb#%E6%8C%87%E5%AE%9A-adb-server-%E7%9A%84%E7%BD%91%E7%BB%9C%E7%AB%AF%E5%8F%A3">adb用法大全</a></p>
@@ -495,6 +324,177 @@
       </categories>
       <tags>
         <tag>adb</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>RecyclerView高级用法——吸顶效果</title>
+    <url>/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/</url>
+    <content><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>我们对RecyclerView的使用不能仅仅停留在表面，可以探索一些高级的用法——自定义，不过要实现这些的前提是必须对RecycleView的源码流程有所了解。今天小编就略讲一下，主要是和今天的主体有关的内容。我们今天就来实现如下的吸顶效果。</p>
+<h3 id="通过绘制实现RecyclerView的吸顶效果"><a href="#通过绘制实现RecyclerView的吸顶效果" class="headerlink" title="通过绘制实现RecyclerView的吸顶效果"></a>通过绘制实现RecyclerView的吸顶效果</h3><p>ItemDecoration</p>
+<p>ItemDecoration允许应用给具体的View添加具体的图画或者layout的偏移，对于绘制View之间的分割线，视觉分组边界等等是非常有用的。</p>
+<p>当我们调用addItemDecoration()方法添加decoration的时候，RecyclerView就会调用该类的onDraw方法区绘制分割线，也就是说：分割线是绘制出来的。</p>
+<blockquote>
+<p>RecyclerView.ItemDecoration，该类为抽象类，官方目前只提供了一个实现类DividerItemDecoration。</p>
+<p>并且只有LinearLayoutManager能够使用</p>
+</blockquote>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719205304144.png" alt="image-20220719205304144"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C.gif" alt="吸顶效果"></p>
+<p>要实现这样的吸顶效果，首先，就需要了解一下RecyclerView.ItemDecoration的绘制流程。</p>
+<p>1.onDraw</p>
+<p>在绘制每个itemView之前绘制，上图中的每个跟着滑动的头部就是在此处绘制</p>
+<p>2.onDrawOver</p>
+<p>在绘制了每个ItemView之后绘制，上图中固定的顶部在此处绘制</p>
+<p>3.getItemOffsets</p>
+<p>设置偏移值，可以在绘制itemView时设置偏移值，其实上demo中的每个头部（红色区域）就是在绘制itemView预留了部分空间用于绘制头部。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719210625576.png" alt="image-20220719210625576"></p>
+<blockquote>
+<p>也就是说绘制流程是：onDraw()-&gt;ItemView-&gt;onDrawOver</p>
+</blockquote>
+<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ul>
+<li>在Adapter中创建两个方法<ul>
+<li>1.获取组名</li>
+<li>2.判断是否是组的头部<ul>
+<li>首先，position&#x3D;0一定是组的头部</li>
+<li>其次，可以通过前后两次组名判断当前item是不是组的头部</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line"><span class="comment">//是否是 组的第一个</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Boolean <span class="title">isGroupHeader</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (position==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="type">String</span> currentName = <span class="built_in">getGroupName</span>(position);</span><br><span class="line">            <span class="type">String</span> preGroupName = <span class="built_in">getGroupName</span>(position<span class="number">-1</span>);</span><br><span class="line">            <span class="keyword">if</span> (preGroupName.<span class="built_in">equals</span>(currentName))&#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="type">String</span> <span class="title">getGroupName</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> modelList.<span class="built_in">get</span>(position).<span class="built_in">getGroupName</span>();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>自定义分割线</p>
+<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void on<span class="constructor">Draw(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">        super.on<span class="constructor">Draw(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">        <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">            <span class="built_in">int</span> count  = parent.get<span class="constructor">ChildCount()</span>;</span><br><span class="line">            <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">            <span class="built_in">int</span> right  = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">                <span class="comment">//获取对应的View</span></span><br><span class="line">                View view = parent.get<span class="constructor">ChildAt(<span class="params">i</span>)</span>;</span><br><span class="line">                <span class="comment">//获取View的布局位置</span></span><br><span class="line">                <span class="built_in">int</span> position = parent.get<span class="constructor">ChildLayoutPosition(<span class="params">view</span>)</span>;</span><br><span class="line">                <span class="comment">//判断是不是头部</span></span><br><span class="line">                boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>)</span>;</span><br><span class="line">                <span class="keyword">if</span> (isGroupHeader<span class="operator"> &amp;&amp; </span>view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                    String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">                    textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>, 0, <span class="params">groupName</span>.<span class="params">length</span>()</span>, textRect);</span><br><span class="line">                    c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight/<span class="number">2</span>+textRect.height<span class="literal">()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line"></span><br><span class="line">                &#125;<span class="keyword">else</span> <span class="keyword">if</span> (view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="comment">//分割线</span></span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-<span class="number">4</span>,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">   public void on<span class="constructor">DrawOver(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">       super.on<span class="constructor">DrawOver(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">       <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">           ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">           <span class="comment">//返回可见区域的第一个item的position</span></span><br><span class="line">           <span class="built_in">int</span> position = ((LinearLayoutManager)parent.get<span class="constructor">LayoutManager()</span>).find<span class="constructor">FirstVisibleItemPosition()</span>;</span><br><span class="line">           <span class="comment">//获取对应的position的View</span></span><br><span class="line">           View itemView = parent.find<span class="constructor">ViewHolderForAdapterPosition(<span class="params">position</span>)</span>.itemView;</span><br><span class="line">           <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">           <span class="built_in">int</span> right = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">           <span class="built_in">int</span> top = parent.get<span class="constructor">PaddingTop()</span>;</span><br><span class="line">           <span class="comment">//当下一个是组的头部时</span></span><br><span class="line">           boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>+1)</span>;</span><br><span class="line">           String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">           textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>,0,<span class="params">groupName</span>.<span class="params">length</span>()</span>,textRect);</span><br><span class="line">           <span class="keyword">if</span> (isGroupHeader)&#123;</span><br><span class="line">               <span class="comment">//对顶部进行缩小效果，在视觉上是被下一个组的顶部推进去的</span></span><br><span class="line">               <span class="built_in">int</span> bottom = <span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>min(groupHeaderHeight,itemView.get<span class="constructor">Bottom()</span>-parent.get<span class="constructor">PaddingTop()</span>);</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.clip<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">bottom</span>-<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">groupHeaderHeight</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight pf"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void getItemOffsets(@N<span class="keyword">on</span>Null Rect <span class="keyword">out</span>Rect, @N<span class="keyword">on</span>Null View view, @N<span class="keyword">on</span>Null RecyclerView <span class="keyword">parent</span>, @N<span class="keyword">on</span>Null RecyclerView.State <span class="keyword">state</span>) &#123;</span><br><span class="line">        super.getItemOffsets(<span class="keyword">out</span>Rect, view, <span class="keyword">parent</span>, <span class="keyword">state</span>);</span><br><span class="line">        if (<span class="keyword">parent</span>.getAdapter() instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) <span class="keyword">parent</span>.getAdapter();</span><br><span class="line">            int position = <span class="keyword">parent</span>.getChildAdapterPosition(view);</span><br><span class="line">            boolean isGroupHeader = adapter.isGroupHeader(position);</span><br><span class="line">            //判断itemView是不是头部</span><br><span class="line">            if (isGroupHeader)&#123;</span><br><span class="line">                //如果是头部，预留更大的地方</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="keyword">group</span>HeaderHeight,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="number">4</span>,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>其实这部分的重点就是自定义分割线（ItemDecoration），弄清绘制顺序以及设置偏移值的作用就简单多了。当然，难点（也不是难点）就是弄清除尺寸参数,特别是尺寸变化引起的换组顶部推动效果。</p>
+<p>其次就是特别注意有padding的情况，相信大家看出小编在这设置了顶部padding，有padding的时候需要注意尺寸。（不过有设置padding的情况很少）</p>
+<p><a href="https://github.com/gun-ctrl/RecyclerViewPro">全部代码</a></p>
+]]></content>
+      <categories>
+        <category>Android高级UI</category>
+      </categories>
+      <tags>
+        <tag>高级UI</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>adb shell input text不能输入中文的解决方案</title>
+    <url>/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</url>
+    <content><![CDATA[<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><p>adb默认是不支持Unicode编码的，无法通过adb shell input text 命令输入中文到手机或者模拟器。</p>
+<h3 id="解决步骤"><a href="#解决步骤" class="headerlink" title="解决步骤"></a>解决步骤</h3><ul>
+<li>1、安装ADBKeyBoard.apk文件(直接搜索就能找到)<br>打开手机或模拟器，adb install ADBKeyBoard.apk安装该输入法<br>在手机上直接安装也可</li>
+<li>2、设置默认输入法<br>打开手机设置 -&gt; 点击语法与输入法 -&gt; 点击输入法管理 -&gt; 启用ADBKeyboard<br>重启手机后即可使用该输入法</li>
+<li>3、输入adb命令测试中文输入<br>adb shell am broadcast -a ADB_INPUT_TEXT –es msg ‘这是一段adb中文测试’</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Android随笔</category>
+      </categories>
+      <tags>
+        <tag>adb</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>RecyclerView的回收复用机制</title>
+    <url>/2022/07/24/RecyclerView%E7%9A%84%E5%9B%9E%E6%94%B6%E5%A4%8D%E7%94%A8%E6%9C%BA%E5%88%B6/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一章，小编介绍了RecyclerView的高级用法——自定义LayoutManager。今天，我们来从源码的角度深度剖析RecyclerView，主要是对RecyclerView的回收复用机制熟悉掌握。</p>
+<h2 id="RecyclerView介绍"><a href="#RecyclerView介绍" class="headerlink" title="RecyclerView介绍"></a>RecyclerView介绍</h2><blockquote>
+<p>RecyclerView可以说是项目必备的系统高级控件，相比于传统的ListVIew，RecyclerView最大的优势就是四级缓存机制，ListView是两级缓存机制（屏幕内可见、屏幕外）。</p>
+</blockquote>
+<h3 id="四级缓存机制"><a href="#四级缓存机制" class="headerlink" title="四级缓存机制"></a>四级缓存机制</h3><ul>
+<li><p>mChangeScrap（主要与动画相关）与mAttachedScrap（一般这两算一级）</p>
+<p>用来缓存还在屏幕内的ViewHolder</p>
+</li>
+<li><p>mCachedViews</p>
+<p>用来缓存移除屏幕之外的ViewHolder</p>
+</li>
+<li><p>mViewCacheExtension</p>
+<p>用户的自定义扩展缓存，需要用户自己管理View的创建和缓存</p>
+</li>
+<li><p>RecyclerViewPool</p>
+<p>ViewHolder缓存池</p>
+</li>
+</ul>
+<h3 id="回收复用的入口"><a href="#回收复用的入口" class="headerlink" title="回收复用的入口"></a>回收复用的入口</h3><p>上一章中自定义LayoutManager中有<code> detachAndScrapAttachedViews(recycler!!)</code>这样一个方法，用于回收ViewHolder。下面就来介绍一下RecyclerView的回收。</p>
+<p>回收有两个入口，一是布局onLayout时，二是在fill填充itemVIew时</p>
+<ul>
+<li>onLayout</li>
+</ul>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220724172908391.png" alt="image-20220724172908391"></p>
+<p>1.因为RecyclerView的具体onLayout是交给具体的LayoutManager来实现的，所以回收复用的具体操作是由LayoutManager来完成，在自定义LayoutManager时需考虑这一点，参考系统提供的LinearLayoutManager</p>
+<p>2.上图的两个重心是LinearLayoutManager中回收入口的分叉和Recycler中的实际回收情况，而我们在自定义LayoutManager时，回收Holder只需要通过detachAndScrapAttachedViews这一个方法即可，具体是如何进行回收的我们不关心，但需要知道有哪几种，因为这对应了几种缓存，上面已经介绍了四级缓存。</p>
+<p>3.缓存池与mCacheViews的关系：</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144808720.png" alt="image-20220717144808720"></p>
+<blockquote>
+<p> <strong>注意：</strong>缓存池中保存的只是ViewHolder，没有数据，所以缓存池中的ViewHolder复用还需要绑定</p>
+</blockquote>
+<ul>
+<li><p>fill</p>
+<p>在fill中只考虑了recycleViewHolderInternal这种情况，滑动过程中会触发</p>
+</li>
+</ul>
+<p><strong>回收重要源码截图</strong></p>
+<blockquote>
+<p>如果觉得上述回收流程图理解起来抽象的，可见结合部分源码截图理解。</p>
+</blockquote>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717115957690.png" alt="image-20220717115957690"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717121349370.png" alt="image-20220717121349370"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717141954608.png" alt="image-20220717141954608"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717142707778.png"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717142831116.png" alt="image-20220717142831116"></p>
+<blockquote>
+<p>如果超过mCacheView最大值（2），就加入到缓存池</p>
+<p>缓存到缓存池之后，就从mCacheView中移除</p>
+<p>从“0”拿出，说明是先进先出的</p>
+</blockquote>
+<ul>
+<li>否则，直接进缓存池  和上面一样都是调用<code>addViewHolderToRecycledViewPool</code></li>
+</ul>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717143953794.png" alt="image-20220717143953794"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144255403.png" alt="image-20220717144255403"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144354585.png" alt="image-20220717144354585"></p>
+<blockquote>
+<p>ScrapData -&gt; ArrayList<ViewHolder></p>
+<p>mScrap-&gt;SpareArray<ScrapData></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144443187.png" alt="image-20220717144443187"></p>
+</blockquote>
+<p><strong>recycler.scrapView()</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717153414420.png" alt="image-20220717153414420"></p>
+<p><strong>ViewHolder的包装源码</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120045307.png" alt="image-20220717120045307"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120201306.png" alt="image-20220717120201306"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120910841.png" alt="image-20220717120910841"></p>
+<h3 id="复用入口"><a href="#复用入口" class="headerlink" title="复用入口"></a>复用入口</h3><blockquote>
+<p>复用的入口点同样也是两个，分别是布局时与滑动时。</p>
+</blockquote>
+<ul>
+<li><p>onLayout</p>
+<p>上一章中我们在自定义LayoutManager中就是重写的下面的<code>4.onLayoutChildren</code></p>
+</li>
+</ul>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717165422042.png" alt="image-20220717165422042"></p>
+<ul>
+<li>onTouch</li>
+</ul>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220724174858215.png" alt="image-20220724174858215"></p>
+<p>其实二者雷同，从fill入口开始，onLayout与onTouch几乎一样，只是第一张图用的时序图，绘制的比较详细。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>其实我们阅读源码了解原理机制，不用记住每个方法的入口、流程细节等，只需要记住大致过程，并理解重要部分。比如RecyclerView的四级缓存，以及回收复用的大致过程。</p>
+<p>这章的几个重点：</p>
+<p>1.从mAttachedScrap、mChangedScrap、mCachedViews中取出的holder不需要再绑定数据</p>
+<p>2.从RecyclerPool取出的holder需要重新绑定数据</p>
+<p>3.mAttachedScrap、mChangedScrap缓存的是屏幕看到的holder</p>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a href="https://wiwiyiyi.com/RecyclerView%E5%9B%9E%E6%94%B6%E4%B8%8E%E5%A4%8D%E7%94%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html#%E5%9B%9B-%E6%80%BB%E7%BB%93">https://wiwiyiyi.com/RecyclerView%E5%9B%9E%E6%94%B6%E4%B8%8E%E5%A4%8D%E7%94%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html#%E5%9B%9B-%E6%80%BB%E7%BB%93</a></p>
+]]></content>
+      <categories>
+        <category>高级UI</category>
+      </categories>
+      <tags>
+        <tag>RecyclerView</tag>
       </tags>
   </entry>
   <entry>
@@ -981,6 +981,18 @@
       </tags>
   </entry>
   <entry>
+    <title>测试</title>
+    <url>/2022/07/12/%E6%B5%8B%E8%AF%95/</url>
+    <content><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3><p><img src="/%E6%B5%8B%E8%AF%95.assets/1657615742531.png" alt="1657615742531"></p>
+]]></content>
+      <categories>
+        <category>其他</category>
+      </categories>
+      <tags>
+        <tag>测试</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>第一次上传测试</title>
     <url>/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
@@ -1046,18 +1058,6 @@
       </categories>
       <tags>
         <tag>高级UI</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>测试</title>
-    <url>/2022/07/12/%E6%B5%8B%E8%AF%95/</url>
-    <content><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3><p><img src="/%E6%B5%8B%E8%AF%95.assets/1657615742531.png" alt="1657615742531"></p>
-]]></content>
-      <categories>
-        <category>其他</category>
-      </categories>
-      <tags>
-        <tag>测试</tag>
       </tags>
   </entry>
 </search>
