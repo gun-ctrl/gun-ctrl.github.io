@@ -155,6 +155,23 @@
       </tags>
   </entry>
   <entry>
+    <title>adb shell input text不能输入中文的解决方案</title>
+    <url>/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</url>
+    <content><![CDATA[<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><p>adb默认是不支持Unicode编码的，无法通过adb shell input text 命令输入中文到手机或者模拟器。</p>
+<h3 id="解决步骤"><a href="#解决步骤" class="headerlink" title="解决步骤"></a>解决步骤</h3><ul>
+<li>1、安装ADBKeyBoard.apk文件(直接搜索就能找到)<br>打开手机或模拟器，adb install ADBKeyBoard.apk安装该输入法<br>在手机上直接安装也可</li>
+<li>2、设置默认输入法<br>打开手机设置 -&gt; 点击语法与输入法 -&gt; 点击输入法管理 -&gt; 启用ADBKeyboard<br>重启手机后即可使用该输入法</li>
+<li>3、输入adb命令测试中文输入<br>adb shell am broadcast -a ADB_INPUT_TEXT –es msg ‘这是一段adb中文测试’</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Android随笔</category>
+      </categories>
+      <tags>
+        <tag>adb</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>adb命令</title>
     <url>/2022/07/19/adb%E5%91%BD%E4%BB%A4/</url>
     <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>本文为小编学习总结的一些adb的常用命令，可能一些命令有待验证，更多内容可以参考<a href="https://github.com/mzlogin/awesome-adb#%E6%8C%87%E5%AE%9A-adb-server-%E7%9A%84%E7%BD%91%E7%BB%9C%E7%AB%AF%E5%8F%A3">adb用法大全</a></p>
@@ -472,23 +489,6 @@
 </ol>
 <h4 id="adb-shell-input-text无法响应中文输入的问题"><a href="#adb-shell-input-text无法响应中文输入的问题" class="headerlink" title="adb shell input text无法响应中文输入的问题"></a>adb shell input text无法响应中文输入的问题</h4><p><a href="http://banmaman.com/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">adb shell input text不能输入中文的解决方案</a></p>
 <h2 id="adb部分总结"><a href="#adb部分总结" class="headerlink" title="adb部分总结"></a>adb部分总结</h2><p><a href="https://www.jianshu.com/p/f6fa6759e747">adb小结</a></p>
-]]></content>
-      <categories>
-        <category>Android随笔</category>
-      </categories>
-      <tags>
-        <tag>adb</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>adb shell input text不能输入中文的解决方案</title>
-    <url>/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</url>
-    <content><![CDATA[<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><p>adb默认是不支持Unicode编码的，无法通过adb shell input text 命令输入中文到手机或者模拟器。</p>
-<h3 id="解决步骤"><a href="#解决步骤" class="headerlink" title="解决步骤"></a>解决步骤</h3><ul>
-<li>1、安装ADBKeyBoard.apk文件(直接搜索就能找到)<br>打开手机或模拟器，adb install ADBKeyBoard.apk安装该输入法<br>在手机上直接安装也可</li>
-<li>2、设置默认输入法<br>打开手机设置 -&gt; 点击语法与输入法 -&gt; 点击输入法管理 -&gt; 启用ADBKeyboard<br>重启手机后即可使用该输入法</li>
-<li>3、输入adb命令测试中文输入<br>adb shell am broadcast -a ADB_INPUT_TEXT –es msg ‘这是一段adb中文测试’</li>
-</ul>
 ]]></content>
       <categories>
         <category>Android随笔</category>
@@ -925,6 +925,18 @@
       </tags>
   </entry>
   <entry>
+    <title>测试</title>
+    <url>/2022/07/12/%E6%B5%8B%E8%AF%95/</url>
+    <content><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3><p><img src="/%E6%B5%8B%E8%AF%95.assets/1657615742531.png" alt="1657615742531"></p>
+]]></content>
+      <categories>
+        <category>其他</category>
+      </categories>
+      <tags>
+        <tag>测试</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>括号问题</title>
     <url>/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/</url>
     <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给出n对括号，请编写一个函数来生成所有的由n对括号组成的合法组合。</p>
@@ -958,18 +970,6 @@
       </tags>
   </entry>
   <entry>
-    <title>测试</title>
-    <url>/2022/07/12/%E6%B5%8B%E8%AF%95/</url>
-    <content><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3><p><img src="/%E6%B5%8B%E8%AF%95.assets/1657615742531.png" alt="1657615742531"></p>
-]]></content>
-      <categories>
-        <category>其他</category>
-      </categories>
-      <tags>
-        <tag>测试</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>按Z字形顺序打印二叉树</title>
     <url>/2022/07/17/%E6%8C%89Z%E5%AD%97%E5%BD%A2%E9%A1%BA%E5%BA%8F%E6%89%93%E5%8D%B0%E4%BA%8C%E5%8F%89%E6%A0%91/</url>
     <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给定一个二叉树，返回该二叉树的之字形层序遍历，（第一层从左向右，下一层从右向左，一直这样交替）<br>数据范围：0≤n≤1500,树上每个节点的val满足∣val∣≤1500<br>要求：空间复杂度：O(n)，时间复杂度：O(n)</p>
@@ -991,6 +991,24 @@
       <tags>
         <tag>算法</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>第一次上传测试</title>
+    <url>/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+]]></content>
   </entry>
   <entry>
     <title>自定义LayoutManager实现卡片滑动</title>
@@ -1041,23 +1059,5 @@
       <tags>
         <tag>高级UI</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>第一次上传测试</title>
-    <url>/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-]]></content>
   </entry>
 </search>
