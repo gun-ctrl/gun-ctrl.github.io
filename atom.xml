@@ -6,7 +6,7 @@
   <link href="https://gun-ctrl.github.io/atom.xml" rel="self"/>
   
   <link href="https://gun-ctrl.github.io/"/>
-  <updated>2022-07-26T11:03:33.494Z</updated>
+  <updated>2022-07-31T03:58:50.986Z</updated>
   <id>https://gun-ctrl.github.io/</id>
   
   <author>
@@ -15,6 +15,30 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>阻塞队列与线程池机制</title>
+    <link href="https://gun-ctrl.github.io/2022/07/30/%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E4%B8%8E%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%9C%BA%E5%88%B6/"/>
+    <id>https://gun-ctrl.github.io/2022/07/30/%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E4%B8%8E%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%9C%BA%E5%88%B6/</id>
+    <published>2022-07-30T12:58:23.730Z</published>
+    <updated>2022-07-31T03:58:50.986Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="创建线程的方式"><a href="#创建线程的方式" class="headerlink" title="创建线程的方式"></a>创建线程的方式</h2><ul><li>1.Thread</li><li>2.Runnable（实例化接口，重新run方法，放入Thread中执行）</li></ul><p>为什么Callable方式不算?</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654148325145.png" alt="1654148325145"></p><blockquote><p>首先，我们都知道创建线程都需要通过Thread，那么我们来看一下Thread的构造函数</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654148402777.png" alt="1654148402777"></p><p>可以看到，Thread构造函数中压根就没有Callable类型的参数</p><p>接着，我们再来看看Callable，Callable是继承自FutureTask</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654148426071.png" alt="1654148426071"></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654148455965.png" alt="1654148455965"></p><p>通过上面的源码截图，我们可以看出来Callable本质上还是Runnable的一种实现</p></blockquote><h2 id="CAS"><a href="#CAS" class="headerlink" title="CAS"></a>CAS</h2><p><strong>Compare And Swap</strong></p><blockquote><p>提及CAS之前，我们先来提一下原子操作，原子操作就是一气呵成，中间不能被打断，学过操作系统的朋友应该和熟悉，没错，就类似于操作系统中的中断原语。</p></blockquote><h3 id="CAS原理"><a href="#CAS原理" class="headerlink" title="CAS原理"></a>CAS原理</h3><p>利用了现代处理器都支持的CAS的指令，循环这个指令，直到成功为止。</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220730211300257.png" alt="image-20220730211300257"></p><blockquote><p>会有两个重要的属性变量，旧值与新值（需要更改的值），每次进入前都会用旧值与内存中的变量值进行比较，如果相同，就会用新值替换内存中的变量值，否则将再次循环上述过程。</p></blockquote><h3 id="CAS的问题"><a href="#CAS的问题" class="headerlink" title="CAS的问题"></a>CAS的问题</h3><h4 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h4><p><strong>什么是ABA问题呢？</strong></p><blockquote><p>就是旧值为A，被替换为新值B，后面的线程又替换为新值A。再后面的线程对比其存储的旧值与内存中的值相等，但是它并不知道中间有个A-&gt;B-&gt;A的过程。</p></blockquote><p><strong>解决方案</strong></p><p>通过打标识的方式标记：</p><p>1.AtomicMarkableReference-&gt;仅仅标识发生了ABA现象</p><p>2.AtomicStampedReference-&gt;可以知道发生了几次ABA现象</p><h4 id="开销问题"><a href="#开销问题" class="headerlink" title="开销问题"></a>开销问题</h4><blockquote><p>CAS是一个不断循环检测的过程，毫无疑问，这将带来一定的开销。</p></blockquote><h4 id="只能保证一个共享变量的原子操作"><a href="#只能保证一个共享变量的原子操作" class="headerlink" title="只能保证一个共享变量的原子操作"></a>只能保证一个共享变量的原子操作</h4><ul><li>jdk中相关原子操作类的使用<ul><li>更新基本类型：AtomicBoolean，AtomicInteger，AtomicLong</li><li>更新数组：AtomicIntegerArray，AtomicLongArray，AtomicReferenceArray</li><li>更新引用类型：AtomicReference，AtomicMarkableReference（只关心该没改过），AtomicStampedReference（还关心改过几次）</li></ul></li></ul><p>有些时候对于某些简单的操作采用加锁的话未免有些过重了，可以采用原子类型如果你需要改变多个变量，可以进行封装，通过AtomicReference来管理。</p><h2 id="线程池机制"><a href="#线程池机制" class="headerlink" title="线程池机制"></a>线程池机制</h2><h3 id="ThreadLocal简介"><a href="#ThreadLocal简介" class="headerlink" title="ThreadLocal简介"></a>ThreadLocal简介</h3><blockquote><p>线程本地变量，也有些地方叫做线程本地存储，其实意思差不多。ThreadLocal可以让每个线程拥有属于自己的变量的副本，不会和其他线程的变量副本冲突，实现了线程的数据隔离</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-867510bb5ec6c143.png" alt="threadLocal"></p></blockquote><h3 id="线程池简介"><a href="#线程池简介" class="headerlink" title="线程池简介"></a>线程池简介</h3><p><strong>什么是线程池？为什么要用线程池？</strong></p><blockquote><ul><li>Thread线程属于操作系统的资源，消耗CPU、内存 -&gt;降低资源消耗</li><li>线程有创建、执行、销毁的时间，所以为什么不事先准备好呢？-&gt;提高响应度</li><li>所以需要一个策略机制来管理线程-&gt;提高线程的可管理性</li></ul></blockquote><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220731114721901.png" alt="image-20220731114721901"></p><h3 id="线程池的参数"><a href="#线程池的参数" class="headerlink" title="线程池的参数"></a><strong>线程池的参数</strong></h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654579455105.png" alt="1654140925994"></p><ul><li><p>keepAliveSize和TimeUnit这俩参数控制空闲线程存活的时间</p></li><li><p>ThreadFactory对创建线程时做这些微调工作</p></li><li><p>RejectedExecutionHandler 拒绝策略（阻塞队列满，任务数超过了最大线程数，那么就会拒绝）</p><ul><li>DiscardOldestPolicy 抛弃最老的，也就是队列队首的任务</li><li>AbortPolicy 直接抛出异常</li><li>CallerRunsPolicy  谁调用谁执行</li><li>DiscardPolicy 丢弃最新提交的任务</li></ul><p>当然也可以自己实现接口自定义拒绝策略</p></li><li><p>阻塞队列BlockingQueue</p></li></ul><h3 id="阻塞队列"><a href="#阻塞队列" class="headerlink" title="阻塞队列"></a>阻塞队列</h3><ul><li>ArrayBlockingQueue：一个由数组结构组成的有界阻塞队列</li><li>LinkedBlockingQueue：一个由链表结构组成的有界阻塞队列</li><li>PriorityBlockingQueue：一个支持优先级排序的无界阻塞队列</li><li>DelayQueue：一个使用优先级队列实现的无界阻塞队列</li><li>SynchronousQueue：一个不存储元素的阻塞队列</li><li>LinkedTransferQueue：一个由链表结构组成的无界阻塞队列</li><li>LinkedBlockingDeque：一个由链表结构组成的双向阻塞队列</li></ul><p>这里以okhttp中的实用场景对其中几种做简介：</p><p>在OkHttp的分发器中的线程池定义如上，其实就和 Executors.newCachedThreadPool()创建的线程一样。首先核心线程为0，表示线程池不会一直为我们缓存线程，线程池中所有线程都是在60s内没有工作就会被回收。而最大线程Integer .MAX_VALUE与等待队列synchronousQueue的组合能够得到最大的吞吐量。即当需要线程池执行任务时，如果不存在空闲线程不需要等待，马上新建线程执行任务!等待队列的不同指定了线程池的不同排队机制。一般来说，等待队列BlockingQueue有: (ArrayBlockingQueue 、LinkedBlockingQueue 与synchronousQueue 。</p><p>假设向线程池提交任务时，核心线程都被占用的情况下:</p><p>ArrayBlockingQueue :基于数组的阻塞队列，初始化需要指定固定大小</p><p>当使用此队列时，向线程池提交任务，会首先加入到等待队列中，当等待队列满了之后，再次提交任务，尝试加入队列就会失败，这时就会检查如果当前线程池中的线程数未达到最大线程，则会新建线程执行新提交的任务。所以最终可能出现后提交的任务先执行，而先提交的任务一直在等待。</p><p>LinkedBlockingQueue :基于链表实现的阻塞队列，初始化可以指定大小，也可以不指定。</p><p>当指定大小后，行为就和ArrayBlockingQueue一致。而如果未指定大小，则会使用默认的Integer.MAX_VALUE作为队列大小。这时候就会出现线程池的最大线程数参数无用，因为无论如何，向线程池提交任务加入等待队列都会成功。最终意味着所有任务都是在核心线程执行。如果核心线程一直被占，那就一直等待。</p><p>SynchronousQueue :无容量的队列。</p><p>使用此队列意味着希望获得最大并发量。因为无论如何，向线程池提交任务，往队列提交任务都会失败。而失败后如果没有空闲的非核心线程，就会检查如果当前线程池中的线程数未达到最大线程，则会新建线程执行新提交的任务。完全没有任何等待，唯一制约它的就是最大线程数的个数。因此一般配合Integer.MAX_VALUE就实现了真正的无等待。</p><p>但是需要注意的时，我们都知道，进程的内存是存在限制的，而每一个线程都需要分配一定的内存。所以线程并不能无限个数。那么当设置最大线程数为Integer.MAX_VALUE时，OkHttp同时还有最大请求任务执行个数: 64的限制。这样即解决了这个问题同时也能获得最大吞吐。</p><h3 id="两种线程池的提交任务的方法"><a href="#两种线程池的提交任务的方法" class="headerlink" title="两种线程池的提交任务的方法"></a>两种线程池的提交任务的方法</h3><ul><li><p>execute(不关心有无返回结果)</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654579682668.png" alt="1654142332347"></p></li><li><p>submit</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654579624953.png" alt="1654142400705"></p></li></ul><h3 id="线程池的关闭"><a href="#线程池的关闭" class="headerlink" title="线程池的关闭"></a>线程池的关闭</h3><ul><li><p>shutdown 尝试关闭一个线程，把当前没有执行任务的线程中断</p></li><li><p>shutdownNow 不管有没有执行任务的线程，都尝试中断</p><p>但是不一定成功  所谓线程的中断是一个协作机制  看任务执行方</p></li></ul><h3 id="合理配置线程池资源"><a href="#合理配置线程池资源" class="headerlink" title="合理配置线程池资源"></a>合理配置线程池资源</h3><p><strong>任务特性</strong></p><ul><li><p>CPU密集型  纯计算</p><p>配置最大线程数不要超过机器的CPU核心数（Runtime.getRuntime()）顶多+1（保证核心线程有事做），否则切换线程带来时间浪费</p></li><li><p>IO密集型 与网络、读取磁盘等IO操作相关的</p><p>最大线程数：机器的CPU核心线程数*2（推荐的经验值）</p></li><li><p>混合型 兼并上面两者 </p><p>如果两者的执行时间相差不大，拆分成两个线程池专门处理各自类型</p><p>如果两者相差很大，不用拆分（谁大配置谁）。</p></li></ul><p>核心线程数，看业务（详情参考Okhttp）</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h2 id=&quot;创建线程的方式&quot;&gt;&lt;a href=&quot;#创建线程的方式&quot; class=&quot;headerlink&quot; title=&quot;创建线程的方式&quot;&gt;&lt;/a&gt;创建线程的方式&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;1.Thread&lt;/li&gt;
+&lt;li&gt;2.Runnable（实例化接口，重新run方法，放</summary>
+      
+    
+    
+    
+    <category term="Java筑基" scheme="https://gun-ctrl.github.io/categories/Java%E7%AD%91%E5%9F%BA/"/>
+    
+    
+  </entry>
   
   <entry>
     <title>adb小结</title>
