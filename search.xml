@@ -1,6 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>RecyclerView高级用法——吸顶效果</title>
+    <url>/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/</url>
+    <content><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>我们对RecyclerView的使用不能仅仅停留在表面，可以探索一些高级的用法——自定义，不过要实现这些的前提是必须对RecycleView的源码流程有所了解。今天小编就略讲一下，主要是和今天的主体有关的内容。我们今天就来实现如下的吸顶效果。</p>
+<h3 id="通过绘制实现RecyclerView的吸顶效果"><a href="#通过绘制实现RecyclerView的吸顶效果" class="headerlink" title="通过绘制实现RecyclerView的吸顶效果"></a>通过绘制实现RecyclerView的吸顶效果</h3><p>ItemDecoration</p>
+<p>ItemDecoration允许应用给具体的View添加具体的图画或者layout的偏移，对于绘制View之间的分割线，视觉分组边界等等是非常有用的。</p>
+<p>当我们调用addItemDecoration()方法添加decoration的时候，RecyclerView就会调用该类的onDraw方法区绘制分割线，也就是说：分割线是绘制出来的。</p>
+<blockquote>
+<p>RecyclerView.ItemDecoration，该类为抽象类，官方目前只提供了一个实现类DividerItemDecoration。</p>
+<p>并且只有LinearLayoutManager能够使用</p>
+</blockquote>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719205304144.png" alt="image-20220719205304144"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C.gif" alt="吸顶效果"></p>
+<p>要实现这样的吸顶效果，首先，就需要了解一下RecyclerView.ItemDecoration的绘制流程。</p>
+<p>1.onDraw</p>
+<p>在绘制每个itemView之前绘制，上图中的每个跟着滑动的头部就是在此处绘制</p>
+<p>2.onDrawOver</p>
+<p>在绘制了每个ItemView之后绘制，上图中固定的顶部在此处绘制</p>
+<p>3.getItemOffsets</p>
+<p>设置偏移值，可以在绘制itemView时设置偏移值，其实上demo中的每个头部（红色区域）就是在绘制itemView预留了部分空间用于绘制头部。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719210625576.png" alt="image-20220719210625576"></p>
+<blockquote>
+<p>也就是说绘制流程是：onDraw()-&gt;ItemView-&gt;onDrawOver</p>
+</blockquote>
+<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ul>
+<li>在Adapter中创建两个方法<ul>
+<li>1.获取组名</li>
+<li>2.判断是否是组的头部<ul>
+<li>首先，position&#x3D;0一定是组的头部</li>
+<li>其次，可以通过前后两次组名判断当前item是不是组的头部</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line"><span class="comment">//是否是 组的第一个</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Boolean <span class="title">isGroupHeader</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (position==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="type">String</span> currentName = <span class="built_in">getGroupName</span>(position);</span><br><span class="line">            <span class="type">String</span> preGroupName = <span class="built_in">getGroupName</span>(position<span class="number">-1</span>);</span><br><span class="line">            <span class="keyword">if</span> (preGroupName.<span class="built_in">equals</span>(currentName))&#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="type">String</span> <span class="title">getGroupName</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> modelList.<span class="built_in">get</span>(position).<span class="built_in">getGroupName</span>();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>自定义分割线</p>
+<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void on<span class="constructor">Draw(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">        super.on<span class="constructor">Draw(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">        <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">            <span class="built_in">int</span> count  = parent.get<span class="constructor">ChildCount()</span>;</span><br><span class="line">            <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">            <span class="built_in">int</span> right  = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">                <span class="comment">//获取对应的View</span></span><br><span class="line">                View view = parent.get<span class="constructor">ChildAt(<span class="params">i</span>)</span>;</span><br><span class="line">                <span class="comment">//获取View的布局位置</span></span><br><span class="line">                <span class="built_in">int</span> position = parent.get<span class="constructor">ChildLayoutPosition(<span class="params">view</span>)</span>;</span><br><span class="line">                <span class="comment">//判断是不是头部</span></span><br><span class="line">                boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>)</span>;</span><br><span class="line">                <span class="keyword">if</span> (isGroupHeader<span class="operator"> &amp;&amp; </span>view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                    String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">                    textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>, 0, <span class="params">groupName</span>.<span class="params">length</span>()</span>, textRect);</span><br><span class="line">                    c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight/<span class="number">2</span>+textRect.height<span class="literal">()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line"></span><br><span class="line">                &#125;<span class="keyword">else</span> <span class="keyword">if</span> (view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="comment">//分割线</span></span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-<span class="number">4</span>,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">   public void on<span class="constructor">DrawOver(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">       super.on<span class="constructor">DrawOver(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">       <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">           ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">           <span class="comment">//返回可见区域的第一个item的position</span></span><br><span class="line">           <span class="built_in">int</span> position = ((LinearLayoutManager)parent.get<span class="constructor">LayoutManager()</span>).find<span class="constructor">FirstVisibleItemPosition()</span>;</span><br><span class="line">           <span class="comment">//获取对应的position的View</span></span><br><span class="line">           View itemView = parent.find<span class="constructor">ViewHolderForAdapterPosition(<span class="params">position</span>)</span>.itemView;</span><br><span class="line">           <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">           <span class="built_in">int</span> right = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">           <span class="built_in">int</span> top = parent.get<span class="constructor">PaddingTop()</span>;</span><br><span class="line">           <span class="comment">//当下一个是组的头部时</span></span><br><span class="line">           boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>+1)</span>;</span><br><span class="line">           String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">           textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>,0,<span class="params">groupName</span>.<span class="params">length</span>()</span>,textRect);</span><br><span class="line">           <span class="keyword">if</span> (isGroupHeader)&#123;</span><br><span class="line">               <span class="comment">//对顶部进行缩小效果，在视觉上是被下一个组的顶部推进去的</span></span><br><span class="line">               <span class="built_in">int</span> bottom = <span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>min(groupHeaderHeight,itemView.get<span class="constructor">Bottom()</span>-parent.get<span class="constructor">PaddingTop()</span>);</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.clip<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">bottom</span>-<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">groupHeaderHeight</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight pf"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void getItemOffsets(@N<span class="keyword">on</span>Null Rect <span class="keyword">out</span>Rect, @N<span class="keyword">on</span>Null View view, @N<span class="keyword">on</span>Null RecyclerView <span class="keyword">parent</span>, @N<span class="keyword">on</span>Null RecyclerView.State <span class="keyword">state</span>) &#123;</span><br><span class="line">        super.getItemOffsets(<span class="keyword">out</span>Rect, view, <span class="keyword">parent</span>, <span class="keyword">state</span>);</span><br><span class="line">        if (<span class="keyword">parent</span>.getAdapter() instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) <span class="keyword">parent</span>.getAdapter();</span><br><span class="line">            int position = <span class="keyword">parent</span>.getChildAdapterPosition(view);</span><br><span class="line">            boolean isGroupHeader = adapter.isGroupHeader(position);</span><br><span class="line">            //判断itemView是不是头部</span><br><span class="line">            if (isGroupHeader)&#123;</span><br><span class="line">                //如果是头部，预留更大的地方</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="keyword">group</span>HeaderHeight,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="number">4</span>,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>其实这部分的重点就是自定义分割线（ItemDecoration），弄清绘制顺序以及设置偏移值的作用就简单多了。当然，难点（也不是难点）就是弄清除尺寸参数,特别是尺寸变化引起的换组顶部推动效果。</p>
+<p>其次就是特别注意有padding的情况，相信大家看出小编在这设置了顶部padding，有padding的时候需要注意尺寸。（不过有设置padding的情况很少）</p>
+<p><a href="https://github.com/gun-ctrl/RecyclerViewPro">全部代码</a></p>
+]]></content>
+      <categories>
+        <category>Android高级UI</category>
+      </categories>
+      <tags>
+        <tag>高级UI</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>NestedScrollView嵌套滑动原理</title>
     <url>/2022/08/06/NestedScrollView%E5%B5%8C%E5%A5%97%E6%BB%91%E5%8A%A8%E5%8E%9F%E7%90%86/</url>
     <content><![CDATA[<h2 id="事件分发机制简介"><a href="#事件分发机制简介" class="headerlink" title="事件分发机制简介"></a>事件分发机制简介</h2><p>其实小编应该在前面准备一章关于Android的事件分发和处理机制的专题，因为时间原因和内容源码比较多吧(小编有强迫症，不想不贴源码)，不过还是因为小编懒，哈哈。这里就对事件分发机制做一个简单的回忆，大家感兴趣的可以去看看相关资料和源码，小编后面有空也会出一期。</p>
@@ -115,62 +171,6 @@
       <categories>
         <category>高级UI</category>
       </categories>
-  </entry>
-  <entry>
-    <title>RecyclerView高级用法——吸顶效果</title>
-    <url>/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/</url>
-    <content><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>我们对RecyclerView的使用不能仅仅停留在表面，可以探索一些高级的用法——自定义，不过要实现这些的前提是必须对RecycleView的源码流程有所了解。今天小编就略讲一下，主要是和今天的主体有关的内容。我们今天就来实现如下的吸顶效果。</p>
-<h3 id="通过绘制实现RecyclerView的吸顶效果"><a href="#通过绘制实现RecyclerView的吸顶效果" class="headerlink" title="通过绘制实现RecyclerView的吸顶效果"></a>通过绘制实现RecyclerView的吸顶效果</h3><p>ItemDecoration</p>
-<p>ItemDecoration允许应用给具体的View添加具体的图画或者layout的偏移，对于绘制View之间的分割线，视觉分组边界等等是非常有用的。</p>
-<p>当我们调用addItemDecoration()方法添加decoration的时候，RecyclerView就会调用该类的onDraw方法区绘制分割线，也就是说：分割线是绘制出来的。</p>
-<blockquote>
-<p>RecyclerView.ItemDecoration，该类为抽象类，官方目前只提供了一个实现类DividerItemDecoration。</p>
-<p>并且只有LinearLayoutManager能够使用</p>
-</blockquote>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719205304144.png" alt="image-20220719205304144"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C.gif" alt="吸顶效果"></p>
-<p>要实现这样的吸顶效果，首先，就需要了解一下RecyclerView.ItemDecoration的绘制流程。</p>
-<p>1.onDraw</p>
-<p>在绘制每个itemView之前绘制，上图中的每个跟着滑动的头部就是在此处绘制</p>
-<p>2.onDrawOver</p>
-<p>在绘制了每个ItemView之后绘制，上图中固定的顶部在此处绘制</p>
-<p>3.getItemOffsets</p>
-<p>设置偏移值，可以在绘制itemView时设置偏移值，其实上demo中的每个头部（红色区域）就是在绘制itemView预留了部分空间用于绘制头部。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719210625576.png" alt="image-20220719210625576"></p>
-<blockquote>
-<p>也就是说绘制流程是：onDraw()-&gt;ItemView-&gt;onDrawOver</p>
-</blockquote>
-<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ul>
-<li>在Adapter中创建两个方法<ul>
-<li>1.获取组名</li>
-<li>2.判断是否是组的头部<ul>
-<li>首先，position&#x3D;0一定是组的头部</li>
-<li>其次，可以通过前后两次组名判断当前item是不是组的头部</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line"><span class="comment">//是否是 组的第一个</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Boolean <span class="title">isGroupHeader</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (position==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="type">String</span> currentName = <span class="built_in">getGroupName</span>(position);</span><br><span class="line">            <span class="type">String</span> preGroupName = <span class="built_in">getGroupName</span>(position<span class="number">-1</span>);</span><br><span class="line">            <span class="keyword">if</span> (preGroupName.<span class="built_in">equals</span>(currentName))&#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="type">String</span> <span class="title">getGroupName</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> modelList.<span class="built_in">get</span>(position).<span class="built_in">getGroupName</span>();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>自定义分割线</p>
-<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void on<span class="constructor">Draw(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">        super.on<span class="constructor">Draw(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">        <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">            <span class="built_in">int</span> count  = parent.get<span class="constructor">ChildCount()</span>;</span><br><span class="line">            <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">            <span class="built_in">int</span> right  = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">                <span class="comment">//获取对应的View</span></span><br><span class="line">                View view = parent.get<span class="constructor">ChildAt(<span class="params">i</span>)</span>;</span><br><span class="line">                <span class="comment">//获取View的布局位置</span></span><br><span class="line">                <span class="built_in">int</span> position = parent.get<span class="constructor">ChildLayoutPosition(<span class="params">view</span>)</span>;</span><br><span class="line">                <span class="comment">//判断是不是头部</span></span><br><span class="line">                boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>)</span>;</span><br><span class="line">                <span class="keyword">if</span> (isGroupHeader<span class="operator"> &amp;&amp; </span>view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                    String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">                    textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>, 0, <span class="params">groupName</span>.<span class="params">length</span>()</span>, textRect);</span><br><span class="line">                    c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight/<span class="number">2</span>+textRect.height<span class="literal">()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line"></span><br><span class="line">                &#125;<span class="keyword">else</span> <span class="keyword">if</span> (view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="comment">//分割线</span></span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-<span class="number">4</span>,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">   public void on<span class="constructor">DrawOver(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">       super.on<span class="constructor">DrawOver(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">       <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">           ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">           <span class="comment">//返回可见区域的第一个item的position</span></span><br><span class="line">           <span class="built_in">int</span> position = ((LinearLayoutManager)parent.get<span class="constructor">LayoutManager()</span>).find<span class="constructor">FirstVisibleItemPosition()</span>;</span><br><span class="line">           <span class="comment">//获取对应的position的View</span></span><br><span class="line">           View itemView = parent.find<span class="constructor">ViewHolderForAdapterPosition(<span class="params">position</span>)</span>.itemView;</span><br><span class="line">           <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">           <span class="built_in">int</span> right = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">           <span class="built_in">int</span> top = parent.get<span class="constructor">PaddingTop()</span>;</span><br><span class="line">           <span class="comment">//当下一个是组的头部时</span></span><br><span class="line">           boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>+1)</span>;</span><br><span class="line">           String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">           textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>,0,<span class="params">groupName</span>.<span class="params">length</span>()</span>,textRect);</span><br><span class="line">           <span class="keyword">if</span> (isGroupHeader)&#123;</span><br><span class="line">               <span class="comment">//对顶部进行缩小效果，在视觉上是被下一个组的顶部推进去的</span></span><br><span class="line">               <span class="built_in">int</span> bottom = <span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>min(groupHeaderHeight,itemView.get<span class="constructor">Bottom()</span>-parent.get<span class="constructor">PaddingTop()</span>);</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.clip<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">bottom</span>-<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">groupHeaderHeight</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight pf"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void getItemOffsets(@N<span class="keyword">on</span>Null Rect <span class="keyword">out</span>Rect, @N<span class="keyword">on</span>Null View view, @N<span class="keyword">on</span>Null RecyclerView <span class="keyword">parent</span>, @N<span class="keyword">on</span>Null RecyclerView.State <span class="keyword">state</span>) &#123;</span><br><span class="line">        super.getItemOffsets(<span class="keyword">out</span>Rect, view, <span class="keyword">parent</span>, <span class="keyword">state</span>);</span><br><span class="line">        if (<span class="keyword">parent</span>.getAdapter() instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) <span class="keyword">parent</span>.getAdapter();</span><br><span class="line">            int position = <span class="keyword">parent</span>.getChildAdapterPosition(view);</span><br><span class="line">            boolean isGroupHeader = adapter.isGroupHeader(position);</span><br><span class="line">            //判断itemView是不是头部</span><br><span class="line">            if (isGroupHeader)&#123;</span><br><span class="line">                //如果是头部，预留更大的地方</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="keyword">group</span>HeaderHeight,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="number">4</span>,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></li>
-</ul>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>其实这部分的重点就是自定义分割线（ItemDecoration），弄清绘制顺序以及设置偏移值的作用就简单多了。当然，难点（也不是难点）就是弄清除尺寸参数,特别是尺寸变化引起的换组顶部推动效果。</p>
-<p>其次就是特别注意有padding的情况，相信大家看出小编在这设置了顶部padding，有padding的时候需要注意尺寸。（不过有设置padding的情况很少）</p>
-<p><a href="https://github.com/gun-ctrl/RecyclerViewPro">全部代码</a></p>
-]]></content>
-      <categories>
-        <category>Android高级UI</category>
-      </categories>
-      <tags>
-        <tag>高级UI</tag>
-      </tags>
   </entry>
   <entry>
     <title>RecyclerView的回收复用机制</title>
@@ -614,101 +614,6 @@
       </tags>
   </entry>
   <entry>
-    <title>京东淘宝首页二级联动</title>
-    <url>/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/</url>
-    <content><![CDATA[<p><strong>说明：</strong>这篇文章主要用于作者临时观看，因为涉及版权问题，所以短时间内会删除</p>
-<h2 id="京东淘宝首页二级联动"><a href="#京东淘宝首页二级联动" class="headerlink" title="京东淘宝首页二级联动"></a>京东淘宝首页二级联动</h2><h3 id="单点触摸与多点触摸"><a href="#单点触摸与多点触摸" class="headerlink" title="单点触摸与多点触摸"></a>单点触摸与多点触摸</h3><p>####单点触摸</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212127652.png" alt="image-20220718212127652"></p>
-<p>####多点触摸</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212142549.png" alt="image-20220718212142549"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212203113.png" alt="image-20220718212203113"></p>
-<blockquote>
-<p>面试题</p>
-<p>一个move事件 中间有多少个手指的信息-&gt;有多少个手指就有多少个手指信息-&gt;最多32个</p>
-</blockquote>
-<h3 id="Touch事件源码"><a href="#Touch事件源码" class="headerlink" title="Touch事件源码"></a>Touch事件源码</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212217242.png" alt="image-20220718212217242"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212232559.png" alt="image-20220718212232559"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212254074.png" alt="image-20220718212254074"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212316235.png" alt="image-20220718212316235"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212335895.png" alt="image-20220718212335895"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212349700.png" alt="image-20220718212349700"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212414454.png" alt="image-20220718212414454"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212432841.png" alt="image-20220718212432841"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212452115.png" alt="image-20220718212452115"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212515213.png" alt="image-20220718212515213"></p>
-<p>上述的disallowIntercept及相关内容就是所谓的“尚方宝剑”</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212536424.png" alt="image-20220718212536424"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212555410.png" alt="image-20220718212555410"></p>
-<p> <img src="C:\Users\15786\AppData\Roaming\Typora\typora-user-images\image-20220718212609465.png" alt="image-20220718212609465"></p>
-<h3 id="嵌套滑动"><a href="#嵌套滑动" class="headerlink" title="嵌套滑动"></a>嵌套滑动</h3><blockquote>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212649556.png" alt="image-20220718212649556"></p>
-</blockquote>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212704210.png" alt="image-20220718212704210"></p>
-<p>并且从上面可以看出NestedScrollView既可以做“父亲”，也可以做“孩子”</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212718655.png" alt="image-20220718212718655"></p>
-<p>“孩子”有三个版本</p>
-<p>三个版本之间是的关系  同样“父亲”也是一样</p>
-<blockquote>
-<p>版本2与版本1相比  增加了type 如惯性滑动效果</p>
-</blockquote>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212737829.png" alt="image-20220718212737829"></p>
-<h4 id="吸顶效果"><a href="#吸顶效果" class="headerlink" title="吸顶效果"></a>吸顶效果</h4><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212758009.png" alt="image-20220718212758009"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212818443.png" alt="image-20220718212818443"></p>
-<p>onFinishInflate()中获取第一个孩子的第二个孩子，从下图可以看出也就是是第二个LinearLayout</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212839006.png" alt="image-20220718212839006"></p>
-<h4 id="继续嵌套滑动"><a href="#继续嵌套滑动" class="headerlink" title="继续嵌套滑动"></a>继续嵌套滑动</h4><p>嵌套滑动-&gt;是由孩子主动的   触发的</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212906775.png" alt="image-20220718212906775"></p>
-<p>google为了方便我们处理嵌套滑动，所以提供了这个帮助类 -&gt; getScrollingChildHelper()</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212928635.png" alt="image-20220718212928635"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212942972.png" alt="image-20220718212942972"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213001121.png" alt="image-20220718213001121"></p>
-<p>while(p!&#x3D;null)一直找，直到找到支持嵌套滑动</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213017801.png" alt="image-20220718213017801"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213043191.png" alt="image-20220718213043191"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213058717.png" alt="image-20220718213058717"></p>
-<p>所以它没有滑，“父亲”划不动的时候，它(NestedScrollView)才动</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213122243.png" alt="image-20220718213122243"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213138627.png" alt="image-20220718213138627"></p>
-<p>问题描述：需求是整个页面滑动，当父View滑不动的时候，子View才动。问题出现的原因就是上面的文字描述，要想解决</p>
-<p>问题的解决：重写onNestedPreScroll()方法，做一些设置，如果自己还能滑，那么就自己滑，并且需要记录一下（consumed[1]，0记录的x，1记录的y）</p>
-<ul>
-<li><p>注意：NetestScrollLayout是自定义继承NetestScrollView的</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213208543.png" alt="image-20220718213208543"></p>
-</li>
-</ul>
-<h3 id="惯性滑动"><a href="#惯性滑动" class="headerlink" title="惯性滑动"></a>惯性滑动</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213227462.png" alt="image-20220718213227462"></p>
-<p>记录下速度 velocityY</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213246067.png" alt="image-20220718213246067"></p>
-<blockquote>
-<ul>
-<li>1、记下来速度 velocity</li>
-<li>2、转化成 距离</li>
-<li>3、自己滑了多少距离 根据速度转换后的距离 -&gt; 我自己的滑动距离 &#x3D; 孩子应该滑的距离</li>
-<li>4、孩子应该滑的距离又要转化成速度</li>
-</ul>
-</blockquote>
-<ul>
-<li>google提供的速度转距离的工具</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213300370.png" alt="image-20220718213300370"></p>
-<p>孩子 -&gt;如recyclerView又会将距离转换成速度(因为RecyclerView只支持fling，所以需要转化成速度再转成距离)</p>
-<p>下面两个方法分别对应上述步骤中的第3步和第4步</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213317734.png" alt="image-20220718213317734"></p>
-<p><strong>关于totalDy</strong></p>
-<p>下面注解一处错误：第一个，其实是Viewpager2，不是RecyclerView，通过前面有一张布局截图可以看出最后下面那个是ViewPager2</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213340340.png" alt="image-20220718213340340"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213358954.png" alt="image-20220718213358954"></p>
-<h3 id="关于内部拦截"><a href="#关于内部拦截" class="headerlink" title="关于内部拦截"></a>关于内部拦截</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213415057.png" alt="image-20220718213415057"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213428785.png" alt="image-20220718213428785"></p>
-]]></content>
-      <categories>
-        <category>高级UI</category>
-      </categories>
-      <tags>
-        <tag>高级UI</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>adb小结</title>
     <url>/2022/07/26/adb%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93/</url>
     <content><![CDATA[<p><a href="http://banmaman.com/2022/07/19/adb%E5%91%BD%E4%BB%A4/">adb常用命令</a></p>
@@ -1074,6 +979,113 @@
       </tags>
   </entry>
   <entry>
+    <title>京东淘宝首页二级联动</title>
+    <url>/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/</url>
+    <content><![CDATA[<p><strong>说明：</strong>这篇文章主要用于作者临时观看，因为涉及版权问题，所以短时间内会删除</p>
+<h2 id="京东淘宝首页二级联动"><a href="#京东淘宝首页二级联动" class="headerlink" title="京东淘宝首页二级联动"></a>京东淘宝首页二级联动</h2><h3 id="单点触摸与多点触摸"><a href="#单点触摸与多点触摸" class="headerlink" title="单点触摸与多点触摸"></a>单点触摸与多点触摸</h3><p>####单点触摸</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212127652.png" alt="image-20220718212127652"></p>
+<p>####多点触摸</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212142549.png" alt="image-20220718212142549"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212203113.png" alt="image-20220718212203113"></p>
+<blockquote>
+<p>面试题</p>
+<p>一个move事件 中间有多少个手指的信息-&gt;有多少个手指就有多少个手指信息-&gt;最多32个</p>
+</blockquote>
+<h3 id="Touch事件源码"><a href="#Touch事件源码" class="headerlink" title="Touch事件源码"></a>Touch事件源码</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212217242.png" alt="image-20220718212217242"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212232559.png" alt="image-20220718212232559"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212254074.png" alt="image-20220718212254074"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212316235.png" alt="image-20220718212316235"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212335895.png" alt="image-20220718212335895"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212349700.png" alt="image-20220718212349700"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212414454.png" alt="image-20220718212414454"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212432841.png" alt="image-20220718212432841"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212452115.png" alt="image-20220718212452115"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212515213.png" alt="image-20220718212515213"></p>
+<p>上述的disallowIntercept及相关内容就是所谓的“尚方宝剑”</p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212536424.png" alt="image-20220718212536424"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212555410.png" alt="image-20220718212555410"></p>
+<p> <img src="C:\Users\15786\AppData\Roaming\Typora\typora-user-images\image-20220718212609465.png" alt="image-20220718212609465"></p>
+<h3 id="嵌套滑动"><a href="#嵌套滑动" class="headerlink" title="嵌套滑动"></a>嵌套滑动</h3><blockquote>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212649556.png" alt="image-20220718212649556"></p>
+</blockquote>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212704210.png" alt="image-20220718212704210"></p>
+<p>并且从上面可以看出NestedScrollView既可以做“父亲”，也可以做“孩子”</p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212718655.png" alt="image-20220718212718655"></p>
+<p>“孩子”有三个版本</p>
+<p>三个版本之间是的关系  同样“父亲”也是一样</p>
+<blockquote>
+<p>版本2与版本1相比  增加了type 如惯性滑动效果</p>
+</blockquote>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212737829.png" alt="image-20220718212737829"></p>
+<h4 id="吸顶效果"><a href="#吸顶效果" class="headerlink" title="吸顶效果"></a>吸顶效果</h4><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212758009.png" alt="image-20220718212758009"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212818443.png" alt="image-20220718212818443"></p>
+<p>onFinishInflate()中获取第一个孩子的第二个孩子，从下图可以看出也就是是第二个LinearLayout</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212839006.png" alt="image-20220718212839006"></p>
+<h4 id="继续嵌套滑动"><a href="#继续嵌套滑动" class="headerlink" title="继续嵌套滑动"></a>继续嵌套滑动</h4><p>嵌套滑动-&gt;是由孩子主动的   触发的</p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212906775.png" alt="image-20220718212906775"></p>
+<p>google为了方便我们处理嵌套滑动，所以提供了这个帮助类 -&gt; getScrollingChildHelper()</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212928635.png" alt="image-20220718212928635"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212942972.png" alt="image-20220718212942972"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213001121.png" alt="image-20220718213001121"></p>
+<p>while(p!&#x3D;null)一直找，直到找到支持嵌套滑动</p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213017801.png" alt="image-20220718213017801"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213043191.png" alt="image-20220718213043191"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213058717.png" alt="image-20220718213058717"></p>
+<p>所以它没有滑，“父亲”划不动的时候，它(NestedScrollView)才动</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213122243.png" alt="image-20220718213122243"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213138627.png" alt="image-20220718213138627"></p>
+<p>问题描述：需求是整个页面滑动，当父View滑不动的时候，子View才动。问题出现的原因就是上面的文字描述，要想解决</p>
+<p>问题的解决：重写onNestedPreScroll()方法，做一些设置，如果自己还能滑，那么就自己滑，并且需要记录一下（consumed[1]，0记录的x，1记录的y）</p>
+<ul>
+<li><p>注意：NetestScrollLayout是自定义继承NetestScrollView的</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213208543.png" alt="image-20220718213208543"></p>
+</li>
+</ul>
+<h3 id="惯性滑动"><a href="#惯性滑动" class="headerlink" title="惯性滑动"></a>惯性滑动</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213227462.png" alt="image-20220718213227462"></p>
+<p>记录下速度 velocityY</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213246067.png" alt="image-20220718213246067"></p>
+<blockquote>
+<ul>
+<li>1、记下来速度 velocity</li>
+<li>2、转化成 距离</li>
+<li>3、自己滑了多少距离 根据速度转换后的距离 -&gt; 我自己的滑动距离 &#x3D; 孩子应该滑的距离</li>
+<li>4、孩子应该滑的距离又要转化成速度</li>
+</ul>
+</blockquote>
+<ul>
+<li>google提供的速度转距离的工具</li>
+</ul>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213300370.png" alt="image-20220718213300370"></p>
+<p>孩子 -&gt;如recyclerView又会将距离转换成速度(因为RecyclerView只支持fling，所以需要转化成速度再转成距离)</p>
+<p>下面两个方法分别对应上述步骤中的第3步和第4步</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213317734.png" alt="image-20220718213317734"></p>
+<p><strong>关于totalDy</strong></p>
+<p>下面注解一处错误：第一个，其实是Viewpager2，不是RecyclerView，通过前面有一张布局截图可以看出最后下面那个是ViewPager2</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213340340.png" alt="image-20220718213340340"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213358954.png" alt="image-20220718213358954"></p>
+<h3 id="关于内部拦截"><a href="#关于内部拦截" class="headerlink" title="关于内部拦截"></a>关于内部拦截</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213415057.png" alt="image-20220718213415057"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213428785.png" alt="image-20220718213428785"></p>
+]]></content>
+      <categories>
+        <category>高级UI</category>
+      </categories>
+      <tags>
+        <tag>高级UI</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>测试</title>
+    <url>/2022/07/12/%E6%B5%8B%E8%AF%95/</url>
+    <content><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3><p><img src="/%E6%B5%8B%E8%AF%95.assets/1657615742531.png" alt="1657615742531"></p>
+]]></content>
+      <categories>
+        <category>其他</category>
+      </categories>
+      <tags>
+        <tag>测试</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>按Z字形顺序打印二叉树</title>
     <url>/2022/07/17/%E6%8C%89Z%E5%AD%97%E5%BD%A2%E9%A1%BA%E5%BA%8F%E6%89%93%E5%8D%B0%E4%BA%8C%E5%8F%89%E6%A0%91/</url>
     <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给定一个二叉树，返回该二叉树的之字形层序遍历，（第一层从左向右，下一层从右向左，一直这样交替）<br>数据范围：0≤n≤1500,树上每个节点的val满足∣val∣≤1500<br>要求：空间复杂度：O(n)，时间复杂度：O(n)</p>
@@ -1207,18 +1219,6 @@
       <categories>
         <category>高级UI</category>
       </categories>
-  </entry>
-  <entry>
-    <title>测试</title>
-    <url>/2022/07/12/%E6%B5%8B%E8%AF%95/</url>
-    <content><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3><p><img src="/%E6%B5%8B%E8%AF%95.assets/1657615742531.png" alt="1657615742531"></p>
-]]></content>
-      <categories>
-        <category>其他</category>
-      </categories>
-      <tags>
-        <tag>测试</tag>
-      </tags>
   </entry>
   <entry>
     <title>深入理解并发编程和归纳总结</title>
