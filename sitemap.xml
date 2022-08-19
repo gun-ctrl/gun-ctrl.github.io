@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://gun-ctrl.github.io/2022/08/19/OOM%E4%B8%8E%E5%86%85%E5%AD%98%E4%BC%98%E5%8C%96/</loc>
+    
+    <lastmod>2022-08-19</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://gun-ctrl.github.io/2022/08/13/JVM%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/</loc>
     
     <lastmod>2022-08-19</lastmod>
@@ -173,7 +182,7 @@
   </url>
   
   <url>
-    <loc>https://gun-ctrl.github.io/2022/07/12/%E6%B5%8B%E8%AF%95/</loc>
+    <loc>https://gun-ctrl.github.io/2022/07/12/%E6%A8%A1%E6%9D%BF/</loc>
     
     <lastmod>2022-07-12</lastmod>
     
@@ -244,6 +253,13 @@
 
   
   <url>
+    <loc>https://gun-ctrl.github.io/categories/%E9%AB%98%E7%BA%A7UI/</loc>
+    <lastmod>2022-08-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>https://gun-ctrl.github.io/categories/Java%E7%AD%91%E5%9F%BA/</loc>
     <lastmod>2022-08-19</lastmod>
     <changefreq>weekly</changefreq>
@@ -251,7 +267,7 @@
   </url>
   
   <url>
-    <loc>https://gun-ctrl.github.io/categories/%E9%AB%98%E7%BA%A7UI/</loc>
+    <loc>https://gun-ctrl.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</loc>
     <lastmod>2022-08-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
