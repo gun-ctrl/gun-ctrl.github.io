@@ -475,6 +475,180 @@
       </categories>
   </entry>
   <entry>
+    <title>NestedScrollView嵌套滑动原理</title>
+    <url>/2022/08/06/NestedScrollView%E5%B5%8C%E5%A5%97%E6%BB%91%E5%8A%A8%E5%8E%9F%E7%90%86/</url>
+    <content><![CDATA[<h2 id="事件分发机制简介"><a href="#事件分发机制简介" class="headerlink" title="事件分发机制简介"></a>事件分发机制简介</h2><p>其实小编应该在前面准备一章关于Android的事件分发和处理机制的专题，因为时间原因和内容源码比较多吧(小编有强迫症，不想不贴源码)，不过还是因为小编懒，哈哈。这里就对事件分发机制做一个简单的回忆，大家感兴趣的可以去看看相关资料和源码，小编后面有空也会出一期。</p>
+<p>这里介绍一位优秀博主的博客，大家可以看这篇文章对事件分发机制与滑动冲突、以及解决方案有个全面的了解：</p>
+<p><a href="https://wiwiyiyi.com/%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E4%BB%A5%E5%8F%8A%E6%BB%91%E5%8A%A8%E5%86%B2%E7%AA%81%E7%9A%84%E5%A4%84%E7%90%86.html">事件分发机制以及滑动冲突的处理</a></p>
+<p>下面对事件分发与处理做一个简单总结</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806150250279.png" alt="image-20220806150250279"></p>
+<p>关键的一点大家需要记住：事件的分发是由上层到底层，而事件的处理是由底层到上层。</p>
+<ul>
+<li>也就是说父View可以拦截触摸事件直接消费，而不传递给子View。</li>
+<li>子View可以处理事件，也可以选择给父类消费。</li>
+<li>ViewGroup既可以消费事件，也可以分发事件</li>
+<li>View只能处理事件，也就是消费。</li>
+</ul>
+<h4 id="View滑动冲突"><a href="#View滑动冲突" class="headerlink" title="View滑动冲突"></a>View滑动冲突</h4><ol>
+<li>外部滑动方向与内部滑动方向不一致</li>
+</ol>
+<blockquote>
+<p>解决方案：外部拦截法，当事件传递到父View时，父View需要处理此事件，就拦截，不处理此事件就不拦截</p>
+</blockquote>
+<ol start="2">
+<li>外部滑动方向与内部滑动方向一致；</li>
+</ol>
+<blockquote>
+<p>内部拦截法，当事件传递到父View时，父View都传递给子View，如果子View需要处理此事件就消耗掉，否则就交给父View处理。但是这种方法和Android事件分发不一致，需要配合 requestDisallowInterceptTouchEvent 方法才能正常工作</p>
+</blockquote>
+<ol start="3">
+<li>上面两种情况的嵌套。</li>
+</ol>
+<blockquote>
+<p>某个View一旦决定拦截，那么这一个事件序列都只能由它来处理，并且它的onInterceptTouchEvent不会再被调用<br>解决方案： 解决这种滑动冲突，可以用NestedScrollingParent 和 NestedScrollingChild 来解决</p>
+</blockquote>
+<h2 id="分析NestedScrollView机制"><a href="#分析NestedScrollView机制" class="headerlink" title="分析NestedScrollView机制"></a>分析NestedScrollView机制</h2><blockquote>
+<p>NestedScrollView和ScrollView类似，是一个支持滚动的控件。此外，它还同时支持作NestedScrollingParent或者NestedScrollingChild进行嵌套滚动操作。默认是启用嵌套滚动的</p>
+</blockquote>
+<p>首先介绍两个重要接口</p>
+<p>1.NestedScrollingParent</p>
+<p>当可滑动的ViewGroup充当父View时实现该接口</p>
+<p>2.NestedScrollingChild</p>
+<p>当可滑动的ViewGroup充当子View时实现该接口</p>
+<blockquote>
+<p>我们所熟知的RecyclerView就对上面两个接口都进行了实现，所以它才能完美的处理滑动与点击item之间的关系，同时RecyclerView还支持惯性滑动（快速滑-&gt;手指松开-&gt;滑动一段距离停下），这都是上面两个接口中封装的方法的功劳。小编后面展示的demo就比较拉了，没有实现惯性滑动效果，别问！问就是因为懒。</p>
+</blockquote>
+<h4 id="整个事件流程"><a href="#整个事件流程" class="headerlink" title="整个事件流程"></a>整个事件流程</h4><p>这张图还是很清晰的展示了从点击-&gt;滑动-&gt;松开的方法调用过程</p>
+<p>NestedScrollingChildHelper、NestedScrollingParentHelper是Google提供的帮助类，其内部是去调用ViewCompat中的方法调用（xxxCompat都是兼容处理），也就是说很多操作都可以由helper帮我们完成，对于小编这种懒人还是很友好的。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806160049703.png" alt="image-20220806160049703"></p>
+<p>下面对方法进行介绍：</p>
+<ul>
+<li><p><strong>onStartNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View directTargetChild, @NonNull View target, int axes, int type)</strong> 当用户手指按下的时候，你是否要处理这次操作。当你确定要处理这次操作的时候，返回true；如果返回false的时候，就不会去响应后面的回调事件了。你想怎么滑就怎么话，我都不做处理。这里的(axes)滚动方向很重要，可以通过此参数判断滚动方向！</p>
+<ul>
+<li><p>参数3：直接目标，相当于能滑动的控件</p>
+</li>
+<li><p>参数4：观察的View</p>
+</li>
+<li><p>参数5：这个可以简单理解为滚动方向</p>
+<ul>
+<li>ViewCompat#SCROLL_AXIS_HORIZONTAL 水平方向</li>
+<li>ViewCompat#SCROLL_AXIS_VERTICAL 竖直方向</li>
+</ul>
+</li>
+<li><p>参数6：这个参数是之后有的，如果你输入的类型不是TYPE_TOUCH那么就不会相应这个滚动</p>
+</li>
+</ul>
+</li>
+<li><p><strong>onNestedScrollAccepted(@NonNull CoordinatorLayout coordinatorLayout, @NonNull V child, @NonNull View directTargetChild, @NonNull View target, @ScrollAxis int axes, @NestedScrollType int type)</strong> 当onStartNestedScroll准备处理这次滑动的时候(返回true的时候)，回调这个方法。可以在这个方法中做一些响应的准备工作！</p>
+</li>
+<li><p><strong>onNestedPreScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, int dx, int dy, @NonNull int[] consumed, @NestedScrollType int type)</strong> 当滚动开始执行的时候回调这个方法。</p>
+<ul>
+<li>参数4&#x2F;参数5：用户x&#x2F;y轴滚动的距离(注意这里是每一次都回调的啊！！！)</li>
+<li>参数6：处理滚动的距离的参数，内部维护着输出距离，假设用户滑动了100px,child 做了90px的位移，你需要把consumed［1］的值改成90，这样coordinatorLayout就能知道只处理剩下的10px的滚动。其中consumed[0]代表x轴、consumed[1]代表y轴。可能你不理解这个问题，换个形象点的比喻，比如你开发某一个功能，但是你只会其中的90%那么怎么办呢？不能就不管了。好你找到了你的同事或者老大，让他去完成剩下的10%。这样问题就完美的解决了，是一个概念的！</li>
+</ul>
+</li>
+<li><p><strong>onNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int type)</strong> 上面这个方法结束的时候，coordinatorLayout处理剩下的距离，比如还剩10px。但是coordinatorLayout发现滚动2px的时候就已经到头了。那么结束其滚动，调用该方法，并将coordinatorLayout处理剩下的像素数作为参<code>(dxUnconsumed、dyUnconsumed)</code>传过来，这里传过来的就是 8px。参数中还会有coordinatorLayout处理过的像素数（dxConsumed、dyConsumed）。老大开始处理剩下的距离了！这个方法主要处理一些越界后的滚动。还是不懂对吧！还拿你们老大做比喻：比如上面还剩 10%的工作，这时老大处理了2%后发现已经可以上线了，于是老大结束了工作，并将处理剩下的内容（dxUnconsumed、dyUnconsumed）纪录下来，告诉你。老大处理了的内容（dxConsumed、dyConsumed）也告诉了你。</p>
+<ul>
+<li>参数4&#x2F;参数5：当没有滚动到顶部或者底部的时候，x&#x2F;y轴的滚动距离</li>
+<li>参数6&#x2F;参数7：当滚动到顶部或者底部的时候，x&#x2F;y轴的滚动距离</li>
+</ul>
+</li>
+<li><p>onNestedPreFling(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, float velocityX, float velocityY) 当手指松开发生惯性动作之前调用，这里提供了响应的速度，你可以根据速度判断是否需要进行折叠等一系列的操作，你要确定响应这个方法的话，返回true。</p>
+<ul>
+<li>参数4&#x2F;参数5：代表相应的速度</li>
+</ul>
+</li>
+<li><p>onStopNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, int type) 停止滚动的时候回调的方法。当你不去响应Fling的时候会直接回调这个方法。在这里可以做一些清理工作。或者其他的内容。</p>
+</li>
+</ul>
+<p><strong>再来看看两个接口的源码</strong></p>
+<p>1.NestedScrollingChild</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">NestedScrollingChild</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 启用或禁用嵌套滚动的方法，设置为true，并且当前界面的View的层次结构是支持嵌套滚动的</span></span><br><span class="line"><span class="comment">    * (也就是需要NestedScrollingParent嵌套NestedScrollingChild)，才会触发嵌套滚动。</span></span><br><span class="line"><span class="comment">    * 一般这个方法内部都是直接代理给NestedScrollingChildHelper的同名方法即可</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">setNestedScrollingEnabled</span><span class="params">(<span class="type">boolean</span> enabled)</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 判断当前View是否支持嵌套滑动。一般也是直接代理给NestedScrollingChildHelper的同名方法即可</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">isNestedScrollingEnabled</span><span class="params">()</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 表示view开始滚动了,一般是在ACTION_DOWN中调用，如果返回true则表示父布局支持嵌套滚动。</span></span><br><span class="line"><span class="comment">    * 一般也是直接代理给NestedScrollingChildHelper的同名方法即可。这个时候正常情况会触发Parent的onStartNestedScroll()方法</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">startNestedScroll</span><span class="params">(<span class="meta">@ScrollAxis</span> <span class="type">int</span> axes)</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 一般是在事件结束比如ACTION_UP或者ACTION_CANCLE中调用,告诉父布局滚动结束。一般也是直接代理给NestedScrollingChildHelper的同名方法即可</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">stopNestedScroll</span><span class="params">()</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 判断当前View是否有嵌套滑动的Parent。一般也是直接代理给NestedScrollingChildHelper的同名方法即可</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">hasNestedScrollingParent</span><span class="params">()</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 在当前View消费滚动距离之后。通过调用该方法，把剩下的滚动距离传给父布局。如果当前没有发生嵌套滚动，或者不支持嵌套滚动，调用该方法也没啥用。</span></span><br><span class="line"><span class="comment">    * 内部一般也是直接代理给NestedScrollingChildHelper的同名方法即可</span></span><br><span class="line"><span class="comment">    * dxConsumed：被当前View消费了的水平方向滑动距离</span></span><br><span class="line"><span class="comment">    * dyConsumed：被当前View消费了的垂直方向滑动距离</span></span><br><span class="line"><span class="comment">    * dxUnconsumed：未被消费的水平滑动距离</span></span><br><span class="line"><span class="comment">    * dyUnconsumed：未被消费的垂直滑动距离</span></span><br><span class="line"><span class="comment">    * offsetInWindow：输出可选参数。如果不是null，该方法完成返回时，</span></span><br><span class="line"><span class="comment">    * 会将该视图从该操作之前到该操作完成之后的本地视图坐标中的偏移量封装进该参数中，offsetInWindow[0]水平方向，offsetInWindow[1]垂直方向</span></span><br><span class="line"><span class="comment">    * <span class="doctag">@return</span> true：表示滚动事件分发成功,fasle: 分发失败</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">dispatchNestedScroll</span><span class="params">(<span class="type">int</span> dxConsumed, <span class="type">int</span> dyConsumed,</span></span><br><span class="line"><span class="params">            <span class="type">int</span> dxUnconsumed, <span class="type">int</span> dyUnconsumed, <span class="meta">@Nullable</span> <span class="type">int</span>[] offsetInWindow)</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 在当前View消费滚动距离之前把滑动距离传给父布局。相当于把优先处理权交给Parent</span></span><br><span class="line"><span class="comment">    * 内部一般也是直接代理给NestedScrollingChildHelper的同名方法即可。</span></span><br><span class="line"><span class="comment">	* dx：当前水平方向滑动的距离</span></span><br><span class="line"><span class="comment">	* dy：当前垂直方向滑动的距离</span></span><br><span class="line"><span class="comment">	* consumed：输出参数，会将Parent消费掉的距离封装进该参数consumed[0]代表水平方向，consumed[1]代表垂直方向</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@return</span> true：代表Parent消费了滚动距离</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">dispatchNestedPreScroll</span><span class="params">(<span class="type">int</span> dx, <span class="type">int</span> dy, <span class="meta">@Nullable</span> <span class="type">int</span>[] consumed,</span></span><br><span class="line"><span class="params">            <span class="meta">@Nullable</span> <span class="type">int</span>[] offsetInWindow)</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    *将惯性滑动的速度分发给Parent。内部一般也是直接代理给NestedScrollingChildHelper的同名方法即可</span></span><br><span class="line"><span class="comment">	* velocityX：表示水平滑动速度</span></span><br><span class="line"><span class="comment">	* velocityY：垂直滑动速度</span></span><br><span class="line"><span class="comment">	* consumed：true：表示当前View消费了滑动事件，否则传入false</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@return</span> true：表示Parent处理了滑动事件</span></span><br><span class="line"><span class="comment">	*/</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">dispatchNestedFling</span><span class="params">(<span class="type">float</span> velocityX, <span class="type">float</span> velocityY, <span class="type">boolean</span> consumed)</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 在当前View自己处理惯性滑动前，先将滑动事件分发给Parent,一般来说如果想自己处理惯性的滑动事件，</span></span><br><span class="line"><span class="comment">    * 就不应该调用该方法给Parent处理。如果给了Parent并且返回true，那表示Parent已经处理了，自己就不应该再做处理。</span></span><br><span class="line"><span class="comment">    * 返回false，代表Parent没有处理，但是不代表Parent后面就不用处理了</span></span><br><span class="line"><span class="comment">    * <span class="doctag">@return</span> true：表示Parent处理了滑动事件</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">dispatchNestedPreFling</span><span class="params">(<span class="type">float</span> velocityX, <span class="type">float</span> velocityY)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">NestedScrollingChild2</span> <span class="keyword">extends</span> <span class="title class_">NestedScrollingChild</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">startNestedScroll</span><span class="params">(<span class="meta">@ScrollAxis</span> <span class="type">int</span> axes, <span class="meta">@NestedScrollType</span> <span class="type">int</span> type)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">stopNestedScroll</span><span class="params">(<span class="meta">@NestedScrollType</span> <span class="type">int</span> type)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">hasNestedScrollingParent</span><span class="params">(<span class="meta">@NestedScrollType</span> <span class="type">int</span> type)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">dispatchNestedScroll</span><span class="params">(<span class="type">int</span> dxConsumed, <span class="type">int</span> dyConsumed,</span></span><br><span class="line"><span class="params">            <span class="type">int</span> dxUnconsumed, <span class="type">int</span> dyUnconsumed, <span class="meta">@Nullable</span> <span class="type">int</span>[] offsetInWindow,</span></span><br><span class="line"><span class="params">            <span class="meta">@NestedScrollType</span> <span class="type">int</span> type)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">dispatchNestedPreScroll</span><span class="params">(<span class="type">int</span> dx, <span class="type">int</span> dy, <span class="meta">@Nullable</span> <span class="type">int</span>[] consumed,</span></span><br><span class="line"><span class="params">            <span class="meta">@Nullable</span> <span class="type">int</span>[] offsetInWindow, <span class="meta">@NestedScrollType</span> <span class="type">int</span> type)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">NestedScrollingChild3</span> <span class="keyword">extends</span> <span class="title class_">NestedScrollingChild2</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">dispatchNestedScroll</span><span class="params">(<span class="type">int</span> dxConsumed, <span class="type">int</span> dyConsumed, <span class="type">int</span> dxUnconsumed, <span class="type">int</span> dyUnconsumed,</span></span><br><span class="line"><span class="params">            <span class="meta">@Nullable</span> <span class="type">int</span>[] offsetInWindow, <span class="meta">@ViewCompat</span>.NestedScrollType <span class="type">int</span> type,</span></span><br><span class="line"><span class="params">            <span class="meta">@NonNull</span> <span class="type">int</span>[] consumed)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>2.NestedScrollingParent</p>
+<figure class="highlight less"><table><tr><td class="code"><pre><span class="line"><span class="selector-tag">public</span> <span class="selector-tag">interface</span> <span class="selector-tag">NestedScrollingParent</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 当NestedScrollingChild调用方法startNestedScroll()时,会调用该方法。主要就是通过返回值告诉系统是否需要对后续的滚动进行处理</span></span><br><span class="line"><span class="comment">    * child：该ViewParen的包含NestedScrollingChild的直接子View，如果只有一层嵌套，和target是同一个View</span></span><br><span class="line"><span class="comment">    * target：本次嵌套滚动的NestedScrollingChild</span></span><br><span class="line"><span class="comment">    * nestedScrollAxes：滚动方向</span></span><br><span class="line"><span class="comment">    * @return </span></span><br><span class="line"><span class="comment">    * true:表示我需要进行处理，后续的滚动会触发相应的回到</span></span><br><span class="line"><span class="comment">    * false: 我不需要处理，后面也就不会进行相应的回调了</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="comment">//child和target的区别，如果是嵌套两层如:Parent包含一个LinearLayout，LinearLayout里面才是NestedScrollingChild类型的View。这个时候，</span></span><br><span class="line">    <span class="comment">//child指向LinearLayout，target指向NestedScrollingChild；如果Parent直接就包含了NestedScrollingChild，</span></span><br><span class="line">    <span class="comment">//这个时候target和child都指向NestedScrollingChild</span></span><br><span class="line">    <span class="selector-tag">boolean</span> <span class="selector-tag">onStartNestedScroll</span>(<span class="variable">@NonNull</span> View child, <span class="variable">@NonNull</span> View target, <span class="variable">@ScrollAxis</span> int axes);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 如果onStartNestedScroll()方法返回的是true的话,那么紧接着就会调用该方法.它是让嵌套滚动在开始滚动之前,</span></span><br><span class="line"><span class="comment">    * 让布局容器(viewGroup)或者它的父类执行一些配置的初始化的</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedScrollAccepted</span>(<span class="variable">@NonNull</span> View child, <span class="variable">@NonNull</span> View target, <span class="variable">@ScrollAxis</span> int axes);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 停止滚动了,当子view调用stopNestedScroll()时会调用该方法</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onStopNestedScroll</span>(<span class="variable">@NonNull</span> View target);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 当子view调用dispatchNestedScroll()方法时,会调用该方法。也就是开始分发处理嵌套滑动了</span></span><br><span class="line"><span class="comment">    * dxConsumed：已经被target消费掉的水平方向的滑动距离</span></span><br><span class="line"><span class="comment">    * dyConsumed：已经被target消费掉的垂直方向的滑动距离</span></span><br><span class="line"><span class="comment">    * dxUnconsumed：未被tagert消费掉的水平方向的滑动距离</span></span><br><span class="line"><span class="comment">    * dyUnconsumed：未被tagert消费掉的垂直方向的滑动距离</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedScroll</span>(<span class="variable">@NonNull</span> View target, int dxConsumed, int dyConsumed,</span><br><span class="line">            int dxUnconsumed, int dyUnconsumed);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 当子view调用dispatchNestedPreScroll()方法是,会调用该方法。也就是在NestedScrollingChild在处理滑动之前，</span></span><br><span class="line"><span class="comment">    * 会先将机会给Parent处理。如果Parent想先消费部分滚动距离，将消费的距离放入consumed</span></span><br><span class="line"><span class="comment">    * dx：水平滑动距离</span></span><br><span class="line"><span class="comment">    * dy：处置滑动距离</span></span><br><span class="line"><span class="comment">    * consumed：表示Parent要消费的滚动距离,consumed[0]和consumed[1]分别表示父布局在x和y方向上消费的距离.</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedPreScroll</span>(<span class="variable">@NonNull</span> View target, int dx, int dy, <span class="variable">@NonNull</span> int[] consumed);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 你可以捕获对内部NestedScrollingChild的fling事件</span></span><br><span class="line"><span class="comment">    * velocityX：水平方向的滑动速度</span></span><br><span class="line"><span class="comment">    * velocityY：垂直方向的滑动速度</span></span><br><span class="line"><span class="comment">    * consumed：是否被child消费了</span></span><br><span class="line"><span class="comment">    * @return</span></span><br><span class="line"><span class="comment">    * true:则表示消费了滑动事件</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="selector-tag">boolean</span> <span class="selector-tag">onNestedFling</span>(<span class="variable">@NonNull</span> View target, float velocityX, float velocityY, boolean consumed);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 在惯性滑动距离处理之前，会调用该方法，同onNestedPreScroll()一样，也是给Parent优先处理的权利</span></span><br><span class="line"><span class="comment">    * target：本次嵌套滚动的NestedScrollingChild</span></span><br><span class="line"><span class="comment">    * velocityX：水平方向的滑动速度</span></span><br><span class="line"><span class="comment">    * velocityY：垂直方向的滑动速度</span></span><br><span class="line"><span class="comment">    * @return</span></span><br><span class="line"><span class="comment">    * true：表示Parent要处理本次滑动事件，Child就不要处理了</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="selector-tag">boolean</span> <span class="selector-tag">onNestedPreFling</span>(<span class="variable">@NonNull</span> View target, float velocityX, float velocityY);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 返回当前滑动的方向，一般直接通过NestedScrollingParentHelper.getNestedScrollAxes()返回即可</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    @<span class="selector-tag">ScrollAxis</span></span><br><span class="line">    <span class="selector-tag">int</span> <span class="selector-tag">getNestedScrollAxes</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight less"><table><tr><td class="code"><pre><span class="line"><span class="selector-tag">public</span> <span class="selector-tag">interface</span> <span class="selector-tag">NestedScrollingParent2</span> <span class="selector-tag">extends</span> <span class="selector-tag">NestedScrollingParent</span> &#123;</span><br><span class="line">    <span class="selector-tag">boolean</span> <span class="selector-tag">onStartNestedScroll</span>(<span class="variable">@NonNull</span> View child, <span class="variable">@NonNull</span> View target, <span class="variable">@ScrollAxis</span> int axes,</span><br><span class="line">            <span class="variable">@NestedScrollType</span> int type);</span><br><span class="line"></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedScrollAccepted</span>(<span class="variable">@NonNull</span> View child, <span class="variable">@NonNull</span> View target, <span class="variable">@ScrollAxis</span> int axes,</span><br><span class="line">            <span class="variable">@NestedScrollType</span> int type);</span><br><span class="line"></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onStopNestedScroll</span>(<span class="variable">@NonNull</span> View target, <span class="variable">@NestedScrollType</span> int type);</span><br><span class="line"></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedScroll</span>(<span class="variable">@NonNull</span> View target, int dxConsumed, int dyConsumed,</span><br><span class="line">            int dxUnconsumed, int dyUnconsumed, <span class="variable">@NestedScrollType</span> int type);</span><br><span class="line"></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedPreScroll</span>(<span class="variable">@NonNull</span> View target, int dx, int dy, <span class="variable">@NonNull</span> int[] consumed,</span><br><span class="line">            <span class="variable">@NestedScrollType</span> int type);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight less"><table><tr><td class="code"><pre><span class="line"><span class="selector-tag">public</span> <span class="selector-tag">interface</span> <span class="selector-tag">NestedScrollingParent3</span> <span class="selector-tag">extends</span> <span class="selector-tag">NestedScrollingParent2</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedScroll</span>(<span class="variable">@NonNull</span> View target, int dxConsumed, int dyConsumed, int dxUnconsumed,</span><br><span class="line">            int dyUnconsumed, <span class="variable">@ViewCompat</span>.NestedScrollType int type, <span class="variable">@NonNull</span> int[] consumed);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Demo"><a href="#Demo" class="headerlink" title="Demo"></a>Demo</h2><p>在那之前再补一张较全的事件流程图，还包括传值的过程欧，结合demo代码看也不错。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806164857678.png" alt="image-20220806164857678"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806164945258.png" alt="image-20220806164945258"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806165039684.png" alt="image-20220806165039684"></p>
+<p>效果演示</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%BD%95%E5%88%B6_2022_08_06_16_21_53_330.gif" alt="录制_2022_08_06_16_21_53_330"></p>
+<p>这里就不贴大量代码了，展示一些主要代码，详情可见文章下方的全部代码</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806163510871.png" alt="image-20220806163510871"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806163541253.png" alt="image-20220806163541253"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>只要对NestedScrollView的嵌套滑动机制过程掌握，利用NestedScrollingParent、NestedScrollingChild这两个接口可以很轻松的实现自定义嵌套滑动机制，当然也可以直接通过继承自定义NestedScrollView实现一些炫酷的滑动、吸顶效果，这种效果在现在的电商平台还是很常见的。当然仅仅利用NestedScrollingParent、NestedScrollingChild实现嵌套还是有局限，只能一对一，要想实现一对多的嵌套滑动那就需要Behavior，下一章将会初步接触。</p>
+<p><a href="https://github.com/gun-ctrl/NestedScrollViewTry">全部代码</a></p>
+]]></content>
+      <categories>
+        <category>高级UI</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>RecyclerView高级用法——吸顶效果</title>
+    <url>/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/</url>
+    <content><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>我们对RecyclerView的使用不能仅仅停留在表面，可以探索一些高级的用法——自定义，不过要实现这些的前提是必须对RecycleView的源码流程有所了解。今天小编就略讲一下，主要是和今天的主体有关的内容。我们今天就来实现如下的吸顶效果。</p>
+<h3 id="通过绘制实现RecyclerView的吸顶效果"><a href="#通过绘制实现RecyclerView的吸顶效果" class="headerlink" title="通过绘制实现RecyclerView的吸顶效果"></a>通过绘制实现RecyclerView的吸顶效果</h3><p>ItemDecoration</p>
+<p>ItemDecoration允许应用给具体的View添加具体的图画或者layout的偏移，对于绘制View之间的分割线，视觉分组边界等等是非常有用的。</p>
+<p>当我们调用addItemDecoration()方法添加decoration的时候，RecyclerView就会调用该类的onDraw方法区绘制分割线，也就是说：分割线是绘制出来的。</p>
+<blockquote>
+<p>RecyclerView.ItemDecoration，该类为抽象类，官方目前只提供了一个实现类DividerItemDecoration。</p>
+<p>并且只有LinearLayoutManager能够使用</p>
+</blockquote>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719205304144.png" alt="image-20220719205304144"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C.gif" alt="吸顶效果"></p>
+<p>要实现这样的吸顶效果，首先，就需要了解一下RecyclerView.ItemDecoration的绘制流程。</p>
+<p>1.onDraw</p>
+<p>在绘制每个itemView之前绘制，上图中的每个跟着滑动的头部就是在此处绘制</p>
+<p>2.onDrawOver</p>
+<p>在绘制了每个ItemView之后绘制，上图中固定的顶部在此处绘制</p>
+<p>3.getItemOffsets</p>
+<p>设置偏移值，可以在绘制itemView时设置偏移值，其实上demo中的每个头部（红色区域）就是在绘制itemView预留了部分空间用于绘制头部。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719210625576.png" alt="image-20220719210625576"></p>
+<blockquote>
+<p>也就是说绘制流程是：onDraw()-&gt;ItemView-&gt;onDrawOver</p>
+</blockquote>
+<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ul>
+<li>在Adapter中创建两个方法<ul>
+<li>1.获取组名</li>
+<li>2.判断是否是组的头部<ul>
+<li>首先，position&#x3D;0一定是组的头部</li>
+<li>其次，可以通过前后两次组名判断当前item是不是组的头部</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line"><span class="comment">//是否是 组的第一个</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Boolean <span class="title">isGroupHeader</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (position==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="type">String</span> currentName = <span class="built_in">getGroupName</span>(position);</span><br><span class="line">            <span class="type">String</span> preGroupName = <span class="built_in">getGroupName</span>(position<span class="number">-1</span>);</span><br><span class="line">            <span class="keyword">if</span> (preGroupName.<span class="built_in">equals</span>(currentName))&#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="type">String</span> <span class="title">getGroupName</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> modelList.<span class="built_in">get</span>(position).<span class="built_in">getGroupName</span>();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>自定义分割线</p>
+<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void on<span class="constructor">Draw(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">        super.on<span class="constructor">Draw(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">        <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">            <span class="built_in">int</span> count  = parent.get<span class="constructor">ChildCount()</span>;</span><br><span class="line">            <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">            <span class="built_in">int</span> right  = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">                <span class="comment">//获取对应的View</span></span><br><span class="line">                View view = parent.get<span class="constructor">ChildAt(<span class="params">i</span>)</span>;</span><br><span class="line">                <span class="comment">//获取View的布局位置</span></span><br><span class="line">                <span class="built_in">int</span> position = parent.get<span class="constructor">ChildLayoutPosition(<span class="params">view</span>)</span>;</span><br><span class="line">                <span class="comment">//判断是不是头部</span></span><br><span class="line">                boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>)</span>;</span><br><span class="line">                <span class="keyword">if</span> (isGroupHeader<span class="operator"> &amp;&amp; </span>view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                    String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">                    textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>, 0, <span class="params">groupName</span>.<span class="params">length</span>()</span>, textRect);</span><br><span class="line">                    c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight/<span class="number">2</span>+textRect.height<span class="literal">()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line"></span><br><span class="line">                &#125;<span class="keyword">else</span> <span class="keyword">if</span> (view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="comment">//分割线</span></span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-<span class="number">4</span>,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">   public void on<span class="constructor">DrawOver(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">       super.on<span class="constructor">DrawOver(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">       <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">           ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">           <span class="comment">//返回可见区域的第一个item的position</span></span><br><span class="line">           <span class="built_in">int</span> position = ((LinearLayoutManager)parent.get<span class="constructor">LayoutManager()</span>).find<span class="constructor">FirstVisibleItemPosition()</span>;</span><br><span class="line">           <span class="comment">//获取对应的position的View</span></span><br><span class="line">           View itemView = parent.find<span class="constructor">ViewHolderForAdapterPosition(<span class="params">position</span>)</span>.itemView;</span><br><span class="line">           <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">           <span class="built_in">int</span> right = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">           <span class="built_in">int</span> top = parent.get<span class="constructor">PaddingTop()</span>;</span><br><span class="line">           <span class="comment">//当下一个是组的头部时</span></span><br><span class="line">           boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>+1)</span>;</span><br><span class="line">           String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">           textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>,0,<span class="params">groupName</span>.<span class="params">length</span>()</span>,textRect);</span><br><span class="line">           <span class="keyword">if</span> (isGroupHeader)&#123;</span><br><span class="line">               <span class="comment">//对顶部进行缩小效果，在视觉上是被下一个组的顶部推进去的</span></span><br><span class="line">               <span class="built_in">int</span> bottom = <span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>min(groupHeaderHeight,itemView.get<span class="constructor">Bottom()</span>-parent.get<span class="constructor">PaddingTop()</span>);</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.clip<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">bottom</span>-<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">groupHeaderHeight</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight pf"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void getItemOffsets(@N<span class="keyword">on</span>Null Rect <span class="keyword">out</span>Rect, @N<span class="keyword">on</span>Null View view, @N<span class="keyword">on</span>Null RecyclerView <span class="keyword">parent</span>, @N<span class="keyword">on</span>Null RecyclerView.State <span class="keyword">state</span>) &#123;</span><br><span class="line">        super.getItemOffsets(<span class="keyword">out</span>Rect, view, <span class="keyword">parent</span>, <span class="keyword">state</span>);</span><br><span class="line">        if (<span class="keyword">parent</span>.getAdapter() instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) <span class="keyword">parent</span>.getAdapter();</span><br><span class="line">            int position = <span class="keyword">parent</span>.getChildAdapterPosition(view);</span><br><span class="line">            boolean isGroupHeader = adapter.isGroupHeader(position);</span><br><span class="line">            //判断itemView是不是头部</span><br><span class="line">            if (isGroupHeader)&#123;</span><br><span class="line">                //如果是头部，预留更大的地方</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="keyword">group</span>HeaderHeight,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="number">4</span>,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>其实这部分的重点就是自定义分割线（ItemDecoration），弄清绘制顺序以及设置偏移值的作用就简单多了。当然，难点（也不是难点）就是弄清除尺寸参数,特别是尺寸变化引起的换组顶部推动效果。</p>
+<p>其次就是特别注意有padding的情况，相信大家看出小编在这设置了顶部padding，有padding的时候需要注意尺寸。（不过有设置padding的情况很少）</p>
+<p><a href="https://github.com/gun-ctrl/RecyclerViewPro">全部代码</a></p>
+]]></content>
+      <categories>
+        <category>高级UI</category>
+      </categories>
+      <tags>
+        <tag>RecyclerView</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>OOM与内存优化</title>
     <url>/2022/08/19/OOM%E4%B8%8E%E5%86%85%E5%AD%98%E4%BC%98%E5%8C%96/</url>
     <content><![CDATA[<h2 id="内存管理基础"><a href="#内存管理基础" class="headerlink" title="内存管理基础"></a>内存管理基础</h2><h3 id="App内存组成以及限制"><a href="#App内存组成以及限制" class="headerlink" title="App内存组成以及限制"></a>App内存组成以及限制</h3><p>Android 给每个 App 分配一个 VM ，让App运行在 dalvik 上，这样即使 App 崩溃也不会影响到系统。系统给 VM 分配了一定的内存大小， App 可以申请使用的内存大小不能超过此硬性逻辑限制，就算物理内存富余，如果应用超出 VM 最大内存，就会出现内存溢出 crash。</p>
@@ -713,177 +887,20 @@
       </categories>
   </entry>
   <entry>
-    <title>NestedScrollView嵌套滑动原理</title>
-    <url>/2022/08/06/NestedScrollView%E5%B5%8C%E5%A5%97%E6%BB%91%E5%8A%A8%E5%8E%9F%E7%90%86/</url>
-    <content><![CDATA[<h2 id="事件分发机制简介"><a href="#事件分发机制简介" class="headerlink" title="事件分发机制简介"></a>事件分发机制简介</h2><p>其实小编应该在前面准备一章关于Android的事件分发和处理机制的专题，因为时间原因和内容源码比较多吧(小编有强迫症，不想不贴源码)，不过还是因为小编懒，哈哈。这里就对事件分发机制做一个简单的回忆，大家感兴趣的可以去看看相关资料和源码，小编后面有空也会出一期。</p>
-<p>这里介绍一位优秀博主的博客，大家可以看这篇文章对事件分发机制与滑动冲突、以及解决方案有个全面的了解：</p>
-<p><a href="https://wiwiyiyi.com/%E4%BA%8B%E4%BB%B6%E5%88%86%E5%8F%91%E6%9C%BA%E5%88%B6%E4%BB%A5%E5%8F%8A%E6%BB%91%E5%8A%A8%E5%86%B2%E7%AA%81%E7%9A%84%E5%A4%84%E7%90%86.html">事件分发机制以及滑动冲突的处理</a></p>
-<p>下面对事件分发与处理做一个简单总结</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806150250279.png" alt="image-20220806150250279"></p>
-<p>关键的一点大家需要记住：事件的分发是由上层到底层，而事件的处理是由底层到上层。</p>
-<ul>
-<li>也就是说父View可以拦截触摸事件直接消费，而不传递给子View。</li>
-<li>子View可以处理事件，也可以选择给父类消费。</li>
-<li>ViewGroup既可以消费事件，也可以分发事件</li>
-<li>View只能处理事件，也就是消费。</li>
+    <title>adb shell input text不能输入中文的解决方案</title>
+    <url>/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</url>
+    <content><![CDATA[<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><p>adb默认是不支持Unicode编码的，无法通过adb shell input text 命令输入中文到手机或者模拟器。</p>
+<h3 id="解决步骤"><a href="#解决步骤" class="headerlink" title="解决步骤"></a>解决步骤</h3><ul>
+<li>1、安装ADBKeyBoard.apk文件(直接搜索就能找到)<br>打开手机或模拟器，adb install ADBKeyBoard.apk安装该输入法<br>在手机上直接安装也可</li>
+<li>2、设置默认输入法<br>打开手机设置 -&gt; 点击语法与输入法 -&gt; 点击输入法管理 -&gt; 启用ADBKeyboard<br>重启手机后即可使用该输入法</li>
+<li>3、输入adb命令测试中文输入<br>adb shell am broadcast -a ADB_INPUT_TEXT –es msg ‘这是一段adb中文测试’</li>
 </ul>
-<h4 id="View滑动冲突"><a href="#View滑动冲突" class="headerlink" title="View滑动冲突"></a>View滑动冲突</h4><ol>
-<li>外部滑动方向与内部滑动方向不一致</li>
-</ol>
-<blockquote>
-<p>解决方案：外部拦截法，当事件传递到父View时，父View需要处理此事件，就拦截，不处理此事件就不拦截</p>
-</blockquote>
-<ol start="2">
-<li>外部滑动方向与内部滑动方向一致；</li>
-</ol>
-<blockquote>
-<p>内部拦截法，当事件传递到父View时，父View都传递给子View，如果子View需要处理此事件就消耗掉，否则就交给父View处理。但是这种方法和Android事件分发不一致，需要配合 requestDisallowInterceptTouchEvent 方法才能正常工作</p>
-</blockquote>
-<ol start="3">
-<li>上面两种情况的嵌套。</li>
-</ol>
-<blockquote>
-<p>某个View一旦决定拦截，那么这一个事件序列都只能由它来处理，并且它的onInterceptTouchEvent不会再被调用<br>解决方案： 解决这种滑动冲突，可以用NestedScrollingParent 和 NestedScrollingChild 来解决</p>
-</blockquote>
-<h2 id="分析NestedScrollView机制"><a href="#分析NestedScrollView机制" class="headerlink" title="分析NestedScrollView机制"></a>分析NestedScrollView机制</h2><blockquote>
-<p>NestedScrollView和ScrollView类似，是一个支持滚动的控件。此外，它还同时支持作NestedScrollingParent或者NestedScrollingChild进行嵌套滚动操作。默认是启用嵌套滚动的</p>
-</blockquote>
-<p>首先介绍两个重要接口</p>
-<p>1.NestedScrollingParent</p>
-<p>当可滑动的ViewGroup充当父View时实现该接口</p>
-<p>2.NestedScrollingChild</p>
-<p>当可滑动的ViewGroup充当子View时实现该接口</p>
-<blockquote>
-<p>我们所熟知的RecyclerView就对上面两个接口都进行了实现，所以它才能完美的处理滑动与点击item之间的关系，同时RecyclerView还支持惯性滑动（快速滑-&gt;手指松开-&gt;滑动一段距离停下），这都是上面两个接口中封装的方法的功劳。小编后面展示的demo就比较拉了，没有实现惯性滑动效果，别问！问就是因为懒。</p>
-</blockquote>
-<h4 id="整个事件流程"><a href="#整个事件流程" class="headerlink" title="整个事件流程"></a>整个事件流程</h4><p>这张图还是很清晰的展示了从点击-&gt;滑动-&gt;松开的方法调用过程</p>
-<p>NestedScrollingChildHelper、NestedScrollingParentHelper是Google提供的帮助类，其内部是去调用ViewCompat中的方法调用（xxxCompat都是兼容处理），也就是说很多操作都可以由helper帮我们完成，对于小编这种懒人还是很友好的。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806160049703.png" alt="image-20220806160049703"></p>
-<p>下面对方法进行介绍：</p>
-<ul>
-<li><p><strong>onStartNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View directTargetChild, @NonNull View target, int axes, int type)</strong> 当用户手指按下的时候，你是否要处理这次操作。当你确定要处理这次操作的时候，返回true；如果返回false的时候，就不会去响应后面的回调事件了。你想怎么滑就怎么话，我都不做处理。这里的(axes)滚动方向很重要，可以通过此参数判断滚动方向！</p>
-<ul>
-<li><p>参数3：直接目标，相当于能滑动的控件</p>
-</li>
-<li><p>参数4：观察的View</p>
-</li>
-<li><p>参数5：这个可以简单理解为滚动方向</p>
-<ul>
-<li>ViewCompat#SCROLL_AXIS_HORIZONTAL 水平方向</li>
-<li>ViewCompat#SCROLL_AXIS_VERTICAL 竖直方向</li>
-</ul>
-</li>
-<li><p>参数6：这个参数是之后有的，如果你输入的类型不是TYPE_TOUCH那么就不会相应这个滚动</p>
-</li>
-</ul>
-</li>
-<li><p><strong>onNestedScrollAccepted(@NonNull CoordinatorLayout coordinatorLayout, @NonNull V child, @NonNull View directTargetChild, @NonNull View target, @ScrollAxis int axes, @NestedScrollType int type)</strong> 当onStartNestedScroll准备处理这次滑动的时候(返回true的时候)，回调这个方法。可以在这个方法中做一些响应的准备工作！</p>
-</li>
-<li><p><strong>onNestedPreScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, int dx, int dy, @NonNull int[] consumed, @NestedScrollType int type)</strong> 当滚动开始执行的时候回调这个方法。</p>
-<ul>
-<li>参数4&#x2F;参数5：用户x&#x2F;y轴滚动的距离(注意这里是每一次都回调的啊！！！)</li>
-<li>参数6：处理滚动的距离的参数，内部维护着输出距离，假设用户滑动了100px,child 做了90px的位移，你需要把consumed［1］的值改成90，这样coordinatorLayout就能知道只处理剩下的10px的滚动。其中consumed[0]代表x轴、consumed[1]代表y轴。可能你不理解这个问题，换个形象点的比喻，比如你开发某一个功能，但是你只会其中的90%那么怎么办呢？不能就不管了。好你找到了你的同事或者老大，让他去完成剩下的10%。这样问题就完美的解决了，是一个概念的！</li>
-</ul>
-</li>
-<li><p><strong>onNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int type)</strong> 上面这个方法结束的时候，coordinatorLayout处理剩下的距离，比如还剩10px。但是coordinatorLayout发现滚动2px的时候就已经到头了。那么结束其滚动，调用该方法，并将coordinatorLayout处理剩下的像素数作为参<code>(dxUnconsumed、dyUnconsumed)</code>传过来，这里传过来的就是 8px。参数中还会有coordinatorLayout处理过的像素数（dxConsumed、dyConsumed）。老大开始处理剩下的距离了！这个方法主要处理一些越界后的滚动。还是不懂对吧！还拿你们老大做比喻：比如上面还剩 10%的工作，这时老大处理了2%后发现已经可以上线了，于是老大结束了工作，并将处理剩下的内容（dxUnconsumed、dyUnconsumed）纪录下来，告诉你。老大处理了的内容（dxConsumed、dyConsumed）也告诉了你。</p>
-<ul>
-<li>参数4&#x2F;参数5：当没有滚动到顶部或者底部的时候，x&#x2F;y轴的滚动距离</li>
-<li>参数6&#x2F;参数7：当滚动到顶部或者底部的时候，x&#x2F;y轴的滚动距离</li>
-</ul>
-</li>
-<li><p>onNestedPreFling(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, float velocityX, float velocityY) 当手指松开发生惯性动作之前调用，这里提供了响应的速度，你可以根据速度判断是否需要进行折叠等一系列的操作，你要确定响应这个方法的话，返回true。</p>
-<ul>
-<li>参数4&#x2F;参数5：代表相应的速度</li>
-</ul>
-</li>
-<li><p>onStopNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, int type) 停止滚动的时候回调的方法。当你不去响应Fling的时候会直接回调这个方法。在这里可以做一些清理工作。或者其他的内容。</p>
-</li>
-</ul>
-<p><strong>再来看看两个接口的源码</strong></p>
-<p>1.NestedScrollingChild</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">NestedScrollingChild</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 启用或禁用嵌套滚动的方法，设置为true，并且当前界面的View的层次结构是支持嵌套滚动的</span></span><br><span class="line"><span class="comment">    * (也就是需要NestedScrollingParent嵌套NestedScrollingChild)，才会触发嵌套滚动。</span></span><br><span class="line"><span class="comment">    * 一般这个方法内部都是直接代理给NestedScrollingChildHelper的同名方法即可</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">setNestedScrollingEnabled</span><span class="params">(<span class="type">boolean</span> enabled)</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 判断当前View是否支持嵌套滑动。一般也是直接代理给NestedScrollingChildHelper的同名方法即可</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">isNestedScrollingEnabled</span><span class="params">()</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 表示view开始滚动了,一般是在ACTION_DOWN中调用，如果返回true则表示父布局支持嵌套滚动。</span></span><br><span class="line"><span class="comment">    * 一般也是直接代理给NestedScrollingChildHelper的同名方法即可。这个时候正常情况会触发Parent的onStartNestedScroll()方法</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">startNestedScroll</span><span class="params">(<span class="meta">@ScrollAxis</span> <span class="type">int</span> axes)</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 一般是在事件结束比如ACTION_UP或者ACTION_CANCLE中调用,告诉父布局滚动结束。一般也是直接代理给NestedScrollingChildHelper的同名方法即可</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">stopNestedScroll</span><span class="params">()</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 判断当前View是否有嵌套滑动的Parent。一般也是直接代理给NestedScrollingChildHelper的同名方法即可</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">hasNestedScrollingParent</span><span class="params">()</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 在当前View消费滚动距离之后。通过调用该方法，把剩下的滚动距离传给父布局。如果当前没有发生嵌套滚动，或者不支持嵌套滚动，调用该方法也没啥用。</span></span><br><span class="line"><span class="comment">    * 内部一般也是直接代理给NestedScrollingChildHelper的同名方法即可</span></span><br><span class="line"><span class="comment">    * dxConsumed：被当前View消费了的水平方向滑动距离</span></span><br><span class="line"><span class="comment">    * dyConsumed：被当前View消费了的垂直方向滑动距离</span></span><br><span class="line"><span class="comment">    * dxUnconsumed：未被消费的水平滑动距离</span></span><br><span class="line"><span class="comment">    * dyUnconsumed：未被消费的垂直滑动距离</span></span><br><span class="line"><span class="comment">    * offsetInWindow：输出可选参数。如果不是null，该方法完成返回时，</span></span><br><span class="line"><span class="comment">    * 会将该视图从该操作之前到该操作完成之后的本地视图坐标中的偏移量封装进该参数中，offsetInWindow[0]水平方向，offsetInWindow[1]垂直方向</span></span><br><span class="line"><span class="comment">    * <span class="doctag">@return</span> true：表示滚动事件分发成功,fasle: 分发失败</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">dispatchNestedScroll</span><span class="params">(<span class="type">int</span> dxConsumed, <span class="type">int</span> dyConsumed,</span></span><br><span class="line"><span class="params">            <span class="type">int</span> dxUnconsumed, <span class="type">int</span> dyUnconsumed, <span class="meta">@Nullable</span> <span class="type">int</span>[] offsetInWindow)</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 在当前View消费滚动距离之前把滑动距离传给父布局。相当于把优先处理权交给Parent</span></span><br><span class="line"><span class="comment">    * 内部一般也是直接代理给NestedScrollingChildHelper的同名方法即可。</span></span><br><span class="line"><span class="comment">	* dx：当前水平方向滑动的距离</span></span><br><span class="line"><span class="comment">	* dy：当前垂直方向滑动的距离</span></span><br><span class="line"><span class="comment">	* consumed：输出参数，会将Parent消费掉的距离封装进该参数consumed[0]代表水平方向，consumed[1]代表垂直方向</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@return</span> true：代表Parent消费了滚动距离</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">dispatchNestedPreScroll</span><span class="params">(<span class="type">int</span> dx, <span class="type">int</span> dy, <span class="meta">@Nullable</span> <span class="type">int</span>[] consumed,</span></span><br><span class="line"><span class="params">            <span class="meta">@Nullable</span> <span class="type">int</span>[] offsetInWindow)</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    *将惯性滑动的速度分发给Parent。内部一般也是直接代理给NestedScrollingChildHelper的同名方法即可</span></span><br><span class="line"><span class="comment">	* velocityX：表示水平滑动速度</span></span><br><span class="line"><span class="comment">	* velocityY：垂直滑动速度</span></span><br><span class="line"><span class="comment">	* consumed：true：表示当前View消费了滑动事件，否则传入false</span></span><br><span class="line"><span class="comment">	* <span class="doctag">@return</span> true：表示Parent处理了滑动事件</span></span><br><span class="line"><span class="comment">	*/</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">dispatchNestedFling</span><span class="params">(<span class="type">float</span> velocityX, <span class="type">float</span> velocityY, <span class="type">boolean</span> consumed)</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 在当前View自己处理惯性滑动前，先将滑动事件分发给Parent,一般来说如果想自己处理惯性的滑动事件，</span></span><br><span class="line"><span class="comment">    * 就不应该调用该方法给Parent处理。如果给了Parent并且返回true，那表示Parent已经处理了，自己就不应该再做处理。</span></span><br><span class="line"><span class="comment">    * 返回false，代表Parent没有处理，但是不代表Parent后面就不用处理了</span></span><br><span class="line"><span class="comment">    * <span class="doctag">@return</span> true：表示Parent处理了滑动事件</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">dispatchNestedPreFling</span><span class="params">(<span class="type">float</span> velocityX, <span class="type">float</span> velocityY)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">NestedScrollingChild2</span> <span class="keyword">extends</span> <span class="title class_">NestedScrollingChild</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">startNestedScroll</span><span class="params">(<span class="meta">@ScrollAxis</span> <span class="type">int</span> axes, <span class="meta">@NestedScrollType</span> <span class="type">int</span> type)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">stopNestedScroll</span><span class="params">(<span class="meta">@NestedScrollType</span> <span class="type">int</span> type)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">hasNestedScrollingParent</span><span class="params">(<span class="meta">@NestedScrollType</span> <span class="type">int</span> type)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">dispatchNestedScroll</span><span class="params">(<span class="type">int</span> dxConsumed, <span class="type">int</span> dyConsumed,</span></span><br><span class="line"><span class="params">            <span class="type">int</span> dxUnconsumed, <span class="type">int</span> dyUnconsumed, <span class="meta">@Nullable</span> <span class="type">int</span>[] offsetInWindow,</span></span><br><span class="line"><span class="params">            <span class="meta">@NestedScrollType</span> <span class="type">int</span> type)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">dispatchNestedPreScroll</span><span class="params">(<span class="type">int</span> dx, <span class="type">int</span> dy, <span class="meta">@Nullable</span> <span class="type">int</span>[] consumed,</span></span><br><span class="line"><span class="params">            <span class="meta">@Nullable</span> <span class="type">int</span>[] offsetInWindow, <span class="meta">@NestedScrollType</span> <span class="type">int</span> type)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">NestedScrollingChild3</span> <span class="keyword">extends</span> <span class="title class_">NestedScrollingChild2</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">dispatchNestedScroll</span><span class="params">(<span class="type">int</span> dxConsumed, <span class="type">int</span> dyConsumed, <span class="type">int</span> dxUnconsumed, <span class="type">int</span> dyUnconsumed,</span></span><br><span class="line"><span class="params">            <span class="meta">@Nullable</span> <span class="type">int</span>[] offsetInWindow, <span class="meta">@ViewCompat</span>.NestedScrollType <span class="type">int</span> type,</span></span><br><span class="line"><span class="params">            <span class="meta">@NonNull</span> <span class="type">int</span>[] consumed)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<p>2.NestedScrollingParent</p>
-<figure class="highlight less"><table><tr><td class="code"><pre><span class="line"><span class="selector-tag">public</span> <span class="selector-tag">interface</span> <span class="selector-tag">NestedScrollingParent</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 当NestedScrollingChild调用方法startNestedScroll()时,会调用该方法。主要就是通过返回值告诉系统是否需要对后续的滚动进行处理</span></span><br><span class="line"><span class="comment">    * child：该ViewParen的包含NestedScrollingChild的直接子View，如果只有一层嵌套，和target是同一个View</span></span><br><span class="line"><span class="comment">    * target：本次嵌套滚动的NestedScrollingChild</span></span><br><span class="line"><span class="comment">    * nestedScrollAxes：滚动方向</span></span><br><span class="line"><span class="comment">    * @return </span></span><br><span class="line"><span class="comment">    * true:表示我需要进行处理，后续的滚动会触发相应的回到</span></span><br><span class="line"><span class="comment">    * false: 我不需要处理，后面也就不会进行相应的回调了</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="comment">//child和target的区别，如果是嵌套两层如:Parent包含一个LinearLayout，LinearLayout里面才是NestedScrollingChild类型的View。这个时候，</span></span><br><span class="line">    <span class="comment">//child指向LinearLayout，target指向NestedScrollingChild；如果Parent直接就包含了NestedScrollingChild，</span></span><br><span class="line">    <span class="comment">//这个时候target和child都指向NestedScrollingChild</span></span><br><span class="line">    <span class="selector-tag">boolean</span> <span class="selector-tag">onStartNestedScroll</span>(<span class="variable">@NonNull</span> View child, <span class="variable">@NonNull</span> View target, <span class="variable">@ScrollAxis</span> int axes);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 如果onStartNestedScroll()方法返回的是true的话,那么紧接着就会调用该方法.它是让嵌套滚动在开始滚动之前,</span></span><br><span class="line"><span class="comment">    * 让布局容器(viewGroup)或者它的父类执行一些配置的初始化的</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedScrollAccepted</span>(<span class="variable">@NonNull</span> View child, <span class="variable">@NonNull</span> View target, <span class="variable">@ScrollAxis</span> int axes);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 停止滚动了,当子view调用stopNestedScroll()时会调用该方法</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onStopNestedScroll</span>(<span class="variable">@NonNull</span> View target);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 当子view调用dispatchNestedScroll()方法时,会调用该方法。也就是开始分发处理嵌套滑动了</span></span><br><span class="line"><span class="comment">    * dxConsumed：已经被target消费掉的水平方向的滑动距离</span></span><br><span class="line"><span class="comment">    * dyConsumed：已经被target消费掉的垂直方向的滑动距离</span></span><br><span class="line"><span class="comment">    * dxUnconsumed：未被tagert消费掉的水平方向的滑动距离</span></span><br><span class="line"><span class="comment">    * dyUnconsumed：未被tagert消费掉的垂直方向的滑动距离</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedScroll</span>(<span class="variable">@NonNull</span> View target, int dxConsumed, int dyConsumed,</span><br><span class="line">            int dxUnconsumed, int dyUnconsumed);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 当子view调用dispatchNestedPreScroll()方法是,会调用该方法。也就是在NestedScrollingChild在处理滑动之前，</span></span><br><span class="line"><span class="comment">    * 会先将机会给Parent处理。如果Parent想先消费部分滚动距离，将消费的距离放入consumed</span></span><br><span class="line"><span class="comment">    * dx：水平滑动距离</span></span><br><span class="line"><span class="comment">    * dy：处置滑动距离</span></span><br><span class="line"><span class="comment">    * consumed：表示Parent要消费的滚动距离,consumed[0]和consumed[1]分别表示父布局在x和y方向上消费的距离.</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedPreScroll</span>(<span class="variable">@NonNull</span> View target, int dx, int dy, <span class="variable">@NonNull</span> int[] consumed);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 你可以捕获对内部NestedScrollingChild的fling事件</span></span><br><span class="line"><span class="comment">    * velocityX：水平方向的滑动速度</span></span><br><span class="line"><span class="comment">    * velocityY：垂直方向的滑动速度</span></span><br><span class="line"><span class="comment">    * consumed：是否被child消费了</span></span><br><span class="line"><span class="comment">    * @return</span></span><br><span class="line"><span class="comment">    * true:则表示消费了滑动事件</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="selector-tag">boolean</span> <span class="selector-tag">onNestedFling</span>(<span class="variable">@NonNull</span> View target, float velocityX, float velocityY, boolean consumed);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 在惯性滑动距离处理之前，会调用该方法，同onNestedPreScroll()一样，也是给Parent优先处理的权利</span></span><br><span class="line"><span class="comment">    * target：本次嵌套滚动的NestedScrollingChild</span></span><br><span class="line"><span class="comment">    * velocityX：水平方向的滑动速度</span></span><br><span class="line"><span class="comment">    * velocityY：垂直方向的滑动速度</span></span><br><span class="line"><span class="comment">    * @return</span></span><br><span class="line"><span class="comment">    * true：表示Parent要处理本次滑动事件，Child就不要处理了</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="selector-tag">boolean</span> <span class="selector-tag">onNestedPreFling</span>(<span class="variable">@NonNull</span> View target, float velocityX, float velocityY);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 返回当前滑动的方向，一般直接通过NestedScrollingParentHelper.getNestedScrollAxes()返回即可</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    @<span class="selector-tag">ScrollAxis</span></span><br><span class="line">    <span class="selector-tag">int</span> <span class="selector-tag">getNestedScrollAxes</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight less"><table><tr><td class="code"><pre><span class="line"><span class="selector-tag">public</span> <span class="selector-tag">interface</span> <span class="selector-tag">NestedScrollingParent2</span> <span class="selector-tag">extends</span> <span class="selector-tag">NestedScrollingParent</span> &#123;</span><br><span class="line">    <span class="selector-tag">boolean</span> <span class="selector-tag">onStartNestedScroll</span>(<span class="variable">@NonNull</span> View child, <span class="variable">@NonNull</span> View target, <span class="variable">@ScrollAxis</span> int axes,</span><br><span class="line">            <span class="variable">@NestedScrollType</span> int type);</span><br><span class="line"></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedScrollAccepted</span>(<span class="variable">@NonNull</span> View child, <span class="variable">@NonNull</span> View target, <span class="variable">@ScrollAxis</span> int axes,</span><br><span class="line">            <span class="variable">@NestedScrollType</span> int type);</span><br><span class="line"></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onStopNestedScroll</span>(<span class="variable">@NonNull</span> View target, <span class="variable">@NestedScrollType</span> int type);</span><br><span class="line"></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedScroll</span>(<span class="variable">@NonNull</span> View target, int dxConsumed, int dyConsumed,</span><br><span class="line">            int dxUnconsumed, int dyUnconsumed, <span class="variable">@NestedScrollType</span> int type);</span><br><span class="line"></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedPreScroll</span>(<span class="variable">@NonNull</span> View target, int dx, int dy, <span class="variable">@NonNull</span> int[] consumed,</span><br><span class="line">            <span class="variable">@NestedScrollType</span> int type);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight less"><table><tr><td class="code"><pre><span class="line"><span class="selector-tag">public</span> <span class="selector-tag">interface</span> <span class="selector-tag">NestedScrollingParent3</span> <span class="selector-tag">extends</span> <span class="selector-tag">NestedScrollingParent2</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="selector-tag">void</span> <span class="selector-tag">onNestedScroll</span>(<span class="variable">@NonNull</span> View target, int dxConsumed, int dyConsumed, int dxUnconsumed,</span><br><span class="line">            int dyUnconsumed, <span class="variable">@ViewCompat</span>.NestedScrollType int type, <span class="variable">@NonNull</span> int[] consumed);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="Demo"><a href="#Demo" class="headerlink" title="Demo"></a>Demo</h2><p>在那之前再补一张较全的事件流程图，还包括传值的过程欧，结合demo代码看也不错。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806164857678.png" alt="image-20220806164857678"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806164945258.png" alt="image-20220806164945258"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806165039684.png" alt="image-20220806165039684"></p>
-<p>效果演示</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%BD%95%E5%88%B6_2022_08_06_16_21_53_330.gif" alt="录制_2022_08_06_16_21_53_330"></p>
-<p>这里就不贴大量代码了，展示一些主要代码，详情可见文章下方的全部代码</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806163510871.png" alt="image-20220806163510871"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806163541253.png" alt="image-20220806163541253"></p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>只要对NestedScrollView的嵌套滑动机制过程掌握，利用NestedScrollingParent、NestedScrollingChild这两个接口可以很轻松的实现自定义嵌套滑动机制，当然也可以直接通过继承自定义NestedScrollView实现一些炫酷的滑动、吸顶效果，这种效果在现在的电商平台还是很常见的。当然仅仅利用NestedScrollingParent、NestedScrollingChild实现嵌套还是有局限，只能一对一，要想实现一对多的嵌套滑动那就需要Behavior，下一章将会初步接触。</p>
-<p><a href="https://github.com/gun-ctrl/NestedScrollViewTry">全部代码</a></p>
 ]]></content>
       <categories>
-        <category>高级UI</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>RecyclerView高级用法——吸顶效果</title>
-    <url>/2022/07/19/RecycleView%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95%E2%80%94%E2%80%94%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C/</url>
-    <content><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>我们对RecyclerView的使用不能仅仅停留在表面，可以探索一些高级的用法——自定义，不过要实现这些的前提是必须对RecycleView的源码流程有所了解。今天小编就略讲一下，主要是和今天的主体有关的内容。我们今天就来实现如下的吸顶效果。</p>
-<h3 id="通过绘制实现RecyclerView的吸顶效果"><a href="#通过绘制实现RecyclerView的吸顶效果" class="headerlink" title="通过绘制实现RecyclerView的吸顶效果"></a>通过绘制实现RecyclerView的吸顶效果</h3><p>ItemDecoration</p>
-<p>ItemDecoration允许应用给具体的View添加具体的图画或者layout的偏移，对于绘制View之间的分割线，视觉分组边界等等是非常有用的。</p>
-<p>当我们调用addItemDecoration()方法添加decoration的时候，RecyclerView就会调用该类的onDraw方法区绘制分割线，也就是说：分割线是绘制出来的。</p>
-<blockquote>
-<p>RecyclerView.ItemDecoration，该类为抽象类，官方目前只提供了一个实现类DividerItemDecoration。</p>
-<p>并且只有LinearLayoutManager能够使用</p>
-</blockquote>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719205304144.png" alt="image-20220719205304144"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%90%B8%E9%A1%B6%E6%95%88%E6%9E%9C.gif" alt="吸顶效果"></p>
-<p>要实现这样的吸顶效果，首先，就需要了解一下RecyclerView.ItemDecoration的绘制流程。</p>
-<p>1.onDraw</p>
-<p>在绘制每个itemView之前绘制，上图中的每个跟着滑动的头部就是在此处绘制</p>
-<p>2.onDrawOver</p>
-<p>在绘制了每个ItemView之后绘制，上图中固定的顶部在此处绘制</p>
-<p>3.getItemOffsets</p>
-<p>设置偏移值，可以在绘制itemView时设置偏移值，其实上demo中的每个头部（红色区域）就是在绘制itemView预留了部分空间用于绘制头部。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220719210625576.png" alt="image-20220719210625576"></p>
-<blockquote>
-<p>也就是说绘制流程是：onDraw()-&gt;ItemView-&gt;onDrawOver</p>
-</blockquote>
-<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ul>
-<li>在Adapter中创建两个方法<ul>
-<li>1.获取组名</li>
-<li>2.判断是否是组的头部<ul>
-<li>首先，position&#x3D;0一定是组的头部</li>
-<li>其次，可以通过前后两次组名判断当前item是不是组的头部</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line"><span class="comment">//是否是 组的第一个</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Boolean <span class="title">isGroupHeader</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (position==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="type">String</span> currentName = <span class="built_in">getGroupName</span>(position);</span><br><span class="line">            <span class="type">String</span> preGroupName = <span class="built_in">getGroupName</span>(position<span class="number">-1</span>);</span><br><span class="line">            <span class="keyword">if</span> (preGroupName.<span class="built_in">equals</span>(currentName))&#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="type">String</span> <span class="title">getGroupName</span><span class="params">(<span class="type">int</span> position)</span></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> modelList.<span class="built_in">get</span>(position).<span class="built_in">getGroupName</span>();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>自定义分割线</p>
-<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void on<span class="constructor">Draw(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">        super.on<span class="constructor">Draw(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">        <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">            <span class="built_in">int</span> count  = parent.get<span class="constructor">ChildCount()</span>;</span><br><span class="line">            <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">            <span class="built_in">int</span> right  = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">                <span class="comment">//获取对应的View</span></span><br><span class="line">                View view = parent.get<span class="constructor">ChildAt(<span class="params">i</span>)</span>;</span><br><span class="line">                <span class="comment">//获取View的布局位置</span></span><br><span class="line">                <span class="built_in">int</span> position = parent.get<span class="constructor">ChildLayoutPosition(<span class="params">view</span>)</span>;</span><br><span class="line">                <span class="comment">//判断是不是头部</span></span><br><span class="line">                boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>)</span>;</span><br><span class="line">                <span class="keyword">if</span> (isGroupHeader<span class="operator"> &amp;&amp; </span>view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                    String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">                    textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>, 0, <span class="params">groupName</span>.<span class="params">length</span>()</span>, textRect);</span><br><span class="line">                    c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">view</span>.<span class="params">getTop</span>()</span>-groupHeaderHeight/<span class="number">2</span>+textRect.height<span class="literal">()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line"></span><br><span class="line">                &#125;<span class="keyword">else</span> <span class="keyword">if</span> (view.get<span class="constructor">Top()</span> - groupHeaderHeight - parent.get<span class="constructor">PaddingTop()</span> &gt;= <span class="number">0</span>)&#123;</span><br><span class="line">                    <span class="comment">//分割线</span></span><br><span class="line">                    c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">view</span>.<span class="params">getTop</span>()</span>-<span class="number">4</span>,right,view.get<span class="constructor">Top()</span>,headPaint);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">   public void on<span class="constructor">DrawOver(@NonNull Canvas <span class="params">c</span>, @NonNull RecyclerView <span class="params">parent</span>, @NonNull RecyclerView.State <span class="params">state</span>)</span> &#123;</span><br><span class="line">       super.on<span class="constructor">DrawOver(<span class="params">c</span>, <span class="params">parent</span>, <span class="params">state</span>)</span>;</span><br><span class="line">       <span class="keyword">if</span> (parent.get<span class="constructor">Adapter()</span> instanceof ModelAdapter)&#123;</span><br><span class="line">           ModelAdapter adapter = (ModelAdapter) parent.get<span class="constructor">Adapter()</span>;</span><br><span class="line">           <span class="comment">//返回可见区域的第一个item的position</span></span><br><span class="line">           <span class="built_in">int</span> position = ((LinearLayoutManager)parent.get<span class="constructor">LayoutManager()</span>).find<span class="constructor">FirstVisibleItemPosition()</span>;</span><br><span class="line">           <span class="comment">//获取对应的position的View</span></span><br><span class="line">           View itemView = parent.find<span class="constructor">ViewHolderForAdapterPosition(<span class="params">position</span>)</span>.itemView;</span><br><span class="line">           <span class="built_in">int</span> left = parent.get<span class="constructor">PaddingLeft()</span>;</span><br><span class="line">           <span class="built_in">int</span> right = parent.get<span class="constructor">Width()</span> - parent.get<span class="constructor">PaddingRight()</span>;</span><br><span class="line">           <span class="built_in">int</span> top = parent.get<span class="constructor">PaddingTop()</span>;</span><br><span class="line">           <span class="comment">//当下一个是组的头部时</span></span><br><span class="line">           boolean isGroupHeader = adapter.is<span class="constructor">GroupHeader(<span class="params">position</span>+1)</span>;</span><br><span class="line">           String groupName = adapter.get<span class="constructor">GroupName(<span class="params">position</span>)</span>;</span><br><span class="line">           textPaint.get<span class="constructor">TextBounds(<span class="params">groupName</span>,0,<span class="params">groupName</span>.<span class="params">length</span>()</span>,textRect);</span><br><span class="line">           <span class="keyword">if</span> (isGroupHeader)&#123;</span><br><span class="line">               <span class="comment">//对顶部进行缩小效果，在视觉上是被下一个组的顶部推进去的</span></span><br><span class="line">               <span class="built_in">int</span> bottom = <span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>min(groupHeaderHeight,itemView.get<span class="constructor">Bottom()</span>-parent.get<span class="constructor">PaddingTop()</span>);</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.clip<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">bottom</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">bottom</span>-<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">               c.draw<span class="constructor">Rect(<span class="params">left</span>,<span class="params">top</span>,<span class="params">right</span>,<span class="params">top</span>+<span class="params">groupHeaderHeight</span>,<span class="params">headPaint</span>)</span>;</span><br><span class="line">               c.draw<span class="constructor">Text(<span class="params">groupName</span>,<span class="params">left</span>+20,<span class="params">top</span>+<span class="params">groupHeaderHeight</span><span class="operator">/</span>2+<span class="params">textRect</span>.<span class="params">height</span>()</span>/<span class="number">2</span>,textPaint);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight pf"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public void getItemOffsets(@N<span class="keyword">on</span>Null Rect <span class="keyword">out</span>Rect, @N<span class="keyword">on</span>Null View view, @N<span class="keyword">on</span>Null RecyclerView <span class="keyword">parent</span>, @N<span class="keyword">on</span>Null RecyclerView.State <span class="keyword">state</span>) &#123;</span><br><span class="line">        super.getItemOffsets(<span class="keyword">out</span>Rect, view, <span class="keyword">parent</span>, <span class="keyword">state</span>);</span><br><span class="line">        if (<span class="keyword">parent</span>.getAdapter() instanceof ModelAdapter)&#123;</span><br><span class="line">            ModelAdapter adapter = (ModelAdapter) <span class="keyword">parent</span>.getAdapter();</span><br><span class="line">            int position = <span class="keyword">parent</span>.getChildAdapterPosition(view);</span><br><span class="line">            boolean isGroupHeader = adapter.isGroupHeader(position);</span><br><span class="line">            //判断itemView是不是头部</span><br><span class="line">            if (isGroupHeader)&#123;</span><br><span class="line">                //如果是头部，预留更大的地方</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="keyword">group</span>HeaderHeight,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;else &#123;</span><br><span class="line">                <span class="keyword">out</span>Rect.<span class="built_in">set</span>(<span class="number">0</span>,<span class="number">4</span>,<span class="number">0</span>,<span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></li>
-</ul>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>其实这部分的重点就是自定义分割线（ItemDecoration），弄清绘制顺序以及设置偏移值的作用就简单多了。当然，难点（也不是难点）就是弄清除尺寸参数,特别是尺寸变化引起的换组顶部推动效果。</p>
-<p>其次就是特别注意有padding的情况，相信大家看出小编在这设置了顶部padding，有padding的时候需要注意尺寸。（不过有设置padding的情况很少）</p>
-<p><a href="https://github.com/gun-ctrl/RecyclerViewPro">全部代码</a></p>
-]]></content>
-      <categories>
-        <category>高级UI</category>
+        <category>Android随笔</category>
       </categories>
       <tags>
-        <tag>RecyclerView</tag>
+        <tag>adb</tag>
       </tags>
   </entry>
   <entry>
@@ -985,14 +1002,319 @@
       </tags>
   </entry>
   <entry>
-    <title>adb shell input text不能输入中文的解决方案</title>
-    <url>/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/</url>
-    <content><![CDATA[<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><p>adb默认是不支持Unicode编码的，无法通过adb shell input text 命令输入中文到手机或者模拟器。</p>
-<h3 id="解决步骤"><a href="#解决步骤" class="headerlink" title="解决步骤"></a>解决步骤</h3><ul>
-<li>1、安装ADBKeyBoard.apk文件(直接搜索就能找到)<br>打开手机或模拟器，adb install ADBKeyBoard.apk安装该输入法<br>在手机上直接安装也可</li>
-<li>2、设置默认输入法<br>打开手机设置 -&gt; 点击语法与输入法 -&gt; 点击输入法管理 -&gt; 启用ADBKeyboard<br>重启手机后即可使用该输入法</li>
-<li>3、输入adb命令测试中文输入<br>adb shell am broadcast -a ADB_INPUT_TEXT –es msg ‘这是一段adb中文测试’</li>
+    <title>adb命令</title>
+    <url>/2022/07/19/adb%E5%91%BD%E4%BB%A4/</url>
+    <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>本文为小编学习总结的一些adb的常用命令，可能一些命令有待验证，更多内容可以参考<a href="https://github.com/mzlogin/awesome-adb#%E6%8C%87%E5%AE%9A-adb-server-%E7%9A%84%E7%BD%91%E7%BB%9C%E7%AB%AF%E5%8F%A3">adb用法大全</a></p>
+<h3 id="基本用法"><a href="#基本用法" class="headerlink" title="基本用法"></a>基本用法</h3><h4 id="语法命令"><a href="#语法命令" class="headerlink" title="语法命令"></a>语法命令</h4><p>adb 命令的基本语法如下：<br>adb [ -d| -e| -s <sericalNumber>] <command><br>如果只有一个设备&#x2F;模拟器连接时，可以省略掉[ -d| -e| -s] <sericalNumber>] 这一部分，直接使用adb <command>。</p>
+<h4 id="为命令指定目标设备"><a href="#为命令指定目标设备" class="headerlink" title="为命令指定目标设备"></a>为命令指定目标设备</h4><p>如果有多个设备&#x2F;模拟器,则需要为命令指定目标设备</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-d</td>
+<td align="left">指定当前唯一通过 USB 连接的 Android 设备为命令目标</td>
+</tr>
+<tr>
+<td>-e</td>
+<td align="left">指定当前唯一运行的模拟器为目标命令</td>
+</tr>
+<tr>
+<td>-s<serialNumber></td>
+<td align="left">指定相应 serialNumber 号的设备&#x2F;模拟器为命令目标</td>
+</tr>
+</tbody></table>
+<h2 id="常用adb命令"><a href="#常用adb命令" class="headerlink" title="常用adb命令"></a>常用adb命令</h2><h3 id="查看adb版本号"><a href="#查看adb版本号" class="headerlink" title="查看adb版本号"></a>查看adb版本号</h3><p>adb version</p>
+<h3 id="查看已连接设备"><a href="#查看已连接设备" class="headerlink" title="查看已连接设备"></a>查看已连接设备</h3><p>adb devices</p>
+<h3 id="查看手机序列号"><a href="#查看手机序列号" class="headerlink" title="查看手机序列号"></a>查看手机序列号</h3><p>adb get-serialno<br>如返回127.0.0.1:7555</p>
+<h3 id="查看日志"><a href="#查看日志" class="headerlink" title="查看日志"></a>查看日志</h3><p>adb logcat</p>
+<blockquote>
+<p>adb logcat -c 清除日志<br>adb logcat | grep “tag” 过滤日志 这里的tag就是你打印日志的时候需要设置的第一个参数TAG，通过TAG我们可以很轻松的过滤出我们想要的日志，轻松高效。</p>
+</blockquote>
+<h3 id="安装apk"><a href="#安装apk" class="headerlink" title="安装apk"></a>安装apk</h3><p>adb install [apk文件的路径]</p>
+<blockquote>
+<p>adb install douyin.apk</p>
+</blockquote>
+<ul>
+<li>多个设备安装apk<br>adb -s [设备号] install [apk文件的路径]<blockquote>
+<p>adb -s 127.0.0.1:7555 install douyin.apk</p>
+</blockquote>
+</li>
+<li>如果apk已经存在，需要覆盖安装</li>
+<li>adb install -r [apk文件的路径]<blockquote>
+<p>adb install -r douyin.apk</p>
+</blockquote>
+</li>
 </ul>
+<p>adb install后面可以跟一些可选参数来控制安装APK的行为，可选参数及含义如下</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th align="left">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-l</td>
+<td align="left">将应用安装到保护目录 &#x2F;mnt&#x2F;asec</td>
+</tr>
+<tr>
+<td>-r</td>
+<td align="left">允许覆盖安装</td>
+</tr>
+<tr>
+<td>-t</td>
+<td align="left">允许安装AndroidMainfest.xml里application指定<code>android:testOnly=&quot;true&quot;</code>的应用</td>
+</tr>
+<tr>
+<td>-s</td>
+<td align="left">应用安装到sdcard</td>
+</tr>
+<tr>
+<td>-d</td>
+<td align="left">允许降级覆盖安装</td>
+</tr>
+<tr>
+<td>-g</td>
+<td align="left">授予所有运行时权限</td>
+</tr>
+<tr>
+<td>–abi abi-identifier</td>
+<td align="left">为特定ABI强制安装apk，abi-identifier可以是armeabi-v7a、arm64-v8a、v86、x86_64 等</td>
+</tr>
+</tbody></table>
+<h3 id="卸载apk"><a href="#卸载apk" class="headerlink" title="卸载apk"></a>卸载apk</h3><ul>
+<li>普通卸载</li>
+<li>adb uninstall [apk文件的路径]<blockquote>
+<p>adb uninstall douyin.apk</p>
+</blockquote>
+</li>
+<li>卸载但是保留数据</li>
+<li>adb uninstall -k [apk文件的路径]<blockquote>
+<p>adb uninstall -k douyin.apk</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="获取手机root权限"><a href="#获取手机root权限" class="headerlink" title="获取手机root权限"></a>获取手机root权限</h3><p>adb root</p>
+<h3 id="连接不稳定时需要挂载"><a href="#连接不稳定时需要挂载" class="headerlink" title="连接不稳定时需要挂载"></a>连接不稳定时需要挂载</h3><p>adb remount</p>
+<h3 id="重启手机"><a href="#重启手机" class="headerlink" title="重启手机"></a>重启手机</h3><ul>
+<li>正常重启<br>adb reboot</li>
+<li>重启手机到recovery<br>adb reboot recovery</li>
+<li>重启到bootloader界面<br>adb reboot bootloader</li>
+</ul>
+<h3 id="关闭adb服务"><a href="#关闭adb服务" class="headerlink" title="关闭adb服务"></a>关闭adb服务</h3><p>adb kill -server</p>
+<h3 id="启动adb服务"><a href="#启动adb服务" class="headerlink" title="启动adb服务"></a>启动adb服务</h3><p>adb start -server</p>
+<h3 id="查看手机设备型号"><a href="#查看手机设备型号" class="headerlink" title="查看手机设备型号"></a>查看手机设备型号</h3><p>adb shell getprop ro.product.model<br>如返回MI 8</p>
+<h3 id="查看设备的Android版本"><a href="#查看设备的Android版本" class="headerlink" title="查看设备的Android版本"></a>查看设备的Android版本</h3><p>adb shell getprop ro.build.version.release</p>
+<h3 id="获取手机厂商名称"><a href="#获取手机厂商名称" class="headerlink" title="获取手机厂商名称"></a>获取手机厂商名称</h3><p>adb shell getprop ro.product.brand<br>如返回Xiaomi</p>
+<h3 id="获取手机SDK版本"><a href="#获取手机SDK版本" class="headerlink" title="获取手机SDK版本"></a>获取手机SDK版本</h3><p>adb shell getprop ro.build.version.sdk</p>
+<h3 id="查看手机分辨率"><a href="#查看手机分辨率" class="headerlink" title="查看手机分辨率"></a>查看手机分辨率</h3><p>adb shell wm size</p>
+<h3 id="查看屏幕密度"><a href="#查看屏幕密度" class="headerlink" title="查看屏幕密度"></a>查看屏幕密度</h3><p>adb shell wm density<br><strong>修改屏幕密度</strong><br>adb shell wm density 160<br><strong>恢复原屏幕密度</strong><br>adb shell wm density reset</p>
+<h3 id="查看手机的mac地址"><a href="#查看手机的mac地址" class="headerlink" title="查看手机的mac地址"></a>查看手机的mac地址</h3><p>adb shell cat &#x2F;sys&#x2F;class&#x2F;net&#x2F;wlan0&#x2F;address</p>
+<h3 id="查看电池信息"><a href="#查看电池信息" class="headerlink" title="查看电池信息"></a>查看电池信息</h3><p>adb shell dumpsys battery</p>
+<h3 id="查看进程"><a href="#查看进程" class="headerlink" title="查看进程"></a>查看进程</h3><p>adb shell ps</p>
+<h3 id="查看CPU使用情况"><a href="#查看CPU使用情况" class="headerlink" title="查看CPU使用情况"></a>查看CPU使用情况</h3><p>adb shell top</p>
+<h3 id="CPU信息"><a href="#CPU信息" class="headerlink" title="CPU信息"></a>CPU信息</h3><p>adb shell cat &#x2F;proc&#x2F;cpuinfo</p>
+<h3 id="内存信息"><a href="#内存信息" class="headerlink" title="内存信息"></a>内存信息</h3><p>adb shell cat &#x2F;proc&#x2F;meminfo</p>
+<h3 id="查看手机上所有安装的app包名"><a href="#查看手机上所有安装的app包名" class="headerlink" title="查看手机上所有安装的app包名"></a>查看手机上所有安装的app包名</h3><p>adb shell pm list packages</p>
+<blockquote>
+<p>adb shell pm list packages -s 查看所有系统app的包名<br>adb shell pm list packages -3 查看所有第三方app的包名<br>adb shell pm list packages | grep [包名] 使用grep筛选所有满足要求的app包名</p>
+</blockquote>
+<h3 id="清除应用数据"><a href="#清除应用数据" class="headerlink" title="清除应用数据"></a>清除应用数据</h3><p>adb shell pm clear [<packagename>]</p>
+<blockquote>
+<p>当你只是想要清除一个apk的某些数据来复现某些操作的时候，这个命令就显得额外重要。它可以避免我们重装apk来完成这个操作。</p>
+</blockquote>
+<h3 id="获取某个应用包名的启动入口"><a href="#获取某个应用包名的启动入口" class="headerlink" title="获取某个应用包名的启动入口"></a>获取某个应用包名的启动入口</h3><ul>
+<li>adb shell dumpsys package com.ss.android.ugc.aweme|findstr activity</li>
+<li>com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity 这个就是抖音的入口<blockquote>
+<p>adb shell dumpsys package com.ss.android29111 com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="屏幕截屏"><a href="#屏幕截屏" class="headerlink" title="屏幕截屏"></a>屏幕截屏</h3><p>adb shell screencap [保存路径]</p>
+<blockquote>
+<p>adb shell screencap &#x2F;sdcard&#x2F;screen.png</p>
+</blockquote>
+<h3 id="录制视频"><a href="#录制视频" class="headerlink" title="录制视频"></a>录制视频</h3><p>adb shell screenrecord [保存路径]</p>
+<p>也可以使用（adb版本太老的话，需要更新adb）</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">exec</span><span class="operator">-</span><span class="keyword">out</span> screencap  <span class="operator">&gt;</span> sc.png</span><br></pre></td></tr></table></figure>
+
+<h3 id="上传文件到手机"><a href="#上传文件到手机" class="headerlink" title="上传文件到手机"></a>上传文件到手机</h3><p>adb push [电脑文件路径] [手机文件保存路径]</p>
+<blockquote>
+<p>adb push douyin.apk sdcard&#x2F;douyin.apk</p>
+</blockquote>
+<h3 id="从手机端下载文件"><a href="#从手机端下载文件" class="headerlink" title="从手机端下载文件"></a>从手机端下载文件</h3><p>adb pull [手机上文件路径]<br><strong>注意：</strong>此时没有指定上传到电脑的路径，会默认上传到adb程序所在的路径</p>
+<blockquote>
+<p>adb pull sdcard&#x2F;douyin.apk</p>
+</blockquote>
+<p>指定上传路径：adb pull [手机上文件的路径] [电脑文件的路径]</p>
+<blockquote>
+<p>adb pull &#x2F;storage&#x2F;emulated&#x2F;0&#x2F;app&#x2F;txt.mp4 D:&#x2F;ADB&#x2F;tet.mp4</p>
+</blockquote>
+<h3 id="模拟屏幕点击事件"><a href="#模拟屏幕点击事件" class="headerlink" title="模拟屏幕点击事件"></a>模拟屏幕点击事件</h3><p>adb shell input tap x坐标轴 y坐标轴</p>
+<blockquote>
+<p>adb shell input tap 500 1450</p>
+</blockquote>
+<h3 id="模拟手势滑动事件"><a href="#模拟手势滑动事件" class="headerlink" title="模拟手势滑动事件"></a>模拟手势滑动事件</h3><p>adb shell input swipe 开始x轴 开始y轴 结束x轴 结束y轴 过程持续时间</p>
+<blockquote>
+<p>adb shell input swipe 100 500 100 1450 100</p>
+</blockquote>
+<h3 id="模拟点击键盘按钮"><a href="#模拟点击键盘按钮" class="headerlink" title="模拟点击键盘按钮"></a>模拟点击键盘按钮</h3><p>adb shell input keyevent [key值]</p>
+<blockquote>
+<p>adb shell input keyevent 25</p>
+</blockquote>
+<p>一些常用的keyevent键值信息</p>
+<table>
+<thead>
+<tr>
+<th>keyevent</th>
+<th align="left">效果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>3</td>
+<td align="left">Home键</td>
+</tr>
+<tr>
+<td>5</td>
+<td align="left">拨号键</td>
+</tr>
+<tr>
+<td>6</td>
+<td align="left">挂机键</td>
+</tr>
+<tr>
+<td>19</td>
+<td align="left">向上</td>
+</tr>
+<tr>
+<td>20</td>
+<td align="left">向下</td>
+</tr>
+<tr>
+<td>21</td>
+<td align="left">向左</td>
+</tr>
+<tr>
+<td>22</td>
+<td align="left">向右</td>
+</tr>
+<tr>
+<td>24</td>
+<td align="left">音量加</td>
+</tr>
+<tr>
+<td>25</td>
+<td align="left">音量减</td>
+</tr>
+<tr>
+<td>26</td>
+<td align="left">电源</td>
+</tr>
+<tr>
+<td>27</td>
+<td align="left">拍照键</td>
+</tr>
+<tr>
+<td>66</td>
+<td align="left">回车键</td>
+</tr>
+<tr>
+<td>67</td>
+<td align="left">退格键</td>
+</tr>
+<tr>
+<td>82</td>
+<td align="left">菜单键</td>
+</tr>
+<tr>
+<td>83</td>
+<td align="left">通知键</td>
+</tr>
+<tr>
+<td>84</td>
+<td align="left">搜索键</td>
+</tr>
+<tr>
+<td>92</td>
+<td align="left">向上翻页</td>
+</tr>
+<tr>
+<td>93</td>
+<td align="left">向下翻页</td>
+</tr>
+<tr>
+<td>111</td>
+<td align="left">esc键</td>
+</tr>
+<tr>
+<td>112</td>
+<td align="left">删除键</td>
+</tr>
+<tr>
+<td>115</td>
+<td align="left">大写锁定键</td>
+</tr>
+<tr>
+<td>122</td>
+<td align="left">光标移动到开始键</td>
+</tr>
+<tr>
+<td>123</td>
+<td align="left">光标移动到末尾键</td>
+</tr>
+<tr>
+<td>143</td>
+<td align="left">小键盘锁</td>
+</tr>
+<tr>
+<td>168</td>
+<td align="left">放大键</td>
+</tr>
+<tr>
+<td>169</td>
+<td align="left">缩小键</td>
+</tr>
+</tbody></table>
+<h3 id="向屏幕输入一些信息"><a href="#向屏幕输入一些信息" class="headerlink" title="向屏幕输入一些信息"></a>向屏幕输入一些信息</h3><ul>
+<li>db shell input text [字符串信息]</li>
+<li>%s是空格<blockquote>
+<p>db shell input text “insert%stext%shere”</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="查看前台Activity"><a href="#查看前台Activity" class="headerlink" title="查看前台Activity"></a>查看前台Activity</h3><p>同时小编也是通过这种方式获取到应用包的入口<br>adb shell dumpsys activity activities | findstr mResumedActivity<br>获取到了QQ的启动入口<br><img src="https://upload-images.jianshu.io/upload_images/20123021-1584e1eac4dde441.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<h3 id="启动某个app"><a href="#启动某个app" class="headerlink" title="启动某个app"></a>启动某个app</h3><p>adb shell am start -n [包名]&#x2F;[启动入口]</p>
+<blockquote>
+<p>adb shel am start -n com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity<br>Strating:Intent{cmp&#x3D;com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity}</p>
+</blockquote>
+<p>启动qq</p>
+<blockquote>
+<p>adb shell am start -n com.tencent.mobileqq&#x2F;.activity.SplashActivity</p>
+</blockquote>
+<p>启动有道词典<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-307c3a0c81650606.png" alt="image.png"></p>
+<h3 id="发送广播"><a href="#发送广播" class="headerlink" title="发送广播"></a>发送广播</h3><p>adb shell am broadcast -a “broadcastactionfilter”</p>
+<blockquote>
+<p>adb shell am broadcast -a “broadcastactionfilter”</p>
+</blockquote>
+<h3 id="使用自带浏览器打开网页"><a href="#使用自带浏览器打开网页" class="headerlink" title="使用自带浏览器打开网页"></a>使用自带浏览器打开网页</h3><p>adb shell am start -a [浏览器包名] -d [网址]</p>
+<blockquote>
+<p>adb shell am start -a “android.intent.action.VIEW” -d <a href="https://www.google.com/">https://www.google.com</a></p>
+</blockquote>
+<h3 id="获取手机内部存储信息"><a href="#获取手机内部存储信息" class="headerlink" title="获取手机内部存储信息"></a>获取手机内部存储信息</h3><p>adb shell df &#x2F;data</p>
+<h2 id="关于ADB-IDEA"><a href="#关于ADB-IDEA" class="headerlink" title="关于ADB IDEA"></a>关于ADB IDEA</h2><p>AS插件ADB IDEA，装了这款插件可以直接在AS中快速操作一些ADB命令</p>
+<h3 id="使用方式"><a href="#使用方式" class="headerlink" title="使用方式"></a>使用方式</h3><p>1、双击shift -&gt; 点击action -&gt;搜索adb<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-5f962d67d5267c67.png" alt="image.png"></p>
+<p>2、Ctrl + Shift + A，快捷键直接调用<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-0cb20333cd5ab9ca.png" alt="image.png"></p>
+<h2 id="一些琐碎小问题"><a href="#一些琐碎小问题" class="headerlink" title="一些琐碎小问题"></a>一些琐碎小问题</h2><h4 id="不知应用包的入口Activity如何启动应用包"><a href="#不知应用包的入口Activity如何启动应用包" class="headerlink" title="不知应用包的入口Activity如何启动应用包"></a>不知应用包的入口Activity如何启动应用包</h4><p>1.通过category</p>
+<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell monkey -<span class="selector-tag">p</span> &lt;packagename&gt; -c android<span class="selector-class">.intent</span><span class="selector-class">.category</span><span class="selector-class">.LAUNCHER</span> <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li><a href="https://www.jianshu.com/p/150139c8295a">adb获取应用包入口的方案</a></li>
+</ol>
+<h4 id="adb-shell-input-text无法响应中文输入的问题"><a href="#adb-shell-input-text无法响应中文输入的问题" class="headerlink" title="adb shell input text无法响应中文输入的问题"></a>adb shell input text无法响应中文输入的问题</h4><p><a href="http://banmaman.com/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">adb shell input text不能输入中文的解决方案</a></p>
+<h2 id="adb部分总结"><a href="#adb部分总结" class="headerlink" title="adb部分总结"></a>adb部分总结</h2><p><a href="https://www.jianshu.com/p/f6fa6759e747">adb小结</a></p>
 ]]></content>
       <categories>
         <category>Android随笔</category>
@@ -1334,361 +1656,6 @@
       </tags>
   </entry>
   <entry>
-    <title>adb命令</title>
-    <url>/2022/07/19/adb%E5%91%BD%E4%BB%A4/</url>
-    <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>本文为小编学习总结的一些adb的常用命令，可能一些命令有待验证，更多内容可以参考<a href="https://github.com/mzlogin/awesome-adb#%E6%8C%87%E5%AE%9A-adb-server-%E7%9A%84%E7%BD%91%E7%BB%9C%E7%AB%AF%E5%8F%A3">adb用法大全</a></p>
-<h3 id="基本用法"><a href="#基本用法" class="headerlink" title="基本用法"></a>基本用法</h3><h4 id="语法命令"><a href="#语法命令" class="headerlink" title="语法命令"></a>语法命令</h4><p>adb 命令的基本语法如下：<br>adb [ -d| -e| -s <sericalNumber>] <command><br>如果只有一个设备&#x2F;模拟器连接时，可以省略掉[ -d| -e| -s] <sericalNumber>] 这一部分，直接使用adb <command>。</p>
-<h4 id="为命令指定目标设备"><a href="#为命令指定目标设备" class="headerlink" title="为命令指定目标设备"></a>为命令指定目标设备</h4><p>如果有多个设备&#x2F;模拟器,则需要为命令指定目标设备</p>
-<table>
-<thead>
-<tr>
-<th>参数</th>
-<th align="left">含义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>-d</td>
-<td align="left">指定当前唯一通过 USB 连接的 Android 设备为命令目标</td>
-</tr>
-<tr>
-<td>-e</td>
-<td align="left">指定当前唯一运行的模拟器为目标命令</td>
-</tr>
-<tr>
-<td>-s<serialNumber></td>
-<td align="left">指定相应 serialNumber 号的设备&#x2F;模拟器为命令目标</td>
-</tr>
-</tbody></table>
-<h2 id="常用adb命令"><a href="#常用adb命令" class="headerlink" title="常用adb命令"></a>常用adb命令</h2><h3 id="查看adb版本号"><a href="#查看adb版本号" class="headerlink" title="查看adb版本号"></a>查看adb版本号</h3><p>adb version</p>
-<h3 id="查看已连接设备"><a href="#查看已连接设备" class="headerlink" title="查看已连接设备"></a>查看已连接设备</h3><p>adb devices</p>
-<h3 id="查看手机序列号"><a href="#查看手机序列号" class="headerlink" title="查看手机序列号"></a>查看手机序列号</h3><p>adb get-serialno<br>如返回127.0.0.1:7555</p>
-<h3 id="查看日志"><a href="#查看日志" class="headerlink" title="查看日志"></a>查看日志</h3><p>adb logcat</p>
-<blockquote>
-<p>adb logcat -c 清除日志<br>adb logcat | grep “tag” 过滤日志 这里的tag就是你打印日志的时候需要设置的第一个参数TAG，通过TAG我们可以很轻松的过滤出我们想要的日志，轻松高效。</p>
-</blockquote>
-<h3 id="安装apk"><a href="#安装apk" class="headerlink" title="安装apk"></a>安装apk</h3><p>adb install [apk文件的路径]</p>
-<blockquote>
-<p>adb install douyin.apk</p>
-</blockquote>
-<ul>
-<li>多个设备安装apk<br>adb -s [设备号] install [apk文件的路径]<blockquote>
-<p>adb -s 127.0.0.1:7555 install douyin.apk</p>
-</blockquote>
-</li>
-<li>如果apk已经存在，需要覆盖安装</li>
-<li>adb install -r [apk文件的路径]<blockquote>
-<p>adb install -r douyin.apk</p>
-</blockquote>
-</li>
-</ul>
-<p>adb install后面可以跟一些可选参数来控制安装APK的行为，可选参数及含义如下</p>
-<table>
-<thead>
-<tr>
-<th>参数</th>
-<th align="left">含义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>-l</td>
-<td align="left">将应用安装到保护目录 &#x2F;mnt&#x2F;asec</td>
-</tr>
-<tr>
-<td>-r</td>
-<td align="left">允许覆盖安装</td>
-</tr>
-<tr>
-<td>-t</td>
-<td align="left">允许安装AndroidMainfest.xml里application指定<code>android:testOnly=&quot;true&quot;</code>的应用</td>
-</tr>
-<tr>
-<td>-s</td>
-<td align="left">应用安装到sdcard</td>
-</tr>
-<tr>
-<td>-d</td>
-<td align="left">允许降级覆盖安装</td>
-</tr>
-<tr>
-<td>-g</td>
-<td align="left">授予所有运行时权限</td>
-</tr>
-<tr>
-<td>–abi abi-identifier</td>
-<td align="left">为特定ABI强制安装apk，abi-identifier可以是armeabi-v7a、arm64-v8a、v86、x86_64 等</td>
-</tr>
-</tbody></table>
-<h3 id="卸载apk"><a href="#卸载apk" class="headerlink" title="卸载apk"></a>卸载apk</h3><ul>
-<li>普通卸载</li>
-<li>adb uninstall [apk文件的路径]<blockquote>
-<p>adb uninstall douyin.apk</p>
-</blockquote>
-</li>
-<li>卸载但是保留数据</li>
-<li>adb uninstall -k [apk文件的路径]<blockquote>
-<p>adb uninstall -k douyin.apk</p>
-</blockquote>
-</li>
-</ul>
-<h3 id="获取手机root权限"><a href="#获取手机root权限" class="headerlink" title="获取手机root权限"></a>获取手机root权限</h3><p>adb root</p>
-<h3 id="连接不稳定时需要挂载"><a href="#连接不稳定时需要挂载" class="headerlink" title="连接不稳定时需要挂载"></a>连接不稳定时需要挂载</h3><p>adb remount</p>
-<h3 id="重启手机"><a href="#重启手机" class="headerlink" title="重启手机"></a>重启手机</h3><ul>
-<li>正常重启<br>adb reboot</li>
-<li>重启手机到recovery<br>adb reboot recovery</li>
-<li>重启到bootloader界面<br>adb reboot bootloader</li>
-</ul>
-<h3 id="关闭adb服务"><a href="#关闭adb服务" class="headerlink" title="关闭adb服务"></a>关闭adb服务</h3><p>adb kill -server</p>
-<h3 id="启动adb服务"><a href="#启动adb服务" class="headerlink" title="启动adb服务"></a>启动adb服务</h3><p>adb start -server</p>
-<h3 id="查看手机设备型号"><a href="#查看手机设备型号" class="headerlink" title="查看手机设备型号"></a>查看手机设备型号</h3><p>adb shell getprop ro.product.model<br>如返回MI 8</p>
-<h3 id="查看设备的Android版本"><a href="#查看设备的Android版本" class="headerlink" title="查看设备的Android版本"></a>查看设备的Android版本</h3><p>adb shell getprop ro.build.version.release</p>
-<h3 id="获取手机厂商名称"><a href="#获取手机厂商名称" class="headerlink" title="获取手机厂商名称"></a>获取手机厂商名称</h3><p>adb shell getprop ro.product.brand<br>如返回Xiaomi</p>
-<h3 id="获取手机SDK版本"><a href="#获取手机SDK版本" class="headerlink" title="获取手机SDK版本"></a>获取手机SDK版本</h3><p>adb shell getprop ro.build.version.sdk</p>
-<h3 id="查看手机分辨率"><a href="#查看手机分辨率" class="headerlink" title="查看手机分辨率"></a>查看手机分辨率</h3><p>adb shell wm size</p>
-<h3 id="查看屏幕密度"><a href="#查看屏幕密度" class="headerlink" title="查看屏幕密度"></a>查看屏幕密度</h3><p>adb shell wm density<br><strong>修改屏幕密度</strong><br>adb shell wm density 160<br><strong>恢复原屏幕密度</strong><br>adb shell wm density reset</p>
-<h3 id="查看手机的mac地址"><a href="#查看手机的mac地址" class="headerlink" title="查看手机的mac地址"></a>查看手机的mac地址</h3><p>adb shell cat &#x2F;sys&#x2F;class&#x2F;net&#x2F;wlan0&#x2F;address</p>
-<h3 id="查看电池信息"><a href="#查看电池信息" class="headerlink" title="查看电池信息"></a>查看电池信息</h3><p>adb shell dumpsys battery</p>
-<h3 id="查看进程"><a href="#查看进程" class="headerlink" title="查看进程"></a>查看进程</h3><p>adb shell ps</p>
-<h3 id="查看CPU使用情况"><a href="#查看CPU使用情况" class="headerlink" title="查看CPU使用情况"></a>查看CPU使用情况</h3><p>adb shell top</p>
-<h3 id="CPU信息"><a href="#CPU信息" class="headerlink" title="CPU信息"></a>CPU信息</h3><p>adb shell cat &#x2F;proc&#x2F;cpuinfo</p>
-<h3 id="内存信息"><a href="#内存信息" class="headerlink" title="内存信息"></a>内存信息</h3><p>adb shell cat &#x2F;proc&#x2F;meminfo</p>
-<h3 id="查看手机上所有安装的app包名"><a href="#查看手机上所有安装的app包名" class="headerlink" title="查看手机上所有安装的app包名"></a>查看手机上所有安装的app包名</h3><p>adb shell pm list packages</p>
-<blockquote>
-<p>adb shell pm list packages -s 查看所有系统app的包名<br>adb shell pm list packages -3 查看所有第三方app的包名<br>adb shell pm list packages | grep [包名] 使用grep筛选所有满足要求的app包名</p>
-</blockquote>
-<h3 id="清除应用数据"><a href="#清除应用数据" class="headerlink" title="清除应用数据"></a>清除应用数据</h3><p>adb shell pm clear [<packagename>]</p>
-<blockquote>
-<p>当你只是想要清除一个apk的某些数据来复现某些操作的时候，这个命令就显得额外重要。它可以避免我们重装apk来完成这个操作。</p>
-</blockquote>
-<h3 id="获取某个应用包名的启动入口"><a href="#获取某个应用包名的启动入口" class="headerlink" title="获取某个应用包名的启动入口"></a>获取某个应用包名的启动入口</h3><ul>
-<li>adb shell dumpsys package com.ss.android.ugc.aweme|findstr activity</li>
-<li>com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity 这个就是抖音的入口<blockquote>
-<p>adb shell dumpsys package com.ss.android29111 com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity</p>
-</blockquote>
-</li>
-</ul>
-<h3 id="屏幕截屏"><a href="#屏幕截屏" class="headerlink" title="屏幕截屏"></a>屏幕截屏</h3><p>adb shell screencap [保存路径]</p>
-<blockquote>
-<p>adb shell screencap &#x2F;sdcard&#x2F;screen.png</p>
-</blockquote>
-<h3 id="录制视频"><a href="#录制视频" class="headerlink" title="录制视频"></a>录制视频</h3><p>adb shell screenrecord [保存路径]</p>
-<p>也可以使用（adb版本太老的话，需要更新adb）</p>
-<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">adb <span class="keyword">exec</span><span class="operator">-</span><span class="keyword">out</span> screencap  <span class="operator">&gt;</span> sc.png</span><br></pre></td></tr></table></figure>
-
-<h3 id="上传文件到手机"><a href="#上传文件到手机" class="headerlink" title="上传文件到手机"></a>上传文件到手机</h3><p>adb push [电脑文件路径] [手机文件保存路径]</p>
-<blockquote>
-<p>adb push douyin.apk sdcard&#x2F;douyin.apk</p>
-</blockquote>
-<h3 id="从手机端下载文件"><a href="#从手机端下载文件" class="headerlink" title="从手机端下载文件"></a>从手机端下载文件</h3><p>adb pull [手机上文件路径]<br><strong>注意：</strong>此时没有指定上传到电脑的路径，会默认上传到adb程序所在的路径</p>
-<blockquote>
-<p>adb pull sdcard&#x2F;douyin.apk</p>
-</blockquote>
-<p>指定上传路径：adb pull [手机上文件的路径] [电脑文件的路径]</p>
-<blockquote>
-<p>adb pull &#x2F;storage&#x2F;emulated&#x2F;0&#x2F;app&#x2F;txt.mp4 D:&#x2F;ADB&#x2F;tet.mp4</p>
-</blockquote>
-<h3 id="模拟屏幕点击事件"><a href="#模拟屏幕点击事件" class="headerlink" title="模拟屏幕点击事件"></a>模拟屏幕点击事件</h3><p>adb shell input tap x坐标轴 y坐标轴</p>
-<blockquote>
-<p>adb shell input tap 500 1450</p>
-</blockquote>
-<h3 id="模拟手势滑动事件"><a href="#模拟手势滑动事件" class="headerlink" title="模拟手势滑动事件"></a>模拟手势滑动事件</h3><p>adb shell input swipe 开始x轴 开始y轴 结束x轴 结束y轴 过程持续时间</p>
-<blockquote>
-<p>adb shell input swipe 100 500 100 1450 100</p>
-</blockquote>
-<h3 id="模拟点击键盘按钮"><a href="#模拟点击键盘按钮" class="headerlink" title="模拟点击键盘按钮"></a>模拟点击键盘按钮</h3><p>adb shell input keyevent [key值]</p>
-<blockquote>
-<p>adb shell input keyevent 25</p>
-</blockquote>
-<p>一些常用的keyevent键值信息</p>
-<table>
-<thead>
-<tr>
-<th>keyevent</th>
-<th align="left">效果</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>3</td>
-<td align="left">Home键</td>
-</tr>
-<tr>
-<td>5</td>
-<td align="left">拨号键</td>
-</tr>
-<tr>
-<td>6</td>
-<td align="left">挂机键</td>
-</tr>
-<tr>
-<td>19</td>
-<td align="left">向上</td>
-</tr>
-<tr>
-<td>20</td>
-<td align="left">向下</td>
-</tr>
-<tr>
-<td>21</td>
-<td align="left">向左</td>
-</tr>
-<tr>
-<td>22</td>
-<td align="left">向右</td>
-</tr>
-<tr>
-<td>24</td>
-<td align="left">音量加</td>
-</tr>
-<tr>
-<td>25</td>
-<td align="left">音量减</td>
-</tr>
-<tr>
-<td>26</td>
-<td align="left">电源</td>
-</tr>
-<tr>
-<td>27</td>
-<td align="left">拍照键</td>
-</tr>
-<tr>
-<td>66</td>
-<td align="left">回车键</td>
-</tr>
-<tr>
-<td>67</td>
-<td align="left">退格键</td>
-</tr>
-<tr>
-<td>82</td>
-<td align="left">菜单键</td>
-</tr>
-<tr>
-<td>83</td>
-<td align="left">通知键</td>
-</tr>
-<tr>
-<td>84</td>
-<td align="left">搜索键</td>
-</tr>
-<tr>
-<td>92</td>
-<td align="left">向上翻页</td>
-</tr>
-<tr>
-<td>93</td>
-<td align="left">向下翻页</td>
-</tr>
-<tr>
-<td>111</td>
-<td align="left">esc键</td>
-</tr>
-<tr>
-<td>112</td>
-<td align="left">删除键</td>
-</tr>
-<tr>
-<td>115</td>
-<td align="left">大写锁定键</td>
-</tr>
-<tr>
-<td>122</td>
-<td align="left">光标移动到开始键</td>
-</tr>
-<tr>
-<td>123</td>
-<td align="left">光标移动到末尾键</td>
-</tr>
-<tr>
-<td>143</td>
-<td align="left">小键盘锁</td>
-</tr>
-<tr>
-<td>168</td>
-<td align="left">放大键</td>
-</tr>
-<tr>
-<td>169</td>
-<td align="left">缩小键</td>
-</tr>
-</tbody></table>
-<h3 id="向屏幕输入一些信息"><a href="#向屏幕输入一些信息" class="headerlink" title="向屏幕输入一些信息"></a>向屏幕输入一些信息</h3><ul>
-<li>db shell input text [字符串信息]</li>
-<li>%s是空格<blockquote>
-<p>db shell input text “insert%stext%shere”</p>
-</blockquote>
-</li>
-</ul>
-<h3 id="查看前台Activity"><a href="#查看前台Activity" class="headerlink" title="查看前台Activity"></a>查看前台Activity</h3><p>同时小编也是通过这种方式获取到应用包的入口<br>adb shell dumpsys activity activities | findstr mResumedActivity<br>获取到了QQ的启动入口<br><img src="https://upload-images.jianshu.io/upload_images/20123021-1584e1eac4dde441.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
-<h3 id="启动某个app"><a href="#启动某个app" class="headerlink" title="启动某个app"></a>启动某个app</h3><p>adb shell am start -n [包名]&#x2F;[启动入口]</p>
-<blockquote>
-<p>adb shel am start -n com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity<br>Strating:Intent{cmp&#x3D;com.ss.android.ugc.aweme&#x2F;com.ss.android.sdk.activity.BootstrapActivity}</p>
-</blockquote>
-<p>启动qq</p>
-<blockquote>
-<p>adb shell am start -n com.tencent.mobileqq&#x2F;.activity.SplashActivity</p>
-</blockquote>
-<p>启动有道词典<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-307c3a0c81650606.png" alt="image.png"></p>
-<h3 id="发送广播"><a href="#发送广播" class="headerlink" title="发送广播"></a>发送广播</h3><p>adb shell am broadcast -a “broadcastactionfilter”</p>
-<blockquote>
-<p>adb shell am broadcast -a “broadcastactionfilter”</p>
-</blockquote>
-<h3 id="使用自带浏览器打开网页"><a href="#使用自带浏览器打开网页" class="headerlink" title="使用自带浏览器打开网页"></a>使用自带浏览器打开网页</h3><p>adb shell am start -a [浏览器包名] -d [网址]</p>
-<blockquote>
-<p>adb shell am start -a “android.intent.action.VIEW” -d <a href="https://www.google.com/">https://www.google.com</a></p>
-</blockquote>
-<h3 id="获取手机内部存储信息"><a href="#获取手机内部存储信息" class="headerlink" title="获取手机内部存储信息"></a>获取手机内部存储信息</h3><p>adb shell df &#x2F;data</p>
-<h2 id="关于ADB-IDEA"><a href="#关于ADB-IDEA" class="headerlink" title="关于ADB IDEA"></a>关于ADB IDEA</h2><p>AS插件ADB IDEA，装了这款插件可以直接在AS中快速操作一些ADB命令</p>
-<h3 id="使用方式"><a href="#使用方式" class="headerlink" title="使用方式"></a>使用方式</h3><p>1、双击shift -&gt; 点击action -&gt;搜索adb<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-5f962d67d5267c67.png" alt="image.png"></p>
-<p>2、Ctrl + Shift + A，快捷键直接调用<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-0cb20333cd5ab9ca.png" alt="image.png"></p>
-<h2 id="一些琐碎小问题"><a href="#一些琐碎小问题" class="headerlink" title="一些琐碎小问题"></a>一些琐碎小问题</h2><h4 id="不知应用包的入口Activity如何启动应用包"><a href="#不知应用包的入口Activity如何启动应用包" class="headerlink" title="不知应用包的入口Activity如何启动应用包"></a>不知应用包的入口Activity如何启动应用包</h4><p>1.通过category</p>
-<figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">adb shell monkey -<span class="selector-tag">p</span> &lt;packagename&gt; -c android<span class="selector-class">.intent</span><span class="selector-class">.category</span><span class="selector-class">.LAUNCHER</span> <span class="number">1</span></span><br></pre></td></tr></table></figure>
-<ol start="2">
-<li><a href="https://www.jianshu.com/p/150139c8295a">adb获取应用包入口的方案</a></li>
-</ol>
-<h4 id="adb-shell-input-text无法响应中文输入的问题"><a href="#adb-shell-input-text无法响应中文输入的问题" class="headerlink" title="adb shell input text无法响应中文输入的问题"></a>adb shell input text无法响应中文输入的问题</h4><p><a href="http://banmaman.com/2022/07/24/adb%20shell%20input%20text%E4%B8%8D%E8%83%BD%E8%BE%93%E5%85%A5%E4%B8%AD%E6%96%87%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">adb shell input text不能输入中文的解决方案</a></p>
-<h2 id="adb部分总结"><a href="#adb部分总结" class="headerlink" title="adb部分总结"></a>adb部分总结</h2><p><a href="https://www.jianshu.com/p/f6fa6759e747">adb小结</a></p>
-]]></content>
-      <categories>
-        <category>Android随笔</category>
-      </categories>
-      <tags>
-        <tag>adb</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>括号问题</title>
-    <url>/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/</url>
-    <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给出n对括号，请编写一个函数来生成所有的由n对括号组成的合法组合。</p>
-<p>例如，给出n&#x3D;3，解集为：</p>
-<p>“((()))”, “(()())”, “(())()”, “()()()”, “()(())”</p>
-<p>数据范围：0&lt;&#x3D;n&lt;&#x3D;10</p>
-<p>要求：空间复杂度O(n)，时间复杂度O(2^n)</p>
-<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><h4 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h4><blockquote>
-<p>输入：1</p>
-<p>返回值：[“()”]</p>
-</blockquote>
-<h4 id="示例2"><a href="#示例2" class="headerlink" title="示例2"></a>示例2</h4><blockquote>
-<p>输入：2</p>
-<p>返回值：[“(())”，”()()”]</p>
-</blockquote>
-<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>相当于一共n个左括号和n个右括号，可以给我们使用，我们需要依次组装这些括号。每当我们使用一个左括号之后，就剩下n-1个左括号和n个右括号给我们使用，结果拼在使用的左括号之后就行了，因此后者就是一个子问题，可以使用递归：</p>
-<ul>
-<li>终止条件：左右括号都使用了n个，将结果加入数组。</li>
-<li>返回值：每一级向上一级返回后续组装后的字符串，即子问题中搭配出来的括号序列。</li>
-<li>本级任务：每一级就是保证左括号还有剩余的情况下，使用一次左括号进入子问题，或者右括号还有剩余且右括号使用次数少于左括号的情况下使用一次右括号进入子问题。</li>
-<li><strong>注意：</strong>我们需要保证左括号出现的次数比右括号多时我们再使用右括号就一定能保证括号合法了，因此每次需要检查左括号和右括号的使用次数。</li>
-</ul>
-<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight processing"><table><tr><td class="code"><pre><span class="line">```</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 代码中的类名、方法名、参数名已经指定，请勿修改，直接返回方法规定的值即可</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * </span></span><br><span class="line"><span class="comment">     * @param n int整型 </span></span><br><span class="line"><span class="comment">     * @return string字符串ArrayList</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">recursion</span>(<span class="type">int</span> left,<span class="type">int</span> right,<span class="built_in">String</span> temp,<span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res,<span class="type">int</span> n)&#123;</span><br><span class="line">        <span class="comment">//左右括号都用完了，就加入结果</span></span><br><span class="line">        <span class="keyword">if</span>(left==n&amp;&amp;right==n)&#123;</span><br><span class="line">            res.<span class="property">add</span>(temp);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次左括号</span></span><br><span class="line">        <span class="keyword">if</span>(left&lt;n)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left+<span class="number">1</span>,right,temp + <span class="string">&quot;（&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次有括号</span></span><br><span class="line">        <span class="keyword">if</span>(right&lt;n&amp;&amp;right&lt;left)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left,right+<span class="number">1</span>,temp + <span class="string">&quot;）&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; <span class="title function_">generateParenthesis</span> (<span class="type">int</span> n) &#123;</span><br><span class="line">        <span class="comment">//记录结果</span></span><br><span class="line">        <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res = <span class="keyword">new </span><span class="class title_">ArrayList</span>&lt;<span class="built_in">String</span>&gt;();</span><br><span class="line">        <span class="comment">//递归</span></span><br><span class="line">        <span class="title function_">recursion</span>(<span class="number">0</span>,<span class="number">0</span>,<span class="string">&quot;&quot;</span>,res,n);</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>算法</category>
-      </categories>
-      <tags>
-        <tag>算法</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>京东淘宝首页二级联动</title>
     <url>/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/</url>
     <content><![CDATA[<p><strong>说明：</strong>这篇文章主要用于作者临时观看，因为涉及版权问题，所以短时间内会删除</p>
@@ -1807,6 +1774,39 @@
       </tags>
   </entry>
   <entry>
+    <title>括号问题</title>
+    <url>/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给出n对括号，请编写一个函数来生成所有的由n对括号组成的合法组合。</p>
+<p>例如，给出n&#x3D;3，解集为：</p>
+<p>“((()))”, “(()())”, “(())()”, “()()()”, “()(())”</p>
+<p>数据范围：0&lt;&#x3D;n&lt;&#x3D;10</p>
+<p>要求：空间复杂度O(n)，时间复杂度O(2^n)</p>
+<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><h4 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h4><blockquote>
+<p>输入：1</p>
+<p>返回值：[“()”]</p>
+</blockquote>
+<h4 id="示例2"><a href="#示例2" class="headerlink" title="示例2"></a>示例2</h4><blockquote>
+<p>输入：2</p>
+<p>返回值：[“(())”，”()()”]</p>
+</blockquote>
+<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><p>相当于一共n个左括号和n个右括号，可以给我们使用，我们需要依次组装这些括号。每当我们使用一个左括号之后，就剩下n-1个左括号和n个右括号给我们使用，结果拼在使用的左括号之后就行了，因此后者就是一个子问题，可以使用递归：</p>
+<ul>
+<li>终止条件：左右括号都使用了n个，将结果加入数组。</li>
+<li>返回值：每一级向上一级返回后续组装后的字符串，即子问题中搭配出来的括号序列。</li>
+<li>本级任务：每一级就是保证左括号还有剩余的情况下，使用一次左括号进入子问题，或者右括号还有剩余且右括号使用次数少于左括号的情况下使用一次右括号进入子问题。</li>
+<li><strong>注意：</strong>我们需要保证左括号出现的次数比右括号多时我们再使用右括号就一定能保证括号合法了，因此每次需要检查左括号和右括号的使用次数。</li>
+</ul>
+<h3 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h3><figure class="highlight processing"><table><tr><td class="code"><pre><span class="line">```</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 代码中的类名、方法名、参数名已经指定，请勿修改，直接返回方法规定的值即可</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * </span></span><br><span class="line"><span class="comment">     * @param n int整型 </span></span><br><span class="line"><span class="comment">     * @return string字符串ArrayList</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">recursion</span>(<span class="type">int</span> left,<span class="type">int</span> right,<span class="built_in">String</span> temp,<span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res,<span class="type">int</span> n)&#123;</span><br><span class="line">        <span class="comment">//左右括号都用完了，就加入结果</span></span><br><span class="line">        <span class="keyword">if</span>(left==n&amp;&amp;right==n)&#123;</span><br><span class="line">            res.<span class="property">add</span>(temp);</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次左括号</span></span><br><span class="line">        <span class="keyword">if</span>(left&lt;n)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left+<span class="number">1</span>,right,temp + <span class="string">&quot;（&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//使用一次有括号</span></span><br><span class="line">        <span class="keyword">if</span>(right&lt;n&amp;&amp;right&lt;left)&#123;</span><br><span class="line">            <span class="title function_">recursion</span>(left,right+<span class="number">1</span>,temp + <span class="string">&quot;）&quot;</span>,res,n);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; <span class="title function_">generateParenthesis</span> (<span class="type">int</span> n) &#123;</span><br><span class="line">        <span class="comment">//记录结果</span></span><br><span class="line">        <span class="built_in">ArrayList</span>&lt;<span class="built_in">String</span>&gt; res = <span class="keyword">new </span><span class="class title_">ArrayList</span>&lt;<span class="built_in">String</span>&gt;();</span><br><span class="line">        <span class="comment">//递归</span></span><br><span class="line">        <span class="title function_">recursion</span>(<span class="number">0</span>,<span class="number">0</span>,<span class="string">&quot;&quot;</span>,res,n);</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>算法</category>
+      </categories>
+      <tags>
+        <tag>算法</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>第一次上传测试</title>
     <url>/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
@@ -1823,6 +1823,18 @@
 
 <p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
 ]]></content>
+  </entry>
+  <entry>
+    <title>模板</title>
+    <url>/2022/07/12/%E6%A8%A1%E6%9D%BF/</url>
+    <content><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3><p><img src="/%E6%B5%8B%E8%AF%95.assets/1657615742531.png" alt="1657615742531"></p>
+]]></content>
+      <categories>
+        <category>其他</category>
+      </categories>
+      <tags>
+        <tag>模板</tag>
+      </tags>
   </entry>
   <entry>
     <title>深入理解并发编程和归纳总结</title>
@@ -1918,7 +1930,7 @@
 </tbody></table>
 <h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><h3 id="synchronized修饰普通方法和静态方法的区别？什么是可见性？"><a href="#synchronized修饰普通方法和静态方法的区别？什么是可见性？" class="headerlink" title="synchronized修饰普通方法和静态方法的区别？什么是可见性？"></a>synchronized修饰普通方法和静态方法的区别？什么是可见性？</h3><ul>
 <li>锁的对象实例<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-dcaa4928eb8e2b28.png" alt="image.png"></li>
-<li>锁的当前类唯一的.class对象 -&gt;类锁<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-76ba9c28bb9f33ca.png" alt="image.png"></li>
+<li>锁的当前类唯一的.class对象 -&gt;类锁<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654312536892.png" alt="1654312536892"></li>
 <li>假如有两个线程分别执行上面各个方法，可以同时执行，拿的不是同一个对象锁。</li>
 <li>注意：加锁加的是对象锁，只要不是同一个对象锁，并行执行就不会有问题。</li>
 </ul>
@@ -1951,18 +1963,6 @@
       <categories>
         <category>Java筑基</category>
       </categories>
-  </entry>
-  <entry>
-    <title>测试</title>
-    <url>/2022/07/12/%E6%A8%A1%E6%9D%BF/</url>
-    <content><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3><p><img src="/%E6%B5%8B%E8%AF%95.assets/1657615742531.png" alt="1657615742531"></p>
-]]></content>
-      <categories>
-        <category>其他</category>
-      </categories>
-      <tags>
-        <tag>测试</tag>
-      </tags>
   </entry>
   <entry>
     <title>自定义LayoutManager实现卡片滑动</title>
