@@ -6,7 +6,7 @@
   <link href="https://gun-ctrl.github.io/atom.xml" rel="self"/>
   
   <link href="https://gun-ctrl.github.io/"/>
-  <updated>2022-08-19T08:18:55.103Z</updated>
+  <updated>2022-09-13T10:44:44.702Z</updated>
   <id>https://gun-ctrl.github.io/</id>
   
   <author>
@@ -15,6 +15,30 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Android运行时权限</title>
+    <link href="https://gun-ctrl.github.io/2022/09/13/Android%E8%BF%90%E8%A1%8C%E6%97%B6%E6%9D%83%E9%99%90/"/>
+    <id>https://gun-ctrl.github.io/2022/09/13/Android%E8%BF%90%E8%A1%8C%E6%97%B6%E6%9D%83%E9%99%90/</id>
+    <published>2022-09-13T08:39:01.540Z</published>
+    <updated>2022-09-13T10:44:44.702Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>我们在应用开发中如果需要联网就需要在<code>AndroidManifest.xml</code>文件中添加网络访问权限。在我们新安装应用时，往往会弹出提示框问我们是否允许系统获取定位、读取联系人、读取短信等权限。那这些权限有什么用？区别是什么？为什么会有运行时权限这一说法……下面让小编来一一梳理并解答。</p><h2 id="运行时权限"><a href="#运行时权限" class="headerlink" title="运行时权限"></a>运行时权限</h2><blockquote><p> Android的权限机制并不是什么新鲜事物，从系统的第一个版本开始就已经存在了。但其实之前Android的权限机制在保护安全和隐私等方面起到的作用十分有限，尤其是一些大家离不开的常用软件，非常容易“店大欺客”。为此，Android开发团队在Android6.0系统中引入了运行时权限这个功能，从而更好地保护了用户的安全和隐私。</p></blockquote><h2 id="Android权限机制详解"><a href="#Android权限机制详解" class="headerlink" title="Android权限机制详解"></a>Android权限机制详解</h2><p>如下，监听开机广播需要开启广播接收的权限：</p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220913165504245.png" alt="image-20220913165504245"></p><p>因为监听开机广播涉及了用户设备的安全，因此必须在<code>AndroidManifest.xml</code>文件中加入权限声明，否则我们的程序就会崩溃。</p><p>那么问题来了，加入了这句权限声明后，对于用户来说到底有什么影响呢？为什么这样就可以保护设备的安全了呢？</p><p>其实用户主要在两方面得到保护。一方面，如果用户在低于Android6.0系统的设备商安装该程序，会在安装界面弹出一连串提示。这样用户就可以知晓该程序一共申请了哪些权限，从而决定是否安装这个程序。另一方面，用户可以随时在应用程序管理界面查看任意一个程序的权限申请情况。这样该程序申请的权限就尽收眼底，什么都瞒不过用户，以此保证应用程序不会出现滥用权限的情况。</p><p>但是，很多时候我们离不开的常用软件普遍存在滥用权限的情况，不管到底有没有用得到，反正先申请了再说。</p><blockquote><p>考虑到上述问题，Android6.0以后加入了动态申请权限功能。但是，如果安装一个应用需要不停地授权很多权限，就很繁琐，用户体验极差。那么就将权限进行了划分——普通权限与危险权限。普通权限会默认开启，而危险权限需要用户进行授权。</p></blockquote><h2 id="危险权限"><a href="#危险权限" class="headerlink" title="危险权限"></a>危险权限</h2><p>下面列出Android危险权限，除了这些剩余的都是普通权限。</p><table><thead><tr><th>权限组名</th><th>权限名</th></tr></thead><tbody><tr><td>CALENDAR（日历）</td><td>READ_CALENDAR、WRITE_CALENDAR</td></tr><tr><td>CAMERA（相机）</td><td>CAMERA、READ_CONTACTS</td></tr><tr><td>CONTACTS（联系人）</td><td>WRITE_CONTACTS、GET_ACCOUNTS</td></tr><tr><td>LOCATION（位置）</td><td>ACCESS_FINE_LOCATION、ACCESS_COARSE_LOCATION</td></tr><tr><td>MICROPHONE（麦克风）</td><td>RECORD_AUDIO、 READ_PHONE_STATE、CALL_PHONE、ERAD_CALL_LOG</td></tr><tr><td>PHONE（手机）</td><td>WRITE_CALL_LOG、ADD_VOICEMAIL、USE_SIP、PROCESS_OUTGOING_CALLS</td></tr><tr><td>SENSORS（传感器）</td><td>BODY_SENSORS、 SEND_SMS、RECEIVE_SMS</td></tr><tr><td>SMS（短信）</td><td>READ_SMS、RECEIVE_WAP_PUSH、RECEIVE_MMS</td></tr><tr><td>STORAGE（存储卡）</td><td>READ_EXTERNAL_STORAGE、WRITE_EXTERNAL_STORAGE</td></tr></tbody></table><p>这张表看起来不怎么轻松，因为里面的权限不都是能接触到的。不过没有关系，你不需要了解表格中每个权限的作用，只需要把它当成一个参照表来看就行了。每当需要使用一个权限时，可以查表，如果该权限出现在这张表中，那么就需要动态申请权限。</p><p>另外注意，表格中每个危险权限都属于一个权限组，我们在进行运行时权限处理时使用的是权限名。原则上，用户一旦同意了某个权限申请之后，同组的其它权限都会被系统自动开启。</p><p><strong>特别注意</strong>：不要基于此规则来实现任何逻辑，因为Android系统随时有可能调整权限的分组。</p><h2 id="在程序运行时申请权限"><a href="#在程序运行时申请权限" class="headerlink" title="在程序运行时申请权限"></a>在程序运行时申请权限</h2><p><strong>运行效果</strong></p><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%BD%95%E5%88%B6_2022_09_13_17_51_50_995.gif" alt="录制_2022_09_13_17_51_50_995"></p><figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> : <span class="type">AppCompatActivity</span></span>() &#123;</span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span>&#123;</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">val</span> REQUEST_CODE = <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">lateinit</span> <span class="keyword">var</span> binding:ActivityMainBinding;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">(savedInstanceState: <span class="type">Bundle</span>?)</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState)</span><br><span class="line">        binding = ActivityMainBinding.inflate(layoutInflater)</span><br><span class="line">        setContentView(binding.root)</span><br><span class="line">        binding.Call.setOnClickListener &#123;</span><br><span class="line">            <span class="keyword">if</span> (ContextCompat.checkSelfPermission(<span class="keyword">this</span>,Manifest.permission.CALL_PHONE)</span><br><span class="line">            != PackageManager.PERMISSION_GRANTED)&#123;</span><br><span class="line">                ActivityCompat.requestPermissions(</span><br><span class="line">                    <span class="keyword">this</span>,</span><br><span class="line">                    arrayOf(Manifest.permission.CALL_PHONE)</span><br><span class="line">                , REQUEST_CODE)</span><br><span class="line">            &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                call()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onRequestPermissionsResult</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        requestCode: <span class="type">Int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        permissions: <span class="type">Array</span>&lt;<span class="type">out</span> <span class="type">String</span>&gt;,</span></span></span><br><span class="line"><span class="params"><span class="function">        grantResults: <span class="type">IntArray</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.onRequestPermissionsResult(requestCode, permissions, grantResults)</span><br><span class="line">        <span class="keyword">when</span>(requestCode)&#123;</span><br><span class="line">            REQUEST_CODE -&gt; &#123;</span><br><span class="line">                <span class="keyword">if</span> (grantResults.isNotEmpty() &amp;&amp; grantResults[<span class="number">0</span>] == PackageManager.PERMISSION_GRANTED)&#123;</span><br><span class="line">                    call()</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    Toast.makeText(<span class="keyword">this</span>,<span class="string">&quot;You denied the permission&quot;</span>,Toast.LENGTH_LONG).show()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">call</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">val</span> intent = Intent(Intent.ACTION_CALL)</span><br><span class="line">            intent.<span class="keyword">data</span> = Uri.parse(<span class="string">&quot;tel:10086&quot;</span>)</span><br><span class="line">            startActivity(intent)</span><br><span class="line">        &#125;<span class="keyword">catch</span> (e:SecurityException)&#123;</span><br><span class="line">            e.printStackTrace()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><p>上面的代码覆盖了运行时权限的完整流程，下面我们来具体分析一下。</p><ul><li><p>第一步就是要先判断用户是不是已经给我们进行了授权，借助的是<code>ContextCompat.checkSelfPermission()</code>方法接收两个参数：</p><ul><li>Context</li><li>具体的权限名，比如打电话的权限名<code>Manifest.permission.CALL_PHONE</code></li></ul><p>然后我们使用方法的返回值与<code>PackageManager.PERMISSION_GRANTED</code>做比较，相等就说明用户已经授权，不等就表示用户没有权限。</p></li><li><p>如果已经授权了，直接执行拨打电话的逻辑就可以了，这里我们把拨打电话的逻辑封装到call()方法中。如果没有授权的话，则需要调用<code>ActivityCompat.requestPermissions()</code>方法向用户申请权限。<code>requestPermissions()</code>接收3个参数：</p><ul><li>第一个参数要求是Activity实例</li><li>第二个参数是String数组，我们把要申请的权限名放到数组中即可</li><li>第三个要求是请求码，只要是唯一值就可以</li></ul></li><li><p>调用完<code>requestPermissions()</code>方法之后，系统会弹出一个权限申请的对话框，用户可以选择同意我们的权限申请。无论是哪种结果，最终都会回调 <code>onRequestPermissionsResult()</code>方法中，而授权的结果则会封装在<code>grantResults</code>参数中。这里我们只需要判断一下最后的授权结果，如果用户同意的话，就调用call()方法拨打电话；如果用户拒绝的话，我们只能放弃操作，并且弹出一条失败的提示。</p></li></ul>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h2 id=&quot;引言&quot;&gt;&lt;a href=&quot;#引言&quot; class=&quot;headerlink&quot; title=&quot;引言&quot;&gt;&lt;/a&gt;引言&lt;/h2&gt;&lt;p&gt;我们在应用开发中如果需要联网就需要在&lt;code&gt;AndroidManifest.xml&lt;/code&gt;文件中添加网络访问权限。在我们新安装应用</summary>
+      
+    
+    
+    
+    <category term="Android随笔" scheme="https://gun-ctrl.github.io/categories/Android%E9%9A%8F%E7%AC%94/"/>
+    
+    
+    <category term="运行时权限" scheme="https://gun-ctrl.github.io/tags/%E8%BF%90%E8%A1%8C%E6%97%B6%E6%9D%83%E9%99%90/"/>
+    
+  </entry>
   
   <entry>
     <title>OOM与内存优化</title>
@@ -189,6 +213,30 @@
       
     <summary type="html">&lt;p&gt;&lt;a href=&quot;http://banmaman.com/2022/07/19/adb%E5%91%BD%E4%BB%A4/&quot;&gt;adb常用命令&lt;/a&gt;&lt;/p&gt;
 &lt;h2 id=&quot;与应用交互&quot;&gt;&lt;a href=&quot;#与应用交互&quot; class=&quot;headerlink&quot; title=</summary>
+      
+    
+    
+    
+    <category term="Android随笔" scheme="https://gun-ctrl.github.io/categories/Android%E9%9A%8F%E7%AC%94/"/>
+    
+    
+    <category term="adb" scheme="https://gun-ctrl.github.io/tags/adb/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>adb获取应用包入口的方案</title>
+    <link href="https://gun-ctrl.github.io/2022/07/24/adb%E8%8E%B7%E5%8F%96%E5%BA%94%E7%94%A8%E5%8C%85%E5%85%A5%E5%8F%A3%E7%9A%84%E6%96%B9%E6%A1%88/"/>
+    <id>https://gun-ctrl.github.io/2022/07/24/adb%E8%8E%B7%E5%8F%96%E5%BA%94%E7%94%A8%E5%8C%85%E5%85%A5%E5%8F%A3%E7%9A%84%E6%96%B9%E6%A1%88/</id>
+    <published>2022-07-24T10:10:39.837Z</published>
+    <updated>2022-07-24T10:12:35.328Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>小编最近在入手adb调试，刚开始还是挺顺利的，不过后面就遇到了一些小插曲，其中一个就是获取应用包的入口，开启一个应用。<br>这个问题在网上可以找到很多解决方案，但不都是有用，并且有些方法有一点麻烦。<br>这里，小编介绍一下意外摸索到的解决方案。</p><h3 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h3><p>1、点开需要打开的应用，使用获取前台Activity命令</p><figure class="highlight 1c"><table><tr><td class="code"><pre><span class="line">adb shell dumpsys activity activities <span class="string">| findstr mResumedActivity</span></span><br></pre></td></tr></table></figure><p>这样便能获得应用包的启动入口<br>比如，获取有道词典的启动入口<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-2420606065b22c18.png" alt="image.png"></p><p>2、使用adb启动应用包</p><figure class="highlight css"><table><tr><td class="code"><pre><span class="line">adb shell am start -n <span class="selector-attr">[应用包名]</span> /<span class="selector-attr">[入口]</span></span><br></pre></td></tr></table></figure><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-444cb9956734d120.png" alt="image.png"></p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;h3 id=&quot;引言&quot;&gt;&lt;a href=&quot;#引言&quot; class=&quot;headerlink&quot; title=&quot;引言&quot;&gt;&lt;/a&gt;引言&lt;/h3&gt;&lt;p&gt;小编最近在入手adb调试，刚开始还是挺顺利的，不过后面就遇到了一些小插曲，其中一个就是获取应用包的入口，开启一个应用。&lt;br&gt;这个问题在网上</summary>
       
     
     
