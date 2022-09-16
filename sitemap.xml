@@ -252,13 +252,6 @@
   </url>
   
   <url>
-    <loc>https://gun-ctrl.github.io/tags/Service%E6%80%BB%E7%BB%93/</loc>
-    <lastmod>2022-09-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://gun-ctrl.github.io/tags/RecyclerView/</loc>
     <lastmod>2022-09-16</lastmod>
     <changefreq>weekly</changefreq>
@@ -266,7 +259,21 @@
   </url>
   
   <url>
+    <loc>https://gun-ctrl.github.io/tags/Service%E6%80%BB%E7%BB%93/</loc>
+    <lastmod>2022-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>https://gun-ctrl.github.io/tags/adb/</loc>
+    <lastmod>2022-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://gun-ctrl.github.io/tags/%E9%AB%98%E7%BA%A7UI/</loc>
     <lastmod>2022-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -281,13 +288,6 @@
   
   <url>
     <loc>https://gun-ctrl.github.io/tags/%E6%A8%A1%E6%9D%BF/</loc>
-    <lastmod>2022-09-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://gun-ctrl.github.io/tags/%E9%AB%98%E7%BA%A7UI/</loc>
     <lastmod>2022-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
