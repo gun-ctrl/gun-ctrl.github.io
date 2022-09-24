@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://gun-ctrl.github.io/2022/09/24/AsyncTask%E7%9A%84%E4%BD%BF%E7%94%A8%E4%BB%8B%E7%BB%8D/</loc>
+    
+    <lastmod>2022-09-24</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://gun-ctrl.github.io/2022/09/16/Service/</loc>
     
     <lastmod>2022-09-17</lastmod>
@@ -238,7 +247,7 @@
 
   <url>
     <loc>https://gun-ctrl.github.io/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -246,56 +255,63 @@
   
   <url>
     <loc>https://gun-ctrl.github.io/tags/%E8%BF%90%E8%A1%8C%E6%97%B6%E6%9D%83%E9%99%90/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://gun-ctrl.github.io/tags/%E5%BC%82%E6%AD%A5%E4%BB%BB%E5%8A%A1/</loc>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://gun-ctrl.github.io/tags/RecyclerView/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://gun-ctrl.github.io/tags/Service%E6%80%BB%E7%BB%93/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://gun-ctrl.github.io/tags/adb/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://gun-ctrl.github.io/tags/%E9%AB%98%E7%BA%A7UI/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://gun-ctrl.github.io/tags/%E7%AE%97%E6%B3%95/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://gun-ctrl.github.io/tags/%E6%A8%A1%E6%9D%BF/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://gun-ctrl.github.io/tags/%E8%87%AA%E5%AE%9A%E4%B9%89View/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -304,42 +320,42 @@
   
   <url>
     <loc>https://gun-ctrl.github.io/categories/Android%E9%9A%8F%E7%AC%94/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://gun-ctrl.github.io/categories/%E9%AB%98%E7%BA%A7UI/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://gun-ctrl.github.io/categories/Java%E7%AD%91%E5%9F%BA/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://gun-ctrl.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://gun-ctrl.github.io/categories/%E7%AE%97%E6%B3%95/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://gun-ctrl.github.io/categories/%E5%85%B6%E4%BB%96/</loc>
-    <lastmod>2022-09-17</lastmod>
+    <lastmod>2022-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
