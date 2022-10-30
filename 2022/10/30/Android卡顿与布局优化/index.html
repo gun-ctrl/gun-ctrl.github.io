@@ -1,0 +1,328 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Android APP卡顿与布局优化 | 搬码人’s Blog</title><meta name="author" content="搬码人"><meta name="copyright" content="搬码人"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="启动状态应用有三种启动状态，每种状态都会影响应用向用户显示所需的时间；冷启动、温启动和热启动。在冷启动中，应用从头开始启动。在另外两种状态中，系统需要将后台的应用带入前台。建议始终在假定冷启动的基础上进行优化。这样做也可以提升温启动和热启动的性能。  冷启动 冷启动是指应用从头开始启动；系统进程在冷启动后才创建应用进程。发生冷启动的情况包括自设备启动后或系统终止应用后首次启动。   热启动 在热启">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android APP卡顿与布局优化">
+<meta property="og:url" content="https://gun-ctrl.github.io/2022/10/30/Android%E5%8D%A1%E9%A1%BF%E4%B8%8E%E5%B8%83%E5%B1%80%E4%BC%98%E5%8C%96/index.html">
+<meta property="og:site_name" content="搬码人’s Blog">
+<meta property="og:description" content="启动状态应用有三种启动状态，每种状态都会影响应用向用户显示所需的时间；冷启动、温启动和热启动。在冷启动中，应用从头开始启动。在另外两种状态中，系统需要将后台的应用带入前台。建议始终在假定冷启动的基础上进行优化。这样做也可以提升温启动和热启动的性能。  冷启动 冷启动是指应用从头开始启动；系统进程在冷启动后才创建应用进程。发生冷启动的情况包括自设备启动后或系统终止应用后首次启动。   热启动 在热启">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gun-ctrl.github.io/img/qinggangying.png">
+<meta property="article:published_time" content="2022-10-30T02:52:44.774Z">
+<meta property="article:modified_time" content="2022-10-30T04:15:18.119Z">
+<meta property="article:author" content="搬码人">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gun-ctrl.github.io/img/qinggangying.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://gun-ctrl.github.io/2022/10/30/Android%E5%8D%A1%E9%A1%BF%E4%B8%8E%E5%B8%83%E5%B1%80%E4%BC%98%E5%8C%96/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":20,"languages":{"author":"作者: 搬码人","link":"链接: ","source":"来源: 搬码人’s Blog","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android APP卡顿与布局优化',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-10-30 12:15:18'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="搬码人’s Blog" type="application/atom+xml">
+</head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">27</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/img/qinggangying.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">搬码人’s Blog</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Android APP卡顿与布局优化</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-10-30T02:52:44.774Z" title="发表于 2022-10-30 10:52:44">2022-10-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-10-30T04:15:18.119Z" title="更新于 2022-10-30 12:15:18">2022-10-30</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.9k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>8分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Android APP卡顿与布局优化"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="启动状态"><a href="#启动状态" class="headerlink" title="启动状态"></a>启动状态</h2><p>应用有三种启动状态，每种状态都会影响应用向用户显示所需的时间；冷启动、温启动和热启动。在冷启动中，应用从头开始启动。在另外两种状态中，系统需要将后台的应用带入前台。建议始终在假定冷启动的基础上进行优化。这样做也可以提升温启动和热启动的性能。</p>
+<ul>
+<li>冷启动<ul>
+<li>冷启动是指应用从头开始启动；系统进程在冷启动后才创建应用进程。发生冷启动的情况包括自设备启动后或系统终止应用后首次启动。</li>
+</ul>
+</li>
+<li>热启动<ul>
+<li>在热启动中，系统的所有工作就是将Activity带到前台。只有应用的所有Activity仍驻留在内存中，应用就不必重复执行对象初始化、布局加载和绘制。</li>
+</ul>
+</li>
+<li>温启动<ul>
+<li>温启动包含了在冷启动期间发生的部分操作；同时，它的开销要比热启动高。有潜在状态可视为温启动。例如：<ul>
+<li>用户在退出应用后又重新启动应用。进程可能未被销毁，继续运行，但应用需要执行<code>onCreate()</code>从头开始创建Activity。</li>
+<li>系统将应用从内存释放，然后用户又重新启动它。进程和Activity需要重新启动，但传递到<code>onCreate()</code>的已保存的实例<code>state bundle</code>对于完成此任务有一定助益。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="冷启动耗时统计"><a href="#冷启动耗时统计" class="headerlink" title="冷启动耗时统计"></a>冷启动耗时统计</h2><p>在性能测试中存在启动时间2-5-8原则：</p>
+<ul>
+<li><p>当用户能够在2秒以内得到响应时，会感觉系统的响应很快；</p>
+</li>
+<li><p>当用户在2-5秒之间得到响应时，会感觉系统的响应速度还可以；</p>
+</li>
+<li><p>当用户在5-8秒以内得到响应时，会感觉系统的响应速度很慢，但是还可以承受；</p>
+</li>
+<li><p>而当用户在超过8秒后仍然无法得到响应时，会感觉系统糟糕透了，或者认为系统已经失去响应。</p>
+</li>
+</ul>
+<p>实际上不同的应用因为启动时需要初始化的数据不同，启动时间自然也会不同。相同的应用也会因为在不同的设备，因为设备影响性能启动速度不同。所以实际上启动时间并没有绝对统一的标准，我们之所以需要进行启动耗时的统计，可能在于产品对我们应用启动时间提出具体的要求。</p>
+<h4 id="系统日志统计"><a href="#系统日志统计" class="headerlink" title="系统日志统计"></a>系统日志统计</h4><p>在 Android 4.4（API 级别 19）及更高版本中，logcat 包含一个输出行，其中包含名为 <code>Displayed </code>的值。此值代表从启动进程到在屏幕上完成对应 Activity 的绘制所用的时间。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps1.jpg" alt="img"> </p>
+<p>如果我们使用异步懒加载的方式来提升程序画面的显示速度，这通常会导致的一个问题是，程序画面已经显示，同时 Displayed 日志已经打印，可是内容却还在加载中。为了衡量这些异步加载资源所耗费的时间，我们可以在异 步加载完毕之后调用<code>activity.reportFullyDrawn() </code>方法来让系统打印到调用此方法为止的启动耗时。</p>
+<h4 id="adb命令统计"><a href="#adb命令统计" class="headerlink" title="adb命令统计"></a>adb命令统计</h4><p>查看启动时间的另一种方式是使用命令：</p>
+<p><strong>adb shell am start –s –w [应用启动入口]</strong></p>
+<p>启动完成之后将输出</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps2.jpg" alt="img"> </p>
+<ul>
+<li><p>WaitTime:总的耗时，包括前一个应用Activity pause的时间和新应用启动的时间；</p>
+</li>
+<li><p>ThisTime：表示一连串启动Activity的最后一个Activity的启动耗时；</p>
+</li>
+<li><p>TotalTime：表示新应用启动的耗时，包括新进程的启动和Activity的启动，但不包括前一个应用Activity pause的耗时</p>
+</li>
+</ul>
+<p><strong>开发者一般只要关心TotalTime即可，这个时间才是自己应用真正启动的耗时。</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps3.jpg" alt="img"> </p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps4.jpg" alt="img"></p>
+<h2 id="CPU-Profile-x2F-TraceView"><a href="#CPU-Profile-x2F-TraceView" class="headerlink" title="CPU Profile&#x2F;TraceView"></a>CPU Profile&#x2F;TraceView</h2><p>如果发现显示时间比希望的时间长，则可以继续尝试识别启动过程中的瓶颈。 查找瓶颈的一个好方法是使用 Android Studio CPU 性能剖析器。</p>
+<p><strong>目前Traceview 已弃用。如果使用 Android Studio 3.2 或更高版本，则应改为使用 CPU Profile</strong></p>
+<p>要在应用启动过程中自动开始记录 CPU 活动，请执行以下操作：</p>
+<ol>
+<li>依次选择 Run &gt; Edit Configurations。</li>
+</ol>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps5.jpg" alt="img"> </p>
+<ol start="2">
+<li>在 Profiling 标签中，勾选 Start recording CPU activity on startup 旁边的复选框。</li>
+</ol>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps6.jpg" alt="img"></p>
+<ol start="3">
+<li><p>从菜单中选择 CPU 记录配置。</p>
+<p><strong>Sample Java Methods</strong></p>
+<p>对 Java 方法采样：在应用的 Java 代码执行期间，频繁捕获应用的调用堆栈。分析器会比较捕获的数据集，以推导与应用的 Java 代码执行有关的时间和资源使用信息。如果应用在捕获调用堆栈后进入一个方法并在下 次捕获前退出该方法，分析器将不会记录该方法调用。如果您想要跟踪生命周期如此短的方法，应使用检测跟踪。</p>
+<p><strong>Trace Java Methods</strong></p>
+<p>跟踪 Java 方法：在运行时检测应用，以在每个方法调用开始和结束时记录一个时间戳。系统会收集并比较这 些时间戳，以生成方法跟踪数据，包括时间信息和CPU使用率。</p>
+<p><strong>Sample C&#x2F;C++ Functions</strong></p>
+<p>对 C&#x2F;C++ 函数采样：捕获应用的原生线程的采样跟踪数据。要使用此配置，您必须将应用部署到搭载 Android 8.0（API 级别 26）或更高版本的设备上。</p>
+<p><strong>Trace System Calls</strong></p>
+<p>跟踪系统调用：捕获非常翔实的细节，以便您检查应用与系统资源的交互情况。您可以检查线程状态的确切 时间和持续时间、直观地查看所有内核的 CPU 瓶颈在何处，并添加要分析的自定义跟踪事件。要使用此配置，您必须将应用部署到搭载 Android 7.0（API 级别 24）或更高版本的设备上。</p>
+<p>此跟踪配置在 systrace 的基础上构建而成。您可以使用 systrace 命令行实用程序指定除 CPU Profiler 提供的 选项之外的其他选项。systrace 提供的其他系统级数据可帮助您检查原生系统进程并排查丢帧或帧延迟问题。</p>
+</li>
+<li><p>点击 Apply。</p>
+</li>
+<li><p>依次选择 Run &gt; Profile，将您的应用部署到搭载 Android 8.0（API 级别 26）或更高版本的设备上。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps7.jpg" alt="img"> </p>
+<p>点击Stop，结束跟踪后显示：</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps8.jpg" alt="img"></p>
+</li>
+</ol>
+<h3 id="Call-Chart"><a href="#Call-Chart" class="headerlink" title="Call Chart"></a>Call Chart</h3><p>以图形来呈现方法跟踪数据或函数跟踪数据，其中调用的时间段和时间在横轴上表示，而其被调用方则在纵轴上显 示。对系统 API 的调用显示为橙色，对应用自有方法的调用显示为绿色，对第三方API包括Java语言API）的调 用显示为蓝色。（实际颜色显示有Bug）</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps9.jpg" alt="img"> </p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps10.jpg" alt="img"> </p>
+<p>如上图，自定义Application的 onCreate 调用了 Thread.sleep 耗时为：3s。</p>
+<p>Call Chart 已经比原数据可读性高很多，但它仍然不方便发现那些运行时间很长的代码，这时我们便需要使用 Flame Chart。</p>
+<h3 id="Flame-Chart"><a href="#Flame-Chart" class="headerlink" title="Flame Chart"></a>Flame Chart</h3><p>提供一个倒置的调用图表，用来汇总完全相同的调用堆栈。也就是说，将具有相同调用方顺序的完全相同的方法或 函数收集起来，并在火焰图中将它们表示为一个较长的横条 。</p>
+<p>横轴显示的是百分比数值。由于忽略了时间线信息，Flame Chart 可以展示每次调用消耗时间占用整个记录时长的 百分比。 同时纵轴也被对调了，在顶部展示的是被调用者，底部展示的是调用者。此时的图表看起来越往上越窄，就好像火焰一样，因此得名: <strong>火焰图</strong>。（说白了就是将Call Chart上下调用栈倒过来。）</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps11.jpg" alt="img"> </p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps12.jpg" alt="img"> </p>
+<p>耗时最长的为：Thread.sleep</p>
+<h3 id="Top-Down-Treee"><a href="#Top-Down-Treee" class="headerlink" title="Top Down Treee"></a>Top Down Treee</h3><p>如果我们需要更精确的时间信息，就需要使用 Top Down Tree。Top Down Tree显示一个调用列表，在该列表中展开方法或函数节点会显示它调用了的方法节点。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps13.jpg" alt="img"> </p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps14.jpg" alt="img"> </p>
+<p>对于每个节点，三个时间信息:</p>
+<ul>
+<li><p>Self Time —— 运行自己的代码所消耗的时间；</p>
+</li>
+<li><p>Children Time —— 调用其他方法的时间；</p>
+</li>
+<li><p>Total Time —— 前面两者时间之和。</p>
+</li>
+</ul>
+<p>此视图能够非常方便看到耗时最长的方法调用栈。</p>
+<h3 id="Bottom-Up-Tree"><a href="#Bottom-Up-Tree" class="headerlink" title="Bottom Up Tree"></a>Bottom Up Tree</h3><p>方便地找到某个方法的调用栈。在该列表中展开方法或函数节点会显示哪个方法调用了自己。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps15.jpg" alt="img"> </p>
+<p>通过工具可以定位到耗时代码，然后查看是否可以进行优化。对于APP启动来说，启动耗时包括Android系统启动 APP进程加上APP启动界面的耗时时长，我们可做的优化是APP启动界面的耗时，也就是说从Application的构建到主界面的 onWindowFocusChanged 的这一段时间。</p>
+<p>因此在这段时间内，我们的代码需要尽量避免耗时操作，检查的方向包括：主线程IO；第三方库初始化或程序需要 使用的数据等初始化改为异步加载&#x2F;懒加载；减少布局复杂度与嵌套层级；Multidex(5.0以上无需考虑)等。</p>
+<h3 id="Debug-API"><a href="#Debug-API" class="headerlink" title="Debug API"></a>Debug API</h3><p>除了直接使用 Profile 启动之外，我们还可以借助Debug API生成trace文件。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps16.jpg" alt="img"> </p>
+<p>运行App，则会在sdcard中生成一个enjoy.trace文件（需要sdcard读写权限）。将手机中的trace文件保存至电脑，随后拖入Android Studio即可。</p>
+<h2 id="StrictMode-严苛模式"><a href="#StrictMode-严苛模式" class="headerlink" title="StrictMode 严苛模式"></a>StrictMode 严苛模式</h2><p>StrictMode是一个开发人员工具，它可以检测出我们可能无意中做的事情，并提示我们注意，以便我们能够修复它们。</p>
+<p>StrictMode最常用于捕获应用程序主线程上的意外磁盘或网络访问。帮助我们让磁盘和网络操作远离主线程，可以使应用程序更加平滑、响应更快。</p>
+<p>使用StrictMode一般定义在Application中，实现全局检测。严苛模式的启动同样也是耗时的，所以应限制其在debug模式下才能运行。</p>
+<p><strong>线程策略检测</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps17.jpg" alt="img"> </p>
+<p><strong>VM策略检测</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps18.jpg" alt="img"> </p>
+<p><strong>触发违规的表现方式</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps19.jpg" alt="img"></p>
+<h2 id="启动黑白屏"><a href="#启动黑白屏" class="headerlink" title="启动黑白屏"></a>启动黑白屏</h2><p>当系统加载并启动APP时，需要耗费相应的时间，这样会造成用户会感觉到当点击APP图标时会有“延迟”现象，为了解决这一问题，Google的做法实在APP创建的过程中，先展示一个空白页面，让用户体会到点击图标之后立马就有响应（如QQ、微信在重新启动时都会有一个数据准备的过度页面，其实那不是引导页）。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps20.jpg" alt="img"> </p>
+<p>如果你的application或activity启动的过程太慢，导致系统的BackgroundWindow没有及时被替换，就会出现启动时白屏或黑屏的情况（取决于Theme主题是Dark还是Light）。</p>
+<p>消除启动时的黑&#x2F;白屏问题，大部分APP都采用自己在Theme中设置背景图的方式来解决。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps22.jpg" alt="img"> </p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps22.jpg" alt="img"> </p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps23.jpg" alt="img"> </p>
+<p>然后在Activity的onCreate方法，把Activity设置回原来的主题。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps24.jpg" alt="img"> </p>
+<p>这么做，只是提高启动的用户体验。并不能做到真正的加快启动速度。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io">搬码人</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io/2022/10/30/Android%E5%8D%A1%E9%A1%BF%E4%B8%8E%E5%B8%83%E5%B1%80%E4%BC%98%E5%8C%96/">https://gun-ctrl.github.io/2022/10/30/Android%E5%8D%A1%E9%A1%BF%E4%B8%8E%E5%B8%83%E5%B1%80%E4%BC%98%E5%8C%96/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://gun-ctrl.github.io" target="_blank">搬码人’s Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"></div><div class="post_share"><div class="social-share" data-image="/img/qinggangying.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechatpay.jpg" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/img/alipay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/alipay.jpg" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-full"><a href="/2022/10/05/Android%E5%B9%BF%E6%92%AD%E6%9C%BA%E5%88%B6/"><img class="prev-cover" src="/img/bizhi1.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Android广播机制</div></div></a></div></nav><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">搬码人</div><div class="author-info__description">我挥舞着键盘和本子，发誓要把世界写个明明白白。</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">27</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">6</div></a></div><a id="card-info-btn" href="https://github.com/gun-ctrl"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="tencent://AddContact/?fromId=50&amp;fromSubId=1&amp;subcmd=all&amp;uin=1578684787" target="_blank" title="QQ"><i class="fab fa-qq"></i></a><a class="social-icon" href="mailto:pengchuan4314@163.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到搬码人的世界</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E7%8A%B6%E6%80%81"><span class="toc-number">1.</span> <span class="toc-text">启动状态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%B7%E5%90%AF%E5%8A%A8%E8%80%97%E6%97%B6%E7%BB%9F%E8%AE%A1"><span class="toc-number">2.</span> <span class="toc-text">冷启动耗时统计</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%B3%BB%E7%BB%9F%E6%97%A5%E5%BF%97%E7%BB%9F%E8%AE%A1"><span class="toc-number">2.0.1.</span> <span class="toc-text">系统日志统计</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#adb%E5%91%BD%E4%BB%A4%E7%BB%9F%E8%AE%A1"><span class="toc-number">2.0.2.</span> <span class="toc-text">adb命令统计</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CPU-Profile-x2F-TraceView"><span class="toc-number">3.</span> <span class="toc-text">CPU Profile&#x2F;TraceView</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Call-Chart"><span class="toc-number">3.1.</span> <span class="toc-text">Call Chart</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Flame-Chart"><span class="toc-number">3.2.</span> <span class="toc-text">Flame Chart</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Top-Down-Treee"><span class="toc-number">3.3.</span> <span class="toc-text">Top Down Treee</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Bottom-Up-Tree"><span class="toc-number">3.4.</span> <span class="toc-text">Bottom Up Tree</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Debug-API"><span class="toc-number">3.5.</span> <span class="toc-text">Debug API</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#StrictMode-%E4%B8%A5%E8%8B%9B%E6%A8%A1%E5%BC%8F"><span class="toc-number">4.</span> <span class="toc-text">StrictMode 严苛模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E9%BB%91%E7%99%BD%E5%B1%8F"><span class="toc-number">5.</span> <span class="toc-text">启动黑白屏</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/10/30/Android%E5%8D%A1%E9%A1%BF%E4%B8%8E%E5%B8%83%E5%B1%80%E4%BC%98%E5%8C%96/" title="Android APP卡顿与布局优化"><img src="/img/qinggangying.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android APP卡顿与布局优化"/></a><div class="content"><a class="title" href="/2022/10/30/Android%E5%8D%A1%E9%A1%BF%E4%B8%8E%E5%B8%83%E5%B1%80%E4%BC%98%E5%8C%96/" title="Android APP卡顿与布局优化">Android APP卡顿与布局优化</a><time datetime="2022-10-30T02:52:44.774Z" title="发表于 2022-10-30 10:52:44">2022-10-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/10/05/Android%E5%B9%BF%E6%92%AD%E6%9C%BA%E5%88%B6/" title="Android广播机制"><img src="/img/bizhi1.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android广播机制"/></a><div class="content"><a class="title" href="/2022/10/05/Android%E5%B9%BF%E6%92%AD%E6%9C%BA%E5%88%B6/" title="Android广播机制">Android广播机制</a><time datetime="2022-10-05T03:19:03.759Z" title="发表于 2022-10-05 11:19:03">2022-10-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/10/01/Activity%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%BA%8E%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%BC%8F/" title="Activity生命周期与启动模式"><img src="/img/paike.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Activity生命周期与启动模式"/></a><div class="content"><a class="title" href="/2022/10/01/Activity%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%BA%8E%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%BC%8F/" title="Activity生命周期与启动模式">Activity生命周期与启动模式</a><time datetime="2022-10-01T02:25:04.593Z" title="发表于 2022-10-01 10:25:04">2022-10-01</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/09/25/%E5%88%A0%E9%99%A4%E6%9C%89%E5%BA%8F%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E9%87%8D%E5%A4%8D%E5%85%83%E7%B4%A0/" title="删除有序链表中重复的元素"><img src="/img/jide.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="删除有序链表中重复的元素"/></a><div class="content"><a class="title" href="/2022/09/25/%E5%88%A0%E9%99%A4%E6%9C%89%E5%BA%8F%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E9%87%8D%E5%A4%8D%E5%85%83%E7%B4%A0/" title="删除有序链表中重复的元素">删除有序链表中重复的元素</a><time datetime="2022-09-25T03:51:46.405Z" title="发表于 2022-09-25 11:51:46">2022-09-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/09/24/AsyncTask%E7%9A%84%E4%BD%BF%E7%94%A8%E4%BB%8B%E7%BB%8D/" title="AsyncTask的使用介绍"><img src="/img/paike.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AsyncTask的使用介绍"/></a><div class="content"><a class="title" href="/2022/09/24/AsyncTask%E7%9A%84%E4%BD%BF%E7%94%A8%E4%BB%8B%E7%BB%8D/" title="AsyncTask的使用介绍">AsyncTask的使用介绍</a><time datetime="2022-09-24T02:43:03.644Z" title="发表于 2022-09-24 10:43:03">2022-09-24</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('/img/qinggangying.png')"><div id="footer-wrap"><div class="copyright">&copy;2022 By 搬码人</div><div class="framework-info"><span>框架 </span><a href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="聊天"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div></div></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',preloader.endLoading())</script><div class="js-pjax"><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: '',
+      appKey: '',
+      avatar: 'monsterid',
+      serverURLs: '',
+      emojiMaps: {"tv_doge":"6ea59c827c414b4a2955fe79e0f6fd3dcd515e24.png","tv_亲亲":"a8111ad55953ef5e3be3327ef94eb4a39d535d06.png","tv_偷笑":"bb690d4107620f1c15cff29509db529a73aee261.png","tv_再见":"180129b8ea851044ce71caf55cc8ce44bd4a4fc8.png","tv_冷漠":"b9cbc755c2b3ee43be07ca13de84e5b699a3f101.png","tv_发怒":"34ba3cd204d5b05fec70ce08fa9fa0dd612409ff.png","tv_发财":"34db290afd2963723c6eb3c4560667db7253a21a.png","tv_可爱":"9e55fd9b500ac4b96613539f1ce2f9499e314ed9.png","tv_吐血":"09dd16a7aa59b77baa1155d47484409624470c77.png","tv_呆":"fe1179ebaa191569b0d31cecafe7a2cd1c951c9d.png","tv_呕吐":"9f996894a39e282ccf5e66856af49483f81870f3.png","tv_困":"241ee304e44c0af029adceb294399391e4737ef2.png","tv_坏笑":"1f0b87f731a671079842116e0991c91c2c88645a.png","tv_大佬":"093c1e2c490161aca397afc45573c877cdead616.png","tv_大哭":"23269aeb35f99daee28dda129676f6e9ea87934f.png","tv_委屈":"d04dba7b5465779e9755d2ab6f0a897b9b33bb77.png","tv_害羞":"a37683fb5642fa3ddfc7f4e5525fd13e42a2bdb1.png","tv_尴尬":"7cfa62dafc59798a3d3fb262d421eeeff166cfa4.png","tv_微笑":"70dc5c7b56f93eb61bddba11e28fb1d18fddcd4c.png","tv_思考":"90cf159733e558137ed20aa04d09964436f618a1.png","tv_惊吓":"0d15c7e2ee58e935adc6a7193ee042388adc22af.png"},
+      path: window.location.pathname,
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="true" data-click="true"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
