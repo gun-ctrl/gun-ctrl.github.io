@@ -1,6 +1,319 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>APP卡顿与布局优化</title>
+    <url>/2022/10/30/APP%E5%8D%A1%E9%A1%BF%E5%92%8C%E5%B8%83%E5%B1%80%E4%BC%98%E5%8C%96/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>大多数用户感知到的卡顿等性能问题的主要根源都是因为渲染性能。Android系统每隔大概16.6ms发出VSYNC信号，触发对UI进行渲染，如果每次渲染都成功，这样就能达到流畅的画面所需要的60fps，为了能够实现fps（每秒传输帧数），这意味着程序的大多数操作都必须在16ms完成。</p>
+<p>我们通常都会提到60fps和16ms，可是知道为何会以程序是否达到60fps来作为APP性能的衡量标准吗？这是因为人眼与大脑之间的协作无法感知超过60fps的画面更新。</p>
+<p>12fps大概类似手动快速翻动书籍的频率，这明显是可以感知到是不够顺滑的。24fps使得人眼感知的是连续线性的运动，这其实是归功于运动模糊的效果。24fps是电影胶圈通常使用的帧率，因为这个帧率已经足够支撑大部分电影画面需要表达的内容，同时能够最大的减少费用的支出。但是低于30fps是无法顺畅表现绚丽的画面的内容的，此时就需要用到60fps来表达想要的效果，当然超过60fps是没有必要的。开发app的性能目标就是保持60fps，这意味着每一帧你只有16ms&#x3D;1000&#x2F;60的时间来处理事务。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps1.jpg" alt="img"></p>
+<p>如果某个操作花费时间是24ms，系统在得到VSYNC信号的时候就无法进行正常渲染，这样就发生了丢帧现象。那么用户在32ms内看到的会是同一帧画面。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps2.jpg" alt="img"> </p>
+<p>有很多原因可以导致丢帧，一般主线程过多的UI绘制、大量的IO操作或是大量的计算操作占用CPU，都会导致App界面卡顿。</p>
+<h3 id="IdleHandler"><a href="#IdleHandler" class="headerlink" title="IdleHandler"></a>IdleHandler</h3><p>IdleHandler会在Handler空闲时执行</p>
+<p>适用场景</p>
+<blockquote>
+<ul>
+<li>如果启动的Activity、Fragment、Dialog内含有大量的数据和视图的加载，导致首次打开时切换卡顿或者一瞬间白屏，可将部分加载逻辑放到queueIdle()内处理。例如引导图的加载和弹窗提示等；</li>
+<li>一些第三方框架Glide和LeakCanary等也使用到IdleHandler。</li>
+</ul>
+</blockquote>
+<p>实例：</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030172939455.png" alt="image-20221030172939455"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030172952411.png" alt="image-20221030172952411"></p>
+<h2 id="卡顿分析"><a href="#卡顿分析" class="headerlink" title="卡顿分析"></a>卡顿分析</h2><h3 id="Systrace"><a href="#Systrace" class="headerlink" title="Systrace"></a>Systrace</h3><blockquote>
+<p>Systrace是Android平台提供的一款工具，用于记录短期内的设备活动。该工具会生成一份报告，其中汇总了Android内核中的数据，例如CPU调度程序、磁盘活动和应用线程。Systrace主要用来分析绘制性能方面的问题。在发生卡顿时，通过这份报告可以知道当前整个系统所处的状态，从而帮助开发者更直观的分析系统瓶颈，改进性能。</p>
+<ul>
+<li>CPU Profiler可以看出代码在运行时的一些具体信息，方法调用时长、次数、时间比率、了解代码运行过程的效率问题，从而针对性改善代码。所以对于可能导致卡顿的耗时方法也可以通过CPU Profiler检测。</li>
+</ul>
+</blockquote>
+<p>要使用Systrace，需要先安装Python2.7.(目前不支持高版本)。</p>
+<p>Systrace具体使用可以参考这篇博客：<a href="https://www.jianshu.com/p/e73768e66b8d">https://www.jianshu.com/p/e73768e66b8d</a></p>
+<p>执行systrace可以选择配置自己感兴趣的category，常用的有：</p>
+<table>
+<thead>
+<tr>
+<th>标签</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>gfx</td>
+<td>Graphics图形系统，包括SerfaceFlinger，VSYNC消息，Texture，RenderThread等</td>
+</tr>
+<tr>
+<td>input</td>
+<td>Input输入系统，按键或者触摸屏输入；分析滑动卡顿等</td>
+</tr>
+<tr>
+<td>view</td>
+<td>View绘制系统的相关信息，比如onMeasure，onLayout等；分析View绘制性能</td>
+</tr>
+<tr>
+<td>am</td>
+<td>ActivityManager调用的相关信息；分析Activity的启动、跳转</td>
+</tr>
+<tr>
+<td>dalvik</td>
+<td>虚拟机相关信息；分析虚拟机行为；如GC停顿</td>
+</tr>
+<tr>
+<td>sched</td>
+<td>CPU调度的信息，能看到CPU在每个时间段在运行什么线程，线程调度情况，锁信息。</td>
+</tr>
+<tr>
+<td>disk</td>
+<td>IO信息</td>
+</tr>
+<tr>
+<td>wm</td>
+<td>WindowManager的相关信息</td>
+</tr>
+<tr>
+<td>res</td>
+<td>资源加载的相关信息</td>
+</tr>
+</tbody></table>
+<p><strong>其实Systrace对于应用开发者来说，能看的并不多。主要用于看是否丢帧，与丢帧时系统以及我们应用大致的一个状态。</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030173502923.png" alt="image-20221030173502923"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030173517795.png" alt="image-20221030173517795"></p>
+<blockquote>
+<p><strong>注意：我们在抓取systrace文件的时候，切记不要抓取太长的时间，也不要太多不同操作。</strong></p>
+<p>打开抓取的html文件，可以看到我们应用存在非常严重的掉帧，不借助工具直接用肉眼看UI是看不出来的。如果只是单独存在一个红色或者黄色都是没有关系的。关键是连续的红&#x2F;黄或者两帧间隔非常大那就需要我们去仔细观察，按“W”放大视图，在UIThread(主线程)上面有一条很细的线，表示线程的状态。</p>
+</blockquote>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030173601186.png" alt="image-20221030173601186"></p>
+<p>Systrace会用不同的颜色来标识不同的线程状态，在每个方法上都会有对应的线程状态来标识目前线程所处的状态。通过查看线程状态我们可以知道目前的瓶颈是什么，是CPU执行慢还是因为Binder调用，又或是进行IO操作，又或是拿不到CPU时间片。</p>
+<p>Systrace会用不同的颜色来标识不同的线程状态，在每个方法上都会有对应的线程状态来标识目前线程所处的状态。通过查看线程状态我们可以知道目前的瓶颈是什么，是CPU执行慢还是因为Binder调用，又或是进行IO操作，又或是拿不到CPU时间片。</p>
+<p>线程状态主要有以下几种：</p>
+<ul>
+<li><p><strong>绿色：表示正在运行：</strong></p>
+<ul>
+<li>是否频率不够？（CPU处理速度）</li>
+<li>是否跑在小核上？（不可控，但实际上很多手机都会有游戏模式，如果我们应用是手游，那系统会优先把手游中的任务放到大核上跑。）</li>
+</ul>
+</li>
+<li><p><strong>蓝色：表示可以运行，但是CPU在执行其他线程：</strong></p>
+<ul>
+<li>是否后台有太多的任务在跑？Runnable状态的线程状态持续时间越长，则表示CPU的调度越忙，没有及时处理到这个任务</li>
+<li>没有及时处理是否是因为频率太低？</li>
+</ul>
+</li>
+<li><p><strong>紫色：表示休眠，一般表示IO：</strong></p>
+<ul>
+<li><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps3.jpg" alt="img"></p>
+</li>
+<li><p>官方介绍为:</p>
+<p>橙色：不可中断的休眠</p>
+<p>线程在遇到I&#x2F;O操作时被阻止或正在等待磁盘操作完成。</p>
+</li>
+<li><p>紫色：可中断的休眠线程在遇到另一项内核操作（通常是内存管理）时被阻止。</p>
+</li>
+</ul>
+<p>但是实际从Android 9模拟器中拉取数据，遇到IO显示紫色，没有橙色状态显示。</p>
+</li>
+<li><p>**白色：表示休眠,**可能是因为线程在互斥锁上被阻塞，如Binder阻塞&#x2F;Wait&#x2F;Sleep等</p>
+</li>
+</ul>
+<p><strong>点击线程的某段能获取当前的线程信息与状态</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps4.jpg" alt="img"> </p>
+<p><strong>实例：</strong></p>
+<p>如下图，对比两个“红点”之间与正常“绿点”发现卡顿的发生原因可能是大量的文件操作导致</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps5.jpg" alt="img"> </p>
+<p>还可以再结合CPU Profiler-&gt;System Trace分析</p>
+<p><strong>找出原因</strong>：排查到出现非法文件操作的位置</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps6.jpg" alt="img"></p>
+<p><strong>点击线程的某段能获取当前的线程信息与状态</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030174107243.png" alt="image-20221030174107243"></p>
+<p><strong>实例：</strong></p>
+<p>如下图，对比两个“红点”之间与正常“绿点”发现卡顿的发生原因可能是大量的文件操作导致</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030174119469.png" alt="image-20221030174119469"></p>
+<p>还可以再结合CPU Profiler-&gt;System Trace分析</p>
+<p><strong>找出原因</strong>：排查到出现非法文件操作的位置</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030174131882.png" alt="image-20221030174131882"></p>
+<h3 id="Profiler-gt-System-Trace"><a href="#Profiler-gt-System-Trace" class="headerlink" title="Profiler-&gt; System Trace"></a>Profiler-&gt; System Trace</h3><blockquote>
+<p>Systrace只是能为我们提供一种猜想，猜想发生卡顿的大概位置、原因，要想定位到具体代码块就需要System Trace。</p>
+<p>其实目前版本的Android Studio已经封装的很好了，System Trace就是模拟Systrace然后封装到AS中。并且还能看到某个时间区间方法的调用。</p>
+</blockquote>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030174230495.png" alt="image-20221030174230495"></p>
+<p><strong>注</strong>：不要Record太多操作！ </p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030174241101.png" alt="image-20221030174241101"></p>
+<p><strong>注</strong>：以下内容针对Android 10以及更低版本（高版本操作雷同，亦可参看官网<a href="https://developer.android.google.cn/studio/profile/jank-detection">界面卡顿检测</a>）</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030174305823.png" alt="image-20221030174305823"></p>
+<p>相关的操作系统图形管道信息会显示在 CPU 性能分析器系统轨迹中的单个部分，称为 ****Display****。</p>
+<ul>
+<li><p><strong>Frames</strong>：此部分显示应用中的界面线程和RenderThread轨迹事件。时长超过16ms的事件会以红色表示，以突出显示潜在的卡顿帧，因为它们超出了60帧&#x2F;秒（fps）的速度进行呈现的截止时间。</p>
+</li>
+<li><p><strong>SurfaceFlinger：</strong>此部分显示SurfaceFlinger处理帧缓冲区的时间。SurfaceFlinger是负责将缓冲区内容发送到显示屏的系统进程。</p>
+</li>
+<li><p><strong>VSYNC</strong>：此部分显示VSYNC，这是一个表示与显示流水线保持同步的信号。此轨迹会显示VSYNC-app信号，这个信号会在应用启动时间过晚时显示。通常情况下，发生这种情况是因为界面线程处于忙碌状态。在动画播放期间，它会导致屏幕上出现可见的闪烁，并且在动画或滚动完成之前，会持续带来额外的输入延迟。对于刷新率较高的显示屏，尤其要注意查看该轨迹，因为与刷新率为60次&#x2F;秒或刷新率可变的显示屏相比，这种显示屏容易出现此类问题。</p>
+</li>
+<li><p><strong>BufferQueue</strong>：此部分显示有多少帧缓冲区在排队等待SurfaceFlinger使用。对于部署到搭载Android 9（API级别28）或更高版本的设备的应用，此轨迹显示应用 surface BufferQueue的缓冲区计数（0、1或2）。BufferQueue可帮助我们了解图像缓冲区在Android图形组件之间切换时的状态。例如，值2表示应用当前处于三重缓冲状态，这会导致额外的输入延迟。</p>
+</li>
+</ul>
+<p><strong>Display</strong>部分会提供有助于检测潜在卡顿的实用信号，例如何时界面线程或RenderThread的用时超过16毫秒。若要调查导致卡顿的确切细节，可以查看Threads部分，其中会显示与界面呈现有关的线程。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030174425605.png" alt="image-20221030174425605"></p>
+<p>在上图中，Threads部分显示了界面线程（java.com.google.samples.apps.iosched）、RenderThread和GPU completion。这些线程与界面呈现有关，可能是导致卡顿的原因。</p>
+<p>Android 10或更低版本检测卡顿操作：</p>
+<ol>
+<li><p>查看<strong>Display</strong>中的<strong>Frames</strong>轨迹。红色帧是要调查的候选对象。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030174517716.png" alt="image-20221030174517716"></p>
+</li>
+<li><p>发现可能存在卡顿的帧后，按“<strong>W</strong>”，或在按住Control键的同时滚动鼠标，以便进行放大。继续放大，直到看到界面线程和RenderThread中的轨迹事件。</p>
+</li>
+</ol>
+<p>   <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030174541910.png" alt="image-20221030174541910"></p>
+<p>   在上图中，Choreographer#Frame显示了界面线程何时调用Choreographer来协调动画、视图布局、图像绘制和相关进程。DrawFrames显示了RenderThread何时形成并向GPU发出实际绘制命令。</p>
+<ol start="3">
+<li><p>如果发现轨迹事件特别长，可以进一步放大，以便找出可能导致呈现速度缓慢的原因。上图显示了界面线程中的inflate，这意味着应用正在花时间膨胀布局。当放大其中一个inflate事件时，可以确切了解每个界面组件花费的时间，如下所示：</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps7.jpg" alt="img"></p>
+</li>
+<li><p>根据Frames缩小排查区域，根据下图右方的Top Down进一步排查出可能导致卡顿的操作。</p>
+</li>
+</ol>
+<p>   <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps8.jpg" alt="img"></p>
+<h3 id="APP层面监控卡顿"><a href="#APP层面监控卡顿" class="headerlink" title="APP层面监控卡顿"></a>APP层面监控卡顿</h3><p>Systrace可以让我们了解应用所处的状态，了解应用卡顿因为什么导致的。若需要准确分析卡顿发生在什么函数，资源占用情况如何，目前业界两种主流有效的app监控方式如下：</p>
+<ol>
+<li><p>利用UI线程的Looper打印的日志匹配；</p>
+</li>
+<li><p>使用Choregrapher.FrameCallback</p>
+</li>
+</ol>
+<h4 id="Looper日志监控卡顿（BlockCanary）"><a href="#Looper日志监控卡顿（BlockCanary）" class="headerlink" title="Looper日志监控卡顿（BlockCanary）"></a>Looper日志监控卡顿（BlockCanary）</h4><p>其实后面的内容就是BlockCanary的原理，也可以直接使用BlockCanary：</p>
+<p><a href="https://github.com/markzhai/AndroidPerformanceMonitor">https://github.com/markzhai/AndroidPerformanceMonitor</a></p>
+<p>其提示方式和LeakCanary一样，会生成如下弹窗</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps9.jpg" alt="img"> </p>
+<p>Android主线程更新UI。如果界面1秒钟少了60次，用户就会产生卡顿感觉。简单来说，Android使用消息机制进行UI更新，UI线程有个Looper，在其Looper方法中会不断去除message，调用其绑定的Handler在UI线程执行。如果在Handler的dispatchMessage方法里有耗时操作，就会发生卡顿。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">loop</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="comment">//......</span></span><br><span class="line">    <span class="keyword">for</span> (;;)&#123;</span><br><span class="line">        <span class="comment">//......</span></span><br><span class="line">        <span class="type">Printer</span> <span class="variable">logging</span> <span class="operator">=</span> me.mLogging;</span><br><span class="line">        <span class="keyword">if</span> (logging != <span class="literal">null</span>)&#123;</span><br><span class="line">            logging.println(<span class="string">&quot;&gt;&gt;&gt;&gt;&gt; Dispatching to &quot;</span> + msg.target + <span class="string">&quot; &quot;</span> +</span><br><span class="line">                    msg.callback + <span class="string">&quot;:&quot;</span> + msg.what);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        msg.target.dispatchMessage(msg);</span><br><span class="line">        <span class="keyword">if</span>(logging != <span class="literal">null</span>)&#123;</span><br><span class="line">            logging.println(<span class="string">&quot;&lt;&lt;&lt;&lt;&lt; Finished to &quot;</span> + msg.target + <span class="string">&quot; &quot;</span> +    msg.callback);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//......</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>只要检测msg.target.dispatchMessage(msg)的执行时间，就能检测到部分UI线程是否有耗时操作。注意到这行执行代码前后，有两个logging.println函数，如果设置了logging，会分别打印出&gt;&gt;&gt;&gt;&gt;Dispatching to和&lt;&lt;&lt;&lt;&lt;Finished to这样的日志，这样我们就可以通过两次log的时间差值，来计算dispatchMessage的执行时间，从而设置阈值判断是否发生了卡顿。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030175520451.png" alt="image-20221030175520451"></p>
+<p>Looper提供了setMessageLogging(@Nullable Printer printer)方法，所以我们可以自己实现一个Printer，再通过setMessageLogging()方法传入即可：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">BlockCanary</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">install</span><span class="params">()</span>&#123;</span><br><span class="line">        <span class="type">LogMonitor</span> <span class="variable">logMonitor</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">LogMonitor</span>();</span><br><span class="line">        Looper.getMainLooper().setMessageLogging(logMonitor);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LogMonitor</span> <span class="keyword">implements</span> <span class="title class_">Printer</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> StackSampler mStackSampler;</span><br><span class="line">    <span class="keyword">private</span> <span class="type">boolean</span> <span class="variable">mPrintingStarted</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="type">long</span> mStartTimestamp;</span><br><span class="line">    <span class="comment">//卡顿阈值</span></span><br><span class="line">    <span class="keyword">private</span> <span class="type">long</span> <span class="variable">mBlockThresholdMills</span> <span class="operator">=</span> <span class="number">3000</span>;</span><br><span class="line">    <span class="comment">//采样频率</span></span><br><span class="line">    <span class="keyword">private</span> <span class="type">long</span> <span class="variable">mSampleInterval</span> <span class="operator">=</span> <span class="number">1000</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Handler mLogHandler;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">LogMonitor</span><span class="params">()</span>&#123;</span><br><span class="line">        mStackSampler = <span class="keyword">new</span> <span class="title class_">StackSampler</span>(mSampleInterval);</span><br><span class="line">        <span class="type">HandlerThread</span> <span class="variable">handlerThread</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HandlerThread</span>(<span class="string">&quot;block-canary-io&quot;</span>);</span><br><span class="line">        handlerThread.start();</span><br><span class="line">        mLogHandler = <span class="keyword">new</span> <span class="title class_">Handler</span>(handlerThread.getLooper());</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">println</span><span class="params">(String s)</span> &#123;</span><br><span class="line">        <span class="comment">//从if到else会执行 dispatchMessage，如果执行耗时超过阈值，输出卡顿信息</span></span><br><span class="line">        <span class="keyword">if</span> (!mPrintingStarted)&#123;</span><br><span class="line">            <span class="comment">//记录开始时间</span></span><br><span class="line">            mStartTimestamp = System.currentTimeMillis();</span><br><span class="line">            mPrintingStarted = <span class="literal">true</span>;</span><br><span class="line">            mStackSampler.startDump();</span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="keyword">final</span> <span class="type">long</span> <span class="variable">endTime</span> <span class="operator">=</span> System.currentTimeMillis();</span><br><span class="line">            mPrintingStarted = <span class="literal">false</span>;</span><br><span class="line">            <span class="comment">//出现卡顿</span></span><br><span class="line">            <span class="keyword">if</span> (isBlock(endTime))&#123;</span><br><span class="line">                notifyBlockEvent(endTime);</span><br><span class="line">            &#125;</span><br><span class="line">            mStackSampler.stopDump();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">notifyBlockEvent</span><span class="params">(<span class="keyword">final</span> <span class="type">long</span> endTime)</span>&#123;</span><br><span class="line">        mLogHandler.post(<span class="keyword">new</span> <span class="title class_">Runnable</span>() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">run</span><span class="params">()</span> &#123;</span><br><span class="line">                <span class="comment">//获取卡顿时主线程堆栈</span></span><br><span class="line">                List&lt;String&gt; stacks = mStackSampler.getStacks(mStartTimestamp,endTime);</span><br><span class="line">                <span class="keyword">for</span> (String stack : stacks)&#123;</span><br><span class="line">                    Log.e(<span class="string">&quot;block-canary&quot;</span>,stack);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="type">boolean</span> <span class="title function_">isBlock</span><span class="params">(<span class="type">long</span> endTime)</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> endTime - mStartTimestamp &gt; mBlockThresholdMills;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">StackSampler</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">SEPARATOR</span> <span class="operator">=</span> <span class="string">&quot;\r\n&quot;</span>;</span><br><span class="line">    <span class="meta">@SuppressLint(&quot;SimpleDateFormat&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">SimpleDateFormat</span> <span class="variable">TIME_FORMATTER</span> <span class="operator">=</span></span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">SimpleDateFormat</span>(<span class="string">&quot;MM-dd HH:mm:ss.SSS&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Handler mHandler;</span><br><span class="line">    <span class="keyword">private</span> Map&lt;Long,String&gt; mStackMap = <span class="keyword">new</span> <span class="title class_">LinkedHashMap</span>&lt;&gt;();</span><br><span class="line">    <span class="keyword">private</span> <span class="type">int</span> <span class="variable">mMaxCount</span> <span class="operator">=</span> <span class="number">100</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="type">long</span> mSampleInterval;</span><br><span class="line">    <span class="comment">//是否需要采样</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="type">AtomicBoolean</span> <span class="variable">mShouldSample</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AtomicBoolean</span>(<span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">StackSampler</span><span class="params">(<span class="type">long</span> sampleInterval)</span>&#123;</span><br><span class="line">        mSampleInterval = sampleInterval;</span><br><span class="line">        <span class="type">HandlerThread</span> <span class="variable">handlerThread</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HandlerThread</span>(<span class="string">&quot;block-canary-sampler&quot;</span>);</span><br><span class="line">        handlerThread.start();</span><br><span class="line">        mHandler = <span class="keyword">new</span> <span class="title class_">Handler</span>(handlerThread.getLooper());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 开始采样 执行堆栈</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">startDump</span><span class="params">()</span>&#123;</span><br><span class="line">        <span class="comment">//避免重复开始</span></span><br><span class="line">        <span class="keyword">if</span> (mShouldSample.get())&#123;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        mShouldSample.set(<span class="literal">true</span>);</span><br><span class="line"></span><br><span class="line">        mHandler.removeCallbacks(mRunnable);</span><br><span class="line">        mHandler.postDelayed(mRunnable,mSampleInterval);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">stopDump</span><span class="params">()</span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (!mShouldSample.get())&#123;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        mShouldSample.set(<span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">        mHandler.removeCallbacks(mRunnable);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> List&lt;String&gt; <span class="title function_">getStacks</span><span class="params">(<span class="type">long</span> startTime,<span class="type">long</span> endTime)</span>&#123;</span><br><span class="line">        ArrayList&lt;String&gt; result = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line">        <span class="keyword">synchronized</span> (mStackMap)&#123;</span><br><span class="line">            <span class="keyword">for</span> (Long entryTime : mStackMap.keySet())&#123;</span><br><span class="line">                <span class="keyword">if</span> (startTime &lt; entryTime &amp;&amp; entryTime &lt; endTime)&#123;</span><br><span class="line">                    result.add(TIME_FORMATTER.format(entryTime)</span><br><span class="line">                            + SEPARATOR</span><br><span class="line">                            + SEPARATOR</span><br><span class="line">                            + mStackMap.get(entryTime));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">private</span> <span class="type">Runnable</span> <span class="variable">mRunnable</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Runnable</span>() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">run</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="type">StringBuilder</span> <span class="variable">sb</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringBuilder</span>();</span><br><span class="line">            StackTraceElement[] stackTrace = Looper.getMainLooper().getThread().getStackTrace();</span><br><span class="line">            <span class="keyword">for</span> (StackTraceElement s: stackTrace)&#123;</span><br><span class="line">                sb.append(s.toString()).append(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">synchronized</span> (mStackMap)&#123;</span><br><span class="line">                <span class="comment">//最多保存100条堆栈信息</span></span><br><span class="line">                <span class="keyword">if</span> (mStackMap.size() == mMaxCount)&#123;</span><br><span class="line">                    mStackMap.remove(mStackMap.keySet().iterator().next());</span><br><span class="line">                &#125;</span><br><span class="line">                mStackMap.put(System.currentTimeMillis(),sb.toString());</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (mShouldSample.get())&#123;</span><br><span class="line">                mHandler.postDelayed(mRunnable,mSampleInterval);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用时在Application的onCreate()调用BlockCanary.install()即可。</p>
+<p>其实这种方法也就是BlockCanary原理。</p>
+<p>例如：</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030175924056.png" alt="image-20221030175924056"></p>
+<h4 id="Choregrapher-FrameCallback"><a href="#Choregrapher-FrameCallback" class="headerlink" title="Choregrapher.FrameCallback"></a>Choregrapher.FrameCallback</h4><blockquote>
+<p>Android系统每隔16ms发出VSYNC信号，来通知界面进行重绘、渲染，每一次同步的周期约为16.6ms，代表一帧的刷新频率。通过Choreographer类设置它的FrameCallback，当每一帧被渲染时会触发回调FrameCallback.doFrame(long frameTimeNanos)函数。frameTimeNanos是底层VSYNC信号到达的时间戳。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ChoreographerHelper</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">start</span><span class="params">()</span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.JELLY_BEAN)&#123;</span><br><span class="line">            Choreographer.getInstance().postFrameCallback(<span class="keyword">new</span> <span class="title class_">Choreographer</span>.FrameCallback() &#123;</span><br><span class="line">                <span class="type">long</span> <span class="variable">lastFrameTimeNanos</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">doFrame</span><span class="params">(<span class="type">long</span> frameTimeNanos)</span> &#123;</span><br><span class="line">                    <span class="comment">//上次回调的时间</span></span><br><span class="line">                    <span class="keyword">if</span> (lastFrameTimeNanos == <span class="number">0</span>)&#123;</span><br><span class="line">                        lastFrameTimeNanos = frameTimeNanos;</span><br><span class="line">                        Choreographer.getInstance().postFrameCallback(<span class="built_in">this</span>);</span><br><span class="line">                        <span class="keyword">return</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="type">long</span> <span class="variable">diff</span> <span class="operator">=</span> (frameTimeNanos - lastFrameTimeNanos)/<span class="number">1_000_000</span>;</span><br><span class="line">                    <span class="keyword">if</span> (diff &gt; <span class="number">16.6f</span>)&#123;</span><br><span class="line">                        <span class="comment">//掉帧数</span></span><br><span class="line">                        <span class="type">int</span> <span class="variable">droppedCount</span> <span class="operator">=</span> (<span class="type">int</span>)(diff/<span class="number">16.6</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                    lastFrameTimeNanos = frameTimeNanos;</span><br><span class="line">                    Choreographer.getInstance().postFrameCallback(<span class="built_in">this</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过ChoreographerHelper可以实时计算帧率和掉帧率，实时检测App页面的帧率数据，发生帧率过低，还可以自动保存现场堆栈信息。</p>
+<p>Looper比较适合在发布前进行测试或者小范围灰度测试然后定位问题，ChoreographerHelper适合监控线上环境的app的掉帧情况来计算app在某些场景的流畅度然后有针对性的做性能优化。</p>
+<h2 id="布局优化"><a href="#布局优化" class="headerlink" title="布局优化"></a>布局优化</h2><h3 id="层级优化"><a href="#层级优化" class="headerlink" title="层级优化"></a>层级优化</h3><p>measure、layout、draw这三个过程都包含自顶向下的View Tree遍历耗时，如果视图层级太深自然需要更多的时间来完成整个绘测过程，从而造成启动速度慢、卡顿等问题。而onDraw在频繁刷新时可能多次出发，因此onDraw更不能做耗时操作，同时需要注意内存抖动。对于布局性能的检测，依然可以使用systrace与CPU Profiler按照绘制流程检查绘制耗时函数。</p>
+<h3 id="Layout-Inspector"><a href="#Layout-Inspector" class="headerlink" title="Layout Inspector"></a>Layout Inspector</h3><p>视图层次结构的检测工具</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps10.jpg" alt="img"> </p>
+<p>然后选择需要查看的进程与Activity后：</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030180644284.png" alt="image-20221030180644284"></p>
+<p>在左侧id为content之下的就是我们写在XML中的布局。可以明显看出，我们的布局中是一个LinearLayout,其中又包含两个LinearLayout。我们应该尽量减少其层级，可以使用ConstraintLayout约束布局使得布局尽量扁平化，移除非必需的UI组件。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030180704070.png" alt="image-20221030180704070"></p>
+<h3 id="使用merge标签"><a href="#使用merge标签" class="headerlink" title="使用merge标签"></a>使用merge标签</h3><p>当我们有一些布局元素需要被多处使用时，这时候我们会考虑将其抽取成一个单独的布局文件。在需要使用的地方通过include加载。同时还能巧妙地减少布局层级。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030181233671.png" alt="image-20221030181233671"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030181217841.png" alt="image-20221030181217841"></p>
+<p>这时候我们的主布局文件是垂直的LinearLayout，include的”layout_merge”也是垂直的LinearLayout，这时候include的布局中使用的LinearLayout就没意义了，使用的话反而减慢你的UI表现。这时可以使用merge标签优化。同时还达到了减少布局层级的目的。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030181327339.png" alt="image-20221030181327339"></p>
+<p>修改为merge后，通过Layout Inspector能够发现，include的布局中TextView直接被加入到父布局中。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030182934087.png" alt="image-20221030182934087"></p>
+<p><strong>merge标签使用注意点</strong>：</p>
+<ol>
+<li><p>根布局是FrameLayout且不需要设置background或padding等属性，可以用merge代替，因为Activity的ContentView父元素就是FrameLayout，所以可以用merge消除只剩一个。</p>
+</li>
+<li><p>因为merge标签并不是View，所以在通过LayoutInflate.inflate()方法渲染的时候，第二个参数必须指定一个父容器，且第三个参数必须为true，也就是merge下的视图指定一个父亲节点，由于merge不是View，所以对merge标签设置的所有属性都是无效的。</p>
+</li>
+</ol>
+<h3 id="使用ViewStub标签"><a href="#使用ViewStub标签" class="headerlink" title="使用ViewStub标签"></a>使用ViewStub标签</h3><p>当我们布局中存在一个View&#x2F;ViewGroup，在某个特定时刻才需要他的展示时，你可能会把这个元素在xml中定义为invisible或者gone，在需要显示时再设置为visible可见。比如在登陆时，如果密码错误在密码输入框上显示提示。</p>
+<blockquote>
+<p>invisible</p>
+<p>view设置为invisible，view在layout布局文件中会占用位置，但是view为不可见，该view还是会创建对象，会被初始化，会占用资源。</p>
+<p>gone</p>
+<p>view设置gone时，view在layout布局文件中不占用位置，但是该view还是会创建对象，会被初始化，会占用资源。</p>
+</blockquote>
+<p>如果view不一定会显示，此时可以使用ViewStub来包裹此View以避免不需要显示view但是又需要加载view消耗资源。</p>
+<p>ViewStub是一个轻量级的view，它不可见，不用占用资源，只有设置viewstub为<code>visible</code>或者调用其<code>inflate()</code>方法时，其对应的布局文件才会被初始化。</p>
+<ul>
+<li><p>优点：实现View的延迟加载，避免资源的浪费，减少渲染的时间，在需要的时候才加载View</p>
+</li>
+<li><p>缺点：</p>
+<ul>
+<li><p>ViewStub所替代的layout文件不能有<code>&lt;merge&gt;</code>标签</p>
+</li>
+<li><p>ViewStub在加载完后会被移除，或者说是被加载进来的layout替换</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030183918391.png" alt="image-20221030183918391"></p>
+<p>用ViewStub加载layout文件时，可以调用 <code>setVisibility()</code>或者 <code>inflate()</code></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030183940211.png" alt="image-20221030183940211"></p>
+<p><strong>注意</strong>：</p>
+<ul>
+<li>一旦ViewStub visible&#x2F;inflated，则ViewStub将从视图框架中移除，其<code>id stub_import</code>也会失效</li>
+<li>ViewStub被绘制完成的layout文件取代，并且该layout文件的root view的id是<code>android:inflatedId</code>指定的<code>id panel_import</code>，root view的布局和ViewStub视图的布局保持一致</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="过度渲染"><a href="#过度渲染" class="headerlink" title="过度渲染"></a>过度渲染</h2><blockquote>
+<p>过度绘制是指系统在渲染单个帧的过程中多次在屏幕上绘制某一个像素。例如，如果我们有若干界面卡片堆叠在一起，每张卡片都会遮盖其下面一张卡片的部分内容。但是，系统仍然需要绘制堆叠中的卡片被遮盖的部分。</p>
+</blockquote>
+<h3 id="GPU过度绘制检查"><a href="#GPU过度绘制检查" class="headerlink" title="GPU过度绘制检查"></a>GPU过度绘制检查</h3><p>手机开发者选项中能够显示过度渲染检查功能，通过对界面进行彩色编码来帮我们识别过度绘制。开启步骤如下：</p>
+<ol>
+<li><p>进入开发者选项(Developer Options)</p>
+</li>
+<li><p>找到调试GPU过度绘制(Debug GPU overdraw)</p>
+</li>
+<li><p>在弹出的对话框中，选择显示过度绘制区域（Show overdraw areas）。</p>
+<p>Android将按如下方式为界面元素着色，以确定过度绘制的次数：</p>
+<ul>
+<li>真彩色：没有过度绘制</li>
+<li>蓝色：过度绘制1次</li>
+<li>绿色：过度绘制2次</li>
+<li>粉色：过度绘制3次</li>
+<li>红色：过度绘制4次或更多次</li>
+</ul>
+</li>
+</ol>
+<p>在优化应用的界面时，应尝试达到大部分显示真彩色或仅有1次过度绘制（蓝色）的视觉效果。</p>
+<h3 id="解决过度绘制问题"><a href="#解决过度绘制问题" class="headerlink" title="解决过度绘制问题"></a>解决过度绘制问题</h3><p>可以采取以下几种策略来减少甚至消除过度绘制</p>
+<ul>
+<li>移除布局中不需要的背景<ul>
+<li>默认情况下，布局没有背景，这表示布局本身不会直接渲染任何内容。但是，当布局具有背景时，其有可能会导致过度绘制。</li>
+<li>移除不必要的背景可以快速提高渲染的性能。不必要的背景可能永远不可见，因为它会被应用在该视图上绘制的其他内容完全覆盖。例如，当系统在父视图上绘制子视图，可能会完全覆盖父视图的背景。</li>
+</ul>
+</li>
+<li>使视图层次结构扁平化<ul>
+<li>可以通过优化视图层次结构来减少重叠界面对象的数量，从而提高性能。</li>
+</ul>
+</li>
+<li>降低透明度<ul>
+<li>对于不透明的View，只需要渲染一次即可把它显示出来。但是如果这个View设置了alpha值，则至少需要渲染两次。这是因为使用了alpha的View需要先知道混合View的下一层元素是什么，然后再结合上层的View进行Blend混色处理。透明动画、淡入淡出和阴影等效果都涉及到某种透明度，这就会造成了过度绘制。可以通过减少要渲染的透明对象的数量，来改善这些情况下的过度绘制。例如，如需获得灰色文本，可以在TextView中绘制黑色文本，再为其设置半透明的透明度值-&gt;但是，简单地通过绘制灰色文本也能获得同样的效果，而且能够大幅提升性能。</li>
+</ul>
+</li>
+</ul>
+<h2 id="布局加载优化"><a href="#布局加载优化" class="headerlink" title="布局加载优化"></a>布局加载优化</h2><h3 id="异步加载"><a href="#异步加载" class="headerlink" title="异步加载"></a>异步加载</h3><p>LayoutInflater加载xml布局的过程会在主线程使用IO读取XML布局文件进行XML解析，再根据解析结果利用反射创建布局中的View&#x2F;ViewGroup对象。这个过程随着布局的复杂度上升，耗时自然也会随之增大。Android为我们提供了Asynclayoutinflater把耗时的加载操作在异步线程中完成，最后把加载结果再回调给主线程。</p>
+<figure class="highlight groovy"><table><tr><td class="code"><pre><span class="line">dependencies&#123;</span><br><span class="line">implementation<span class="string">&quot;androidx.asynclayoutinflater:asynclayoutinflater:1.0.0&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221030210116028.png" alt="image-20221030210116028"></p>
+<ol>
+<li><p>使用异步inflate，那么需要这个layout的parent的generateLayoutParams函数是线程安全的；</p>
+</li>
+<li><p>所有构建的View中必须不能创建Handler或者是调用Looper.myLooper；（因为是在异步线程中加载的，异步线程默认没有调用Looper.prepare）；</p>
+</li>
+<li><p>AsyncLayoutInflater不完全支持设置LayoutInflater.Factory或者LayoutInflater.Factory2；</p>
+</li>
+<li><p>不支持加载包含Fragment的layout;</p>
+</li>
+<li><p>如果AsyncLayoutInflater失败，那么会自动回退到UI线程来加载布局.</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>性能优化</category>
+      </categories>
+  </entry>
+  <entry>
     <title>Activity生命周期与启动模式</title>
     <url>/2022/10/01/Activity%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%BA%8E%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%BC%8F/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
@@ -1055,6 +1368,104 @@
       </categories>
   </entry>
   <entry>
+    <title>RecyclerView的回收复用机制</title>
+    <url>/2022/07/24/RecyclerView%E7%9A%84%E5%9B%9E%E6%94%B6%E5%A4%8D%E7%94%A8%E6%9C%BA%E5%88%B6/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一章，小编介绍了RecyclerView的高级用法——自定义LayoutManager。今天，我们来从源码的角度深度剖析RecyclerView，主要是对RecyclerView的回收复用机制熟悉掌握。</p>
+<h2 id="RecyclerView介绍"><a href="#RecyclerView介绍" class="headerlink" title="RecyclerView介绍"></a>RecyclerView介绍</h2><blockquote>
+<p>RecyclerView可以说是项目必备的系统高级控件，相比于传统的ListVIew，RecyclerView最大的优势就是四级缓存机制，ListView是两级缓存机制（屏幕内可见、屏幕外）。</p>
+</blockquote>
+<h3 id="四级缓存机制"><a href="#四级缓存机制" class="headerlink" title="四级缓存机制"></a>四级缓存机制</h3><ul>
+<li><p>mChangeScrap（主要与动画相关）与mAttachedScrap（一般这两算一级）</p>
+<p>用来缓存还在屏幕内的ViewHolder</p>
+</li>
+<li><p>mCachedViews</p>
+<p>用来缓存移除屏幕之外的ViewHolder</p>
+</li>
+<li><p>mViewCacheExtension</p>
+<p>用户的自定义扩展缓存，需要用户自己管理View的创建和缓存</p>
+</li>
+<li><p>RecyclerViewPool</p>
+<p>ViewHolder缓存池</p>
+</li>
+</ul>
+<h3 id="回收复用的入口"><a href="#回收复用的入口" class="headerlink" title="回收复用的入口"></a>回收复用的入口</h3><p>上一章中自定义LayoutManager中有<code> detachAndScrapAttachedViews(recycler!!)</code>这样一个方法，用于回收ViewHolder。下面就来介绍一下RecyclerView的回收。</p>
+<p>回收有两个入口，一是布局onLayout时，二是在fill填充itemVIew时</p>
+<ul>
+<li>onLayout</li>
+</ul>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220724172908391.png" alt="image-20220724172908391"></p>
+<p>1.因为RecyclerView的具体onLayout是交给具体的LayoutManager来实现的，所以回收复用的具体操作是由LayoutManager来完成，在自定义LayoutManager时需考虑这一点，参考系统提供的LinearLayoutManager</p>
+<p>2.上图的两个重心是LinearLayoutManager中回收入口的分叉和Recycler中的实际回收情况，而我们在自定义LayoutManager时，回收Holder只需要通过detachAndScrapAttachedViews这一个方法即可，具体是如何进行回收的我们不关心，但需要知道有哪几种，因为这对应了几种缓存，上面已经介绍了四级缓存。</p>
+<p>3.缓存池与mCacheViews的关系：</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144808720.png" alt="image-20220717144808720"></p>
+<blockquote>
+<p> <strong>注意：</strong>缓存池中保存的只是ViewHolder，没有数据，所以缓存池中的ViewHolder复用还需要绑定</p>
+</blockquote>
+<ul>
+<li><p>fill</p>
+<p>在fill中只考虑了recycleViewHolderInternal这种情况，滑动过程中会触发</p>
+</li>
+</ul>
+<p><strong>回收重要源码截图</strong></p>
+<blockquote>
+<p>如果觉得上述回收流程图理解起来抽象的，可见结合部分源码截图理解。</p>
+</blockquote>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717115957690.png" alt="image-20220717115957690"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717121349370.png" alt="image-20220717121349370"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717141954608.png" alt="image-20220717141954608"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717142707778.png"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717142831116.png" alt="image-20220717142831116"></p>
+<blockquote>
+<p>如果超过mCacheView最大值（2），就加入到缓存池</p>
+<p>缓存到缓存池之后，就从mCacheView中移除</p>
+<p>从“0”拿出，说明是先进先出的</p>
+</blockquote>
+<ul>
+<li>否则，直接进缓存池  和上面一样都是调用<code>addViewHolderToRecycledViewPool</code></li>
+</ul>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717143953794.png" alt="image-20220717143953794"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144255403.png" alt="image-20220717144255403"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144354585.png" alt="image-20220717144354585"></p>
+<blockquote>
+<p>ScrapData -&gt; ArrayList<ViewHolder></p>
+<p>mScrap-&gt;SpareArray<ScrapData></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144443187.png" alt="image-20220717144443187"></p>
+</blockquote>
+<p><strong>recycler.scrapView()</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717153414420.png" alt="image-20220717153414420"></p>
+<p><strong>ViewHolder的包装源码</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120045307.png" alt="image-20220717120045307"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120201306.png" alt="image-20220717120201306"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120910841.png" alt="image-20220717120910841"></p>
+<h3 id="复用入口"><a href="#复用入口" class="headerlink" title="复用入口"></a>复用入口</h3><blockquote>
+<p>复用的入口点同样也是两个，分别是布局时与滑动时。</p>
+</blockquote>
+<ul>
+<li><p>onLayout</p>
+<p>上一章中我们在自定义LayoutManager中就是重写的下面的<code>4.onLayoutChildren</code></p>
+</li>
+</ul>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717165422042.png" alt="image-20220717165422042"></p>
+<ul>
+<li>onTouch</li>
+</ul>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220724174858215.png" alt="image-20220724174858215"></p>
+<p>其实二者雷同，从fill入口开始，onLayout与onTouch几乎一样，只是第一张图用的时序图，绘制的比较详细。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>其实我们阅读源码了解原理机制，不用记住每个方法的入口、流程细节等，只需要记住大致过程，并理解重要部分。比如RecyclerView的四级缓存，以及回收复用的大致过程。</p>
+<p>这章的几个重点：</p>
+<p>1.从mAttachedScrap、mChangedScrap、mCachedViews中取出的holder不需要再绑定数据</p>
+<p>2.从RecyclerPool取出的holder需要重新绑定数据</p>
+<p>3.mAttachedScrap、mChangedScrap缓存的是屏幕看到的holder</p>
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a href="https://wiwiyiyi.com/RecyclerView%E5%9B%9E%E6%94%B6%E4%B8%8E%E5%A4%8D%E7%94%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html#%E5%9B%9B-%E6%80%BB%E7%BB%93">https://wiwiyiyi.com/RecyclerView%E5%9B%9E%E6%94%B6%E4%B8%8E%E5%A4%8D%E7%94%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html#%E5%9B%9B-%E6%80%BB%E7%BB%93</a></p>
+]]></content>
+      <categories>
+        <category>高级UI</category>
+      </categories>
+      <tags>
+        <tag>RecyclerView</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>OOM与内存优化</title>
     <url>/2022/08/19/OOM%E4%B8%8E%E5%86%85%E5%AD%98%E4%BC%98%E5%8C%96/</url>
     <content><![CDATA[<h2 id="内存管理基础"><a href="#内存管理基础" class="headerlink" title="内存管理基础"></a>内存管理基础</h2><h3 id="App内存组成以及限制"><a href="#App内存组成以及限制" class="headerlink" title="App内存组成以及限制"></a>App内存组成以及限制</h3><p>Android 给每个 App 分配一个 VM ，让App运行在 dalvik 上，这样即使 App 崩溃也不会影响到系统。系统给 VM 分配了一定的内存大小， App 可以申请使用的内存大小不能超过此硬性逻辑限制，就算物理内存富余，如果应用超出 VM 最大内存，就会出现内存溢出 crash。</p>
@@ -1340,104 +1751,6 @@
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>其实这部分的重点就是自定义分割线（ItemDecoration），弄清绘制顺序以及设置偏移值的作用就简单多了。当然，难点（也不是难点）就是弄清除尺寸参数,特别是尺寸变化引起的换组顶部推动效果。</p>
 <p>其次就是特别注意有padding的情况，相信大家看出小编在这设置了顶部padding，有padding的时候需要注意尺寸。（不过有设置padding的情况很少）</p>
 <p><a href="https://github.com/gun-ctrl/RecyclerViewPro">全部代码</a></p>
-]]></content>
-      <categories>
-        <category>高级UI</category>
-      </categories>
-      <tags>
-        <tag>RecyclerView</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>RecyclerView的回收复用机制</title>
-    <url>/2022/07/24/RecyclerView%E7%9A%84%E5%9B%9E%E6%94%B6%E5%A4%8D%E7%94%A8%E6%9C%BA%E5%88%B6/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上一章，小编介绍了RecyclerView的高级用法——自定义LayoutManager。今天，我们来从源码的角度深度剖析RecyclerView，主要是对RecyclerView的回收复用机制熟悉掌握。</p>
-<h2 id="RecyclerView介绍"><a href="#RecyclerView介绍" class="headerlink" title="RecyclerView介绍"></a>RecyclerView介绍</h2><blockquote>
-<p>RecyclerView可以说是项目必备的系统高级控件，相比于传统的ListVIew，RecyclerView最大的优势就是四级缓存机制，ListView是两级缓存机制（屏幕内可见、屏幕外）。</p>
-</blockquote>
-<h3 id="四级缓存机制"><a href="#四级缓存机制" class="headerlink" title="四级缓存机制"></a>四级缓存机制</h3><ul>
-<li><p>mChangeScrap（主要与动画相关）与mAttachedScrap（一般这两算一级）</p>
-<p>用来缓存还在屏幕内的ViewHolder</p>
-</li>
-<li><p>mCachedViews</p>
-<p>用来缓存移除屏幕之外的ViewHolder</p>
-</li>
-<li><p>mViewCacheExtension</p>
-<p>用户的自定义扩展缓存，需要用户自己管理View的创建和缓存</p>
-</li>
-<li><p>RecyclerViewPool</p>
-<p>ViewHolder缓存池</p>
-</li>
-</ul>
-<h3 id="回收复用的入口"><a href="#回收复用的入口" class="headerlink" title="回收复用的入口"></a>回收复用的入口</h3><p>上一章中自定义LayoutManager中有<code> detachAndScrapAttachedViews(recycler!!)</code>这样一个方法，用于回收ViewHolder。下面就来介绍一下RecyclerView的回收。</p>
-<p>回收有两个入口，一是布局onLayout时，二是在fill填充itemVIew时</p>
-<ul>
-<li>onLayout</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220724172908391.png" alt="image-20220724172908391"></p>
-<p>1.因为RecyclerView的具体onLayout是交给具体的LayoutManager来实现的，所以回收复用的具体操作是由LayoutManager来完成，在自定义LayoutManager时需考虑这一点，参考系统提供的LinearLayoutManager</p>
-<p>2.上图的两个重心是LinearLayoutManager中回收入口的分叉和Recycler中的实际回收情况，而我们在自定义LayoutManager时，回收Holder只需要通过detachAndScrapAttachedViews这一个方法即可，具体是如何进行回收的我们不关心，但需要知道有哪几种，因为这对应了几种缓存，上面已经介绍了四级缓存。</p>
-<p>3.缓存池与mCacheViews的关系：</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144808720.png" alt="image-20220717144808720"></p>
-<blockquote>
-<p> <strong>注意：</strong>缓存池中保存的只是ViewHolder，没有数据，所以缓存池中的ViewHolder复用还需要绑定</p>
-</blockquote>
-<ul>
-<li><p>fill</p>
-<p>在fill中只考虑了recycleViewHolderInternal这种情况，滑动过程中会触发</p>
-</li>
-</ul>
-<p><strong>回收重要源码截图</strong></p>
-<blockquote>
-<p>如果觉得上述回收流程图理解起来抽象的，可见结合部分源码截图理解。</p>
-</blockquote>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717115957690.png" alt="image-20220717115957690"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717121349370.png" alt="image-20220717121349370"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717141954608.png" alt="image-20220717141954608"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717142707778.png"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717142831116.png" alt="image-20220717142831116"></p>
-<blockquote>
-<p>如果超过mCacheView最大值（2），就加入到缓存池</p>
-<p>缓存到缓存池之后，就从mCacheView中移除</p>
-<p>从“0”拿出，说明是先进先出的</p>
-</blockquote>
-<ul>
-<li>否则，直接进缓存池  和上面一样都是调用<code>addViewHolderToRecycledViewPool</code></li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717143953794.png" alt="image-20220717143953794"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144255403.png" alt="image-20220717144255403"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144354585.png" alt="image-20220717144354585"></p>
-<blockquote>
-<p>ScrapData -&gt; ArrayList<ViewHolder></p>
-<p>mScrap-&gt;SpareArray<ScrapData></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717144443187.png" alt="image-20220717144443187"></p>
-</blockquote>
-<p><strong>recycler.scrapView()</strong></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717153414420.png" alt="image-20220717153414420"></p>
-<p><strong>ViewHolder的包装源码</strong></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120045307.png" alt="image-20220717120045307"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120201306.png" alt="image-20220717120201306"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717120910841.png" alt="image-20220717120910841"></p>
-<h3 id="复用入口"><a href="#复用入口" class="headerlink" title="复用入口"></a>复用入口</h3><blockquote>
-<p>复用的入口点同样也是两个，分别是布局时与滑动时。</p>
-</blockquote>
-<ul>
-<li><p>onLayout</p>
-<p>上一章中我们在自定义LayoutManager中就是重写的下面的<code>4.onLayoutChildren</code></p>
-</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220717165422042.png" alt="image-20220717165422042"></p>
-<ul>
-<li>onTouch</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220724174858215.png" alt="image-20220724174858215"></p>
-<p>其实二者雷同，从fill入口开始，onLayout与onTouch几乎一样，只是第一张图用的时序图，绘制的比较详细。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>其实我们阅读源码了解原理机制，不用记住每个方法的入口、流程细节等，只需要记住大致过程，并理解重要部分。比如RecyclerView的四级缓存，以及回收复用的大致过程。</p>
-<p>这章的几个重点：</p>
-<p>1.从mAttachedScrap、mChangedScrap、mCachedViews中取出的holder不需要再绑定数据</p>
-<p>2.从RecyclerPool取出的holder需要重新绑定数据</p>
-<p>3.mAttachedScrap、mChangedScrap缓存的是屏幕看到的holder</p>
-<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a href="https://wiwiyiyi.com/RecyclerView%E5%9B%9E%E6%94%B6%E4%B8%8E%E5%A4%8D%E7%94%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html#%E5%9B%9B-%E6%80%BB%E7%BB%93">https://wiwiyiyi.com/RecyclerView%E5%9B%9E%E6%94%B6%E4%B8%8E%E5%A4%8D%E7%94%A8%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.html#%E5%9B%9B-%E6%80%BB%E7%BB%93</a></p>
 ]]></content>
       <categories>
         <category>高级UI</category>
@@ -1904,24 +2217,6 @@
       </tags>
   </entry>
   <entry>
-    <title>adb获取应用包入口的方案</title>
-    <url>/2022/07/24/adb%E8%8E%B7%E5%8F%96%E5%BA%94%E7%94%A8%E5%8C%85%E5%85%A5%E5%8F%A3%E7%9A%84%E6%96%B9%E6%A1%88/</url>
-    <content><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>小编最近在入手adb调试，刚开始还是挺顺利的，不过后面就遇到了一些小插曲，其中一个就是获取应用包的入口，开启一个应用。<br>这个问题在网上可以找到很多解决方案，但不都是有用，并且有些方法有一点麻烦。<br>这里，小编介绍一下意外摸索到的解决方案。</p>
-<h3 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h3><p>1、点开需要打开的应用，使用获取前台Activity命令</p>
-<figure class="highlight 1c"><table><tr><td class="code"><pre><span class="line">adb shell dumpsys activity activities <span class="string">| findstr mResumedActivity</span></span><br></pre></td></tr></table></figure>
-<p>这样便能获得应用包的启动入口<br>比如，获取有道词典的启动入口<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-2420606065b22c18.png" alt="image.png"></p>
-<p>2、使用adb启动应用包</p>
-<figure class="highlight css"><table><tr><td class="code"><pre><span class="line">adb shell am start -n <span class="selector-attr">[应用包名]</span> /<span class="selector-attr">[入口]</span></span><br></pre></td></tr></table></figure>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-444cb9956734d120.png" alt="image.png"></p>
-]]></content>
-      <categories>
-        <category>Android随笔</category>
-      </categories>
-      <tags>
-        <tag>adb</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>adb小结</title>
     <url>/2022/07/26/adb%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93/</url>
     <content><![CDATA[<p><a href="http://banmaman.com/2022/07/19/adb%E5%91%BD%E4%BB%A4/">adb常用命令</a></p>
@@ -2254,6 +2549,24 @@
       </tags>
   </entry>
   <entry>
+    <title>adb获取应用包入口的方案</title>
+    <url>/2022/07/24/adb%E8%8E%B7%E5%8F%96%E5%BA%94%E7%94%A8%E5%8C%85%E5%85%A5%E5%8F%A3%E7%9A%84%E6%96%B9%E6%A1%88/</url>
+    <content><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>小编最近在入手adb调试，刚开始还是挺顺利的，不过后面就遇到了一些小插曲，其中一个就是获取应用包的入口，开启一个应用。<br>这个问题在网上可以找到很多解决方案，但不都是有用，并且有些方法有一点麻烦。<br>这里，小编介绍一下意外摸索到的解决方案。</p>
+<h3 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h3><p>1、点开需要打开的应用，使用获取前台Activity命令</p>
+<figure class="highlight 1c"><table><tr><td class="code"><pre><span class="line">adb shell dumpsys activity activities <span class="string">| findstr mResumedActivity</span></span><br></pre></td></tr></table></figure>
+<p>这样便能获得应用包的启动入口<br>比如，获取有道词典的启动入口<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-2420606065b22c18.png" alt="image.png"></p>
+<p>2、使用adb启动应用包</p>
+<figure class="highlight css"><table><tr><td class="code"><pre><span class="line">adb shell am start -n <span class="selector-attr">[应用包名]</span> /<span class="selector-attr">[入口]</span></span><br></pre></td></tr></table></figure>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-444cb9956734d120.png" alt="image.png"></p>
+]]></content>
+      <categories>
+        <category>Android随笔</category>
+      </categories>
+      <tags>
+        <tag>adb</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android性能优化：APK瘦身</title>
     <url>/2022/09/15/apk%E7%98%A6%E8%BA%AB/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
@@ -2463,41 +2776,6 @@
       </categories>
   </entry>
   <entry>
-    <title>删除有序链表中重复的元素</title>
-    <url>/2022/09/25/%E5%88%A0%E9%99%A4%E6%9C%89%E5%BA%8F%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E9%87%8D%E5%A4%8D%E5%85%83%E7%B4%A0/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
-<p>今天，小编来分享一道热门的面试算法题——删除有序链表中重复的元素。</p>
-</blockquote>
-<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>给出一个升序的链表，删除链表中的所有重复出现的元素，只保留原链表中只出现一次的元素。</p>
-<p>例如：</p>
-<p>给出的链表为1 -&gt; 2 -&gt; 3 -&gt;3 -&gt; 4 -&gt; 4 -&gt; 5，返回1-&gt; 2 -&gt; 5.</p>
-<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><h3 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h3><p>输入：{1,2,3}</p>
-<p>返回值：{1}</p>
-<h3 id="示例2"><a href="#示例2" class="headerlink" title="示例2"></a>示例2</h3><p>输入：{}</p>
-<p>返回值：{}</p>
-<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol>
-<li>给链表加上表头，因为可能会出现第一个节点就需要删除</li>
-<li>遍历链表，每次比较相邻两个节点，如果遇到了两个相邻节点相同，则新开内循环将这一段所有的相同都遍历过去。</li>
-<li>在第2步中这一连串相同的节点前的节点直接连上后续第一个不相同值的节点。</li>
-<li>返回时去掉添加的表头。</li>
-</ol>
-<p><strong>注意：</strong></p>
-<ul>
-<li>这道题删除的是所有重复的元素，也就是说凡是有重复出现的任何数就全部删除，并不是删除至只留下一个。</li>
-<li>外层循环的条件<code>cur.next != null &amp;&amp; cur.next.next != null</code></li>
-<li>内层循环的条件<code>cur.next != null &amp;&amp; cur.next.val == temp</code>，其实内层循环条件很简单，但是一定要细心，小编第一次遇到这道题的时候就在这入了坑</li>
-</ul>
-<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.*;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> ListNode <span class="title function_">deleteDuplicates</span> <span class="params">(ListNode head)</span> &#123;</span><br><span class="line">        <span class="comment">//空链表</span></span><br><span class="line">        <span class="keyword">if</span>(head == <span class="literal">null</span>) </span><br><span class="line">            <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">        <span class="type">ListNode</span> <span class="variable">res</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ListNode</span>(<span class="number">0</span>);</span><br><span class="line">        <span class="comment">//在链表前加一个表头</span></span><br><span class="line">        res.next = head; </span><br><span class="line">        <span class="type">ListNode</span> <span class="variable">cur</span> <span class="operator">=</span> res;</span><br><span class="line">        <span class="keyword">while</span>(cur.next != <span class="literal">null</span> &amp;&amp; cur.next.next != <span class="literal">null</span>)&#123; </span><br><span class="line">            <span class="comment">//遇到相邻两个节点值相同</span></span><br><span class="line">            <span class="keyword">if</span>(cur.next.val == cur.next.next.val)&#123; </span><br><span class="line">                <span class="type">int</span> <span class="variable">temp</span> <span class="operator">=</span> cur.next.val;</span><br><span class="line">                <span class="comment">//将所有相同的都跳过</span></span><br><span class="line">                <span class="keyword">while</span> (cur.next != <span class="literal">null</span> &amp;&amp; cur.next.val == temp) </span><br><span class="line">                    cur.next = cur.next.next;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> </span><br><span class="line">                cur = cur.next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//返回时去掉表头</span></span><br><span class="line">        <span class="keyword">return</span> res.next; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>算法</category>
-      </categories>
-      <tags>
-        <tag>算法</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>京东淘宝首页二级联动</title>
     <url>/2022/07/18/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/</url>
     <content><![CDATA[<p><strong>说明：</strong>这篇文章主要用于作者临时观看，因为涉及版权问题，所以短时间内会删除</p>
@@ -2593,6 +2871,53 @@
       </tags>
   </entry>
   <entry>
+    <title>删除有序链表中重复的元素</title>
+    <url>/2022/09/25/%E5%88%A0%E9%99%A4%E6%9C%89%E5%BA%8F%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E9%87%8D%E5%A4%8D%E5%85%83%E7%B4%A0/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
+<p>今天，小编来分享一道热门的面试算法题——删除有序链表中重复的元素。</p>
+</blockquote>
+<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p>给出一个升序的链表，删除链表中的所有重复出现的元素，只保留原链表中只出现一次的元素。</p>
+<p>例如：</p>
+<p>给出的链表为1 -&gt; 2 -&gt; 3 -&gt;3 -&gt; 4 -&gt; 4 -&gt; 5，返回1-&gt; 2 -&gt; 5.</p>
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><h3 id="示例1"><a href="#示例1" class="headerlink" title="示例1"></a>示例1</h3><p>输入：{1,2,3}</p>
+<p>返回值：{1}</p>
+<h3 id="示例2"><a href="#示例2" class="headerlink" title="示例2"></a>示例2</h3><p>输入：{}</p>
+<p>返回值：{}</p>
+<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol>
+<li>给链表加上表头，因为可能会出现第一个节点就需要删除</li>
+<li>遍历链表，每次比较相邻两个节点，如果遇到了两个相邻节点相同，则新开内循环将这一段所有的相同都遍历过去。</li>
+<li>在第2步中这一连串相同的节点前的节点直接连上后续第一个不相同值的节点。</li>
+<li>返回时去掉添加的表头。</li>
+</ol>
+<p><strong>注意：</strong></p>
+<ul>
+<li>这道题删除的是所有重复的元素，也就是说凡是有重复出现的任何数就全部删除，并不是删除至只留下一个。</li>
+<li>外层循环的条件<code>cur.next != null &amp;&amp; cur.next.next != null</code></li>
+<li>内层循环的条件<code>cur.next != null &amp;&amp; cur.next.val == temp</code>，其实内层循环条件很简单，但是一定要细心，小编第一次遇到这道题的时候就在这入了坑</li>
+</ul>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.*;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> ListNode <span class="title function_">deleteDuplicates</span> <span class="params">(ListNode head)</span> &#123;</span><br><span class="line">        <span class="comment">//空链表</span></span><br><span class="line">        <span class="keyword">if</span>(head == <span class="literal">null</span>) </span><br><span class="line">            <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">        <span class="type">ListNode</span> <span class="variable">res</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ListNode</span>(<span class="number">0</span>);</span><br><span class="line">        <span class="comment">//在链表前加一个表头</span></span><br><span class="line">        res.next = head; </span><br><span class="line">        <span class="type">ListNode</span> <span class="variable">cur</span> <span class="operator">=</span> res;</span><br><span class="line">        <span class="keyword">while</span>(cur.next != <span class="literal">null</span> &amp;&amp; cur.next.next != <span class="literal">null</span>)&#123; </span><br><span class="line">            <span class="comment">//遇到相邻两个节点值相同</span></span><br><span class="line">            <span class="keyword">if</span>(cur.next.val == cur.next.next.val)&#123; </span><br><span class="line">                <span class="type">int</span> <span class="variable">temp</span> <span class="operator">=</span> cur.next.val;</span><br><span class="line">                <span class="comment">//将所有相同的都跳过</span></span><br><span class="line">                <span class="keyword">while</span> (cur.next != <span class="literal">null</span> &amp;&amp; cur.next.val == temp) </span><br><span class="line">                    cur.next = cur.next.next;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> </span><br><span class="line">                cur = cur.next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//返回时去掉表头</span></span><br><span class="line">        <span class="keyword">return</span> res.next; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>算法</category>
+      </categories>
+      <tags>
+        <tag>算法</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>模板</title>
+    <url>/2022/07/12/%E6%A8%A1%E6%9D%BF/</url>
+    <content><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3><p><img src="/%E6%B5%8B%E8%AF%95.assets/1657615742531.png" alt="1657615742531"></p>
+]]></content>
+      <categories>
+        <category>其他</category>
+      </categories>
+      <tags>
+        <tag>模板</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>括号问题</title>
     <url>/2022/07/13/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/</url>
     <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>给出n对括号，请编写一个函数来生成所有的由n对括号组成的合法组合。</p>
@@ -2649,16 +2974,22 @@
       </tags>
   </entry>
   <entry>
-    <title>模板</title>
-    <url>/2022/07/12/%E6%A8%A1%E6%9D%BF/</url>
-    <content><![CDATA[<h3 id="关于Hexo搭建遇到的小问题"><a href="#关于Hexo搭建遇到的小问题" class="headerlink" title="关于Hexo搭建遇到的小问题"></a>关于Hexo搭建遇到的小问题</h3><p><img src="/%E6%B5%8B%E8%AF%95.assets/1657615742531.png" alt="1657615742531"></p>
+    <title>第一次上传测试</title>
+    <url>/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
 ]]></content>
-      <categories>
-        <category>其他</category>
-      </categories>
-      <tags>
-        <tag>模板</tag>
-      </tags>
   </entry>
   <entry>
     <title>深入理解并发编程和归纳总结</title>
@@ -2795,24 +3126,6 @@
       <categories>
         <category>Java筑基</category>
       </categories>
-  </entry>
-  <entry>
-    <title>第一次上传测试</title>
-    <url>/2022/07/09/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-]]></content>
   </entry>
   <entry>
     <title>自定义LayoutManager实现卡片滑动</title>
