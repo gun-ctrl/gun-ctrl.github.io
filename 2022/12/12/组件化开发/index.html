@@ -1,0 +1,318 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>组件化开发 | 搬码人’s Blog</title><meta name="keywords" content="Android组件化"><meta name="author" content="搬码人"><meta name="copyright" content="搬码人"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="什么是组件化？ 在项目开发中往往根据功能的不同划分多个模块，在小型项目中大家往往会把各模块放置到对应的包当中，这样是很方便，小编也喜欢这样干。但是，划重点！是“小”项目中，要是大项目还是按包来划分后期改动的时候会不会牵一发而动全身呢？会的。所以组件化登场了，将每个功能分成多个模块，模块之间独立性强却有些许联系。如此，我们在更改代码时就不会遇到前面所说的困扰了。下面，我上一份图来帮助大家理解。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="组件化开发">
+<meta property="og:url" content="https://gun-ctrl.github.io/2022/12/12/%E7%BB%84%E4%BB%B6%E5%8C%96%E5%BC%80%E5%8F%91/index.html">
+<meta property="og:site_name" content="搬码人’s Blog">
+<meta property="og:description" content="什么是组件化？ 在项目开发中往往根据功能的不同划分多个模块，在小型项目中大家往往会把各模块放置到对应的包当中，这样是很方便，小编也喜欢这样干。但是，划重点！是“小”项目中，要是大项目还是按包来划分后期改动的时候会不会牵一发而动全身呢？会的。所以组件化登场了，将每个功能分成多个模块，模块之间独立性强却有些许联系。如此，我们在更改代码时就不会遇到前面所说的困扰了。下面，我上一份图来帮助大家理解。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gun-ctrl.github.io/img/pansen.png">
+<meta property="article:published_time" content="2022-12-12T09:38:18.596Z">
+<meta property="article:modified_time" content="2022-12-13T12:28:28.548Z">
+<meta property="article:author" content="搬码人">
+<meta property="article:tag" content="Android组件化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gun-ctrl.github.io/img/pansen.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://gun-ctrl.github.io/2022/12/12/%E7%BB%84%E4%BB%B6%E5%8C%96%E5%BC%80%E5%8F%91/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":20,"languages":{"author":"作者: 搬码人","link":"链接: ","source":"来源: 搬码人’s Blog","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '组件化开发',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-12-13 20:28:28'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          if (t === 'dark') activateDarkMode()
+          else if (t === 'light') activateLightMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="搬码人’s Blog" type="application/atom+xml">
+</head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">31</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">11</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/img/pansen.png')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">搬码人’s Blog</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">组件化开发</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-12-12T09:38:18.596Z" title="发表于 2022-12-12 17:38:18">2022-12-12</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-12-13T12:28:28.548Z" title="更新于 2022-12-13 20:28:28">2022-12-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E7%BB%84%E4%BB%B6%E5%8C%96/">Android组件化</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.9k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>11分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="组件化开发"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h3 id="什么是组件化？"><a href="#什么是组件化？" class="headerlink" title="什么是组件化？"></a>什么是组件化？</h3><blockquote>
+<p>在项目开发中往往根据功能的不同划分多个模块，在小型项目中大家往往会把各模块放置到对应的包当中，这样是很方便，小编也喜欢这样干。但是，划重点！是“小”项目中，要是大项目还是按包来划分后期改动的时候会不会牵一发而动全身呢？会的。所以组件化登场了，将每个功能分成多个模块，模块之间独立性强却有些许联系。如此，我们在更改代码时就不会遇到前面所说的困扰了。下面，我上一份图来帮助大家理解。</p>
+</blockquote>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221212180059339.png" alt="image-20221212180059339"></p>
+<ul>
+<li>app壳工程<ul>
+<li>模块之间相互独立，那就需要一个“主子”来统筹全局，那就是app壳工程</li>
+</ul>
+</li>
+<li>业务组件化<ul>
+<li>这就是各个功能模块，比如用户注册登录、首页、个人等等</li>
+</ul>
+</li>
+<li>公共基础库<ul>
+<li>这里集成着项目中每个或多个模块需要的基础功能，也就是共享库。比如基本数据、网络访问框架、Application（的context）、工具类Utils。</li>
+</ul>
+</li>
+</ul>
+<h4 id="组件化优势"><a href="#组件化优势" class="headerlink" title="组件化优势"></a>组件化优势</h4><ul>
+<li>层次分明，即使是另一个人接手项目也能清晰项目框架，很快入手项目</li>
+<li>拆卸方便，某个模块不想要了或者要替换成另一个模块，直接拆卸即可，只需要做很小的改动</li>
+<li>不相互依赖，前面提到过，依赖性太强会导致改动太大</li>
+<li>重复利用</li>
+</ul>
+<h3 id="集成环境-x2F-组件环境部署配置"><a href="#集成环境-x2F-组件环境部署配置" class="headerlink" title="集成环境&#x2F;组件环境部署配置"></a>集成环境&#x2F;组件环境部署配置</h3><h4 id="创建新模块"><a href="#创建新模块" class="headerlink" title="创建新模块"></a>创建新模块</h4><p>在Android Studio中创建一个项目，在左上角app处右键new一个module出来，见下图，这就将作为业务组件层。当然，一个项目中的业务组件层有很多module，再new就好</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221212181551729.png" alt="image-20221212181551729"></p>
+<h4 id="创建公共基础库"><a href="#创建公共基础库" class="headerlink" title="创建公共基础库"></a>创建公共基础库</h4><p>几乎同样的步骤和注意事项，但是请注意：这里创建的是Android Library依赖库，也就是没有UI的代码仓库。</p>
+<p>并且，公共依赖库最好只有这一个。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221212181931950.png" alt="image-20221212181931950"></p>
+<p>见下图可以看到，小编创建了两个业务组件以及一个公共依赖库。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221212182206688.png" alt="image-20221212182206688"></p>
+<h4 id="环境部署"><a href="#环境部署" class="headerlink" title="环境部署"></a>环境部署</h4><blockquote>
+<p>这个要麻烦一点，主要是细心。我们先来看看项目中gradle的组成</p>
+<p>1、这是gradle的根文件，咱们用不到</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221212182459708.png"></p>
+<p>2、这是整个项目的build.gradle文件，后面我将在这做一点操作，相信大家也看出来，就那一行代码，后面再说。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221212182727574.png" alt="image-20221212182727574"></p>
+<p>3、这是每个模块的build.gradle，这里展示app的，app壳咱也能当做一个模块，只是它是“老大哥”，和每个组件有联系。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221212182906438.png" alt="image-20221212182906438"></p>
+</blockquote>
+<p>下面，我们来部署环境。</p>
+<p><strong>为什么要环境部署呢？</strong>下图大家都熟悉，是build.gradle里的配置，我们需要保证各模块的版本配置相同，才能保证在相同的环境运行。</p>
+<blockquote>
+<p>观察下面的这些变量都有一个共同点——&gt;以键值对的形式存在，所以我们要想办法造一个公共库，直接调取里面的变量。</p>
+</blockquote>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221212195515443.png" alt="image-20221212195515443"></p>
+<ol>
+<li><p>new一个gradle扩展块,这是groovy语法，不过对于学过面向对象的大家也不是问题；</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221212183111198.png" alt="image-20221212183111198"></p>
+<figure class="highlight groovy"><table><tr><td class="code"><pre><span class="line"><span class="comment">//扩展块</span></span><br><span class="line">ext&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//区分测试环境和正式环境</span></span><br><span class="line">    isRelease = <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//模拟正式环境和测试环境的服务器地址</span></span><br><span class="line">    url = [</span><br><span class="line">            <span class="string">&quot;debug&quot;</span>   :<span class="string">&quot;https://192.188.22.99/debug&quot;</span>,</span><br><span class="line">            <span class="string">&quot;release&quot;</span> :<span class="string">&quot;https://192.188.22.99/release&quot;</span></span><br><span class="line">    ]</span><br><span class="line"></span><br><span class="line">    <span class="comment">//建立Map存储，key和value  都是自定义的</span></span><br><span class="line">    androidID = [</span><br><span class="line">            <span class="attr">compileSdk       :</span><span class="number">32</span>,</span><br><span class="line">            <span class="attr">applicationId    :</span><span class="string">&quot;com.example.skindemo&quot;</span>,</span><br><span class="line">            <span class="attr">minSdk           :</span><span class="number">28</span>,</span><br><span class="line">            <span class="attr">targetSdk        :</span><span class="number">32</span>,</span><br><span class="line">            <span class="attr">versionCode      :</span><span class="number">1</span>,</span><br><span class="line">            <span class="attr">versionName      :</span><span class="string">&quot;1.0&quot;</span>,</span><br><span class="line">            <span class="attr">testInstrumentationRunner :</span><span class="string">&quot;androidx.test.runner.AndroidJUnitRunner&quot;</span></span><br><span class="line">    ]</span><br><span class="line"></span><br><span class="line">    appID = [</span><br><span class="line">            <span class="attr">app :</span> <span class="string">&quot;com.example.skindemo&quot;</span>,</span><br><span class="line">            <span class="symbol">home:</span> <span class="string">&quot;com.example.home&quot;</span>,</span><br><span class="line">            <span class="symbol">login:</span> <span class="string">&quot;com.example.login&quot;</span></span><br><span class="line">    ]</span><br><span class="line"></span><br><span class="line">    dependenciesID = [</span><br><span class="line">            <span class="string">&quot;core-ktx&quot;</span>     :<span class="string">&#x27;androidx.core:core-ktx:1.7.0&#x27;</span>,</span><br><span class="line">            <span class="string">&quot;appcompat&quot;</span>    :<span class="string">&#x27;androidx.appcompat:appcompat:1.3.0&#x27;</span>,</span><br><span class="line">            <span class="string">&quot;material&quot;</span>     :<span class="string">&#x27;com.google.android.material:material:1.4.0&#x27;</span>,</span><br><span class="line">            <span class="attr">implementation :</span><span class="string">&#x27;androidx.constraintlayout:constraintlayout:2.0.4&#x27;</span>,</span><br><span class="line">            <span class="string">&quot;navigation-fragment-ktx&quot;</span> :<span class="string">&#x27;androidx.navigation:navigation-fragment-ktx:2.3.5&#x27;</span>,</span><br><span class="line">            <span class="string">&quot;navigation-ui-ktx&quot;</span> :<span class="string">&#x27;androidx.navigation:navigation-ui-ktx:2.3.5&#x27;</span></span><br><span class="line">    ]</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>isRelease：用来判断是否是正式环境，如果是测试环境，那么功能子模块就能独立运行，否则就只能寄存与app壳运行。什么意思呢？看到下方的叉叉没有，那就是不能独立运行，也就是我们把isRelease设置为true的情况。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221212194830481.png" alt="image-20221212194830481"></p>
+</li>
+<li><p>url：这个不用管，是模拟的两种服务器地址，这是虚拟的，没有用，读者可不敲。</p>
+</li>
+<li><p>androidID：这是个键值对存储，就和Map一样，里面存储的value信息就是前面提到的版本信息。</p>
+</li>
+<li><p>appID：不同模块的路径</p>
+</li>
+<li><p>dependenciesID：看名字就知道是模块中各种依赖的键值对，但注意只有implementation相关的才提到扩展gralde中</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221212195722179.png" alt="image-20221212195722179"></p>
+</li>
+</ul>
+</li>
+<li><p>在<strong>整个项目的build.gradle</strong>（注意不是root.gradle）中引入我们刚创建的扩展块，这样就能在模块的build.gradle访问扩展块里的数据了。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221212195937100.png" alt="image-20221212195937100"></p>
+</li>
+<li><p>修改模块的build.gradle的代码，我以home为例。</p>
+<p>注意：最开始的<code>isRelease</code>这部分判断是业务组件（功能模块）的独有部分，前面已经对这个字段作用解说过了。</p>
+<p><code>def androidID = rootProject.ext.androidID</code>这段代码不要也行，只不过有了这段代码相当于持有缓存，下次访问就直接访问缓存，相当于一种优化。</p>
+<figure class="highlight groovy"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (isRelease)&#123;</span><br><span class="line">    apply <span class="attr">plugin:</span> <span class="string">&#x27;com.android.library&#x27;</span><span class="comment">//正式环境 不能独立运行</span></span><br><span class="line">&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">    apply <span class="attr">plugin:</span> <span class="string">&#x27;com.android.application&#x27;</span><span class="comment">//测试环境</span></span><br><span class="line">&#125;</span><br><span class="line">apply <span class="attr">plugin:</span> <span class="string">&#x27;org.jetbrains.kotlin.android&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> androidID = rootProject.ext.androidID</span><br><span class="line">android &#123;</span><br><span class="line">    compileSdk androidID.compileSdk</span><br><span class="line"></span><br><span class="line">    defaultConfig &#123;</span><br><span class="line">        <span class="keyword">if</span> (!isRelease)&#123;</span><br><span class="line">            applicationId appID.home</span><br><span class="line">        &#125;</span><br><span class="line">        minSdk androidID.minSdk</span><br><span class="line">        targetSdk androidID.targetSdk</span><br><span class="line">        versionCode androidID.versionCode</span><br><span class="line">        versionName androidID.versionName</span><br><span class="line"></span><br><span class="line">        testInstrumentationRunner androidID.testInstrumentationRunner</span><br><span class="line">        viewBinding&#123;</span><br><span class="line">            enabled = <span class="literal">true</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里的代码看着是不是很舒服？因为groovy语法属于Java子语言的一种，所以看着非常好理解，这里用到了foreach。另外，<code>implementation project(&#39;:common&#39;)</code>这是依赖其他模块的操作，common是所有模块的公共依赖库，所以都会对其依赖。依赖后，就能使用里面的类和方法。</p>
+<figure class="highlight groovy"><table><tr><td class="code"><pre><span class="line">dependencies &#123;</span><br><span class="line"></span><br><span class="line">    dependenciesID.each&#123;k,v -&gt; implementation v&#125;</span><br><span class="line"></span><br><span class="line">    testImplementation <span class="string">&#x27;junit:junit:4.13.2&#x27;</span></span><br><span class="line">    androidTestImplementation <span class="string">&#x27;androidx.test.ext:junit:1.1.3&#x27;</span></span><br><span class="line">    androidTestImplementation <span class="string">&#x27;androidx.test.espresso:espresso-core:3.4.0&#x27;</span></span><br><span class="line"></span><br><span class="line">    implementation project(<span class="string">&#x27;:common&#x27;</span>) <span class="comment">//公共基础库</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再展现一下common的build.gradle，因为其不同的多一点。（plugins和dependencies处的不同）</p>
+<figure class="highlight groovy"><table><tr><td class="code"><pre><span class="line">plugins &#123;</span><br><span class="line">    id <span class="string">&#x27;com.android.library&#x27;</span></span><br><span class="line">    id <span class="string">&#x27;org.jetbrains.kotlin.android&#x27;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> androidID = rootProject.ext.androidID</span><br><span class="line">android &#123;</span><br><span class="line">    compileSdk androidID.compileSdk</span><br><span class="line"></span><br><span class="line">    defaultConfig &#123;</span><br><span class="line">        minSdk androidID.minSdk</span><br><span class="line">        targetSdk androidID.targetSdk</span><br><span class="line"></span><br><span class="line">        testInstrumentationRunner androidID.testInstrumentationRunner</span><br><span class="line">        consumerProguardFiles <span class="string">&quot;consumer-rules.pro&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    buildTypes &#123;</span><br><span class="line">        release &#123;</span><br><span class="line">            minifyEnabled <span class="literal">false</span></span><br><span class="line">            proguardFiles getDefaultProguardFile(<span class="string">&#x27;proguard-android-optimize.txt&#x27;</span>), <span class="string">&#x27;proguard-rules.pro&#x27;</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    compileOptions &#123;</span><br><span class="line">        sourceCompatibility JavaVersion.VERSION_1_8</span><br><span class="line">        targetCompatibility JavaVersion.VERSION_1_8</span><br><span class="line">    &#125;</span><br><span class="line">    kotlinOptions &#123;</span><br><span class="line">        jvmTarget = <span class="string">&#x27;1.8&#x27;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">dependencies &#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">//    implementation &#x27;androidx.core:core-ktx:1.7.0&#x27;</span></span><br><span class="line"><span class="comment">//    implementation &#x27;androidx.appcompat:appcompat:1.3.0&#x27;</span></span><br><span class="line"><span class="comment">//    implementation &#x27;com.google.android.material:material:1.4.0&#x27;</span></span><br><span class="line">    dependenciesID.each&#123;k,v -&gt;</span><br><span class="line">        <span class="keyword">if</span> (k==<span class="string">&quot;core-ktx&quot;</span>)&#123;</span><br><span class="line">            implementation v</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (k==<span class="string">&quot;appcompat&quot;</span>)&#123;</span><br><span class="line">            implementation v</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (k==<span class="string">&quot;material&quot;</span>)&#123;</span><br><span class="line">            implementation v</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    testImplementation <span class="string">&#x27;junit:junit:4.13.2&#x27;</span></span><br><span class="line">    androidTestImplementation <span class="string">&#x27;androidx.test.ext:junit:1.1.3&#x27;</span></span><br><span class="line">    androidTestImplementation <span class="string">&#x27;androidx.test.espresso:espresso-core:3.4.0&#x27;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>app壳作为“老大”，则需要对所有模块进行依赖。</p>
+<figure class="highlight groovy"><table><tr><td class="code"><pre><span class="line">dependencies &#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">//    implementation &#x27;androidx.core:core-ktx:1.7.0&#x27;</span></span><br><span class="line"><span class="comment">//    implementation &#x27;androidx.appcompat:appcompat:1.3.0&#x27;</span></span><br><span class="line"><span class="comment">//    implementation &#x27;com.google.android.material:material:1.4.0&#x27;</span></span><br><span class="line"><span class="comment">//    implementation &#x27;androidx.constraintlayout:constraintlayout:2.0.4&#x27;</span></span><br><span class="line"><span class="comment">//    implementation &#x27;androidx.navigation:navigation-fragment-ktx:2.3.5&#x27;</span></span><br><span class="line"><span class="comment">//    implementation &#x27;androidx.navigation:navigation-ui-ktx:2.3.5&#x27;</span></span><br><span class="line"></span><br><span class="line">    dependenciesID.each&#123;k,v -&gt; implementation v&#125;</span><br><span class="line"></span><br><span class="line">    testImplementation <span class="string">&#x27;junit:junit:4.13.2&#x27;</span></span><br><span class="line">    androidTestImplementation <span class="string">&#x27;androidx.test.ext:junit:1.1.3&#x27;</span></span><br><span class="line">    androidTestImplementation <span class="string">&#x27;androidx.test.espresso:espresso-core:3.4.0&#x27;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    implementation project(<span class="string">&#x27;:common&#x27;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (isRelease)&#123;</span><br><span class="line">        <span class="comment">//依附于app壳</span></span><br><span class="line">        implementation project(<span class="string">&#x27;:login&#x27;</span>)</span><br><span class="line">        implementation project(<span class="string">&#x27;:home&#x27;</span>)</span><br><span class="line">    &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">//不能依附app壳，因为login home都能独立运行，依附不了，否则报错</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="组件化中子模块交互方式"><a href="#组件化中子模块交互方式" class="headerlink" title="组件化中子模块交互方式"></a>组件化中子模块交互方式</h3><h4 id="类加载的方式"><a href="#类加载的方式" class="headerlink" title="类加载的方式"></a>类加载的方式</h4><figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> targetClass = Class.forName(<span class="string">&quot;com.example.login.LoginActivity&quot;</span>)</span><br><span class="line"><span class="keyword">val</span> intent = Intent(<span class="keyword">this</span>,targetClass).apply &#123;</span><br><span class="line">           putExtra(<span class="string">&quot;name&quot;</span>,<span class="string">&quot;joker&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line">startActivity(intent)</span><br></pre></td></tr></table></figure>
+
+<p>为什么这种方式可以呢？当我们buildAPK的时候可以发现，这工程中创建的所有的类都在一个文件夹下。</p>
+<h4 id="全局Map"><a href="#全局Map" class="headerlink" title="全局Map"></a>全局Map</h4><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20221213182001925.png" alt="image-20221213182001925"></p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="keyword">data</span> <span class="class"><span class="keyword">class</span> <span class="title">PathBean</span></span>(<span class="keyword">var</span> path: String?, <span class="keyword">var</span> clazz: Class&lt;*&gt;?)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="keyword">object</span> RecordPathManager &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> maps: MutableMap&lt;String, MutableList&lt;PathBean&gt;&gt; = HashMap()</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> groupName 组名</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> pathName 路径名</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> clazz 跳转目标class对象</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">addGroupInfo</span><span class="params">(groupName: <span class="type">String</span>, pathName: <span class="type">String</span>?, clazz: <span class="type">Class</span>&lt;*&gt;?)</span></span> &#123;</span><br><span class="line">        <span class="keyword">var</span> list = maps[groupName]</span><br><span class="line">        <span class="keyword">if</span> (<span class="literal">null</span> == list) &#123;</span><br><span class="line">            list = ArrayList()</span><br><span class="line">        &#125;</span><br><span class="line">        list.add(PathBean(pathName, clazz))</span><br><span class="line">        <span class="comment">//存入仓库</span></span><br><span class="line">        maps[groupName] = list</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">startTargetActivity</span><span class="params">(groupName: <span class="type">String</span>, pathName: <span class="type">String</span>)</span></span>: Class&lt;*&gt;? &#123;</span><br><span class="line">        <span class="keyword">val</span> list = maps[groupName]</span><br><span class="line">            ?: <span class="keyword">return</span> <span class="literal">null</span></span><br><span class="line">        <span class="comment">//遍历寻找“PathBean”对象</span></span><br><span class="line">        <span class="keyword">for</span> (pathBean <span class="keyword">in</span> list) &#123;</span><br><span class="line">            <span class="keyword">if</span> (pathName.equals(pathBean.path, ignoreCase = <span class="literal">true</span>)) &#123;</span><br><span class="line">                <span class="keyword">return</span> pathBean.clazz</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后需要在app壳的Application中注册Activity：</p>
+<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">override <span class="keyword">fun</span> on<span class="constructor">Create()</span> &#123;</span><br><span class="line">        super.on<span class="constructor">Create()</span></span><br><span class="line">        <span class="comment">//在注册表中注册Activity</span></span><br><span class="line">        mContext = context</span><br><span class="line">        <span class="module-access"><span class="module"><span class="identifier">RecordPathManager</span>.</span></span>add<span class="constructor">GroupInfo(<span class="string">&quot;app&quot;</span>,<span class="string">&quot;MainActivity&quot;</span>,MainActivity::<span class="params">class</span>.<span class="params">java</span>)</span></span><br><span class="line">        <span class="module-access"><span class="module"><span class="identifier">RecordPathManager</span>.</span></span>add<span class="constructor">GroupInfo(<span class="string">&quot;home&quot;</span>,<span class="string">&quot;HomeActivity&quot;</span>,HomeActivity::<span class="params">class</span>.<span class="params">java</span>)</span></span><br><span class="line">        <span class="module-access"><span class="module"><span class="identifier">RecordPathManager</span>.</span></span>add<span class="constructor">GroupInfo(<span class="string">&quot;login&quot;</span>,<span class="string">&quot;LoginActivity&quot;</span>,LoginActivity::<span class="params">class</span>.<span class="params">java</span>)</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>使用1：</strong></p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> clazz = RecordPathManager.startTargetActivity(<span class="string">&quot;home&quot;</span>,<span class="string">&quot;HomeActivity&quot;</span>)</span><br><span class="line">Intent(<span class="keyword">this</span>,clazz).apply &#123;</span><br><span class="line">      startActivity(<span class="keyword">this</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>使用2：</strong></p>
+<p>也就是添加了携带数据和跳转动画</p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> clazz = RecordPathManager.startTargetActivity(<span class="string">&quot;home&quot;</span>,<span class="string">&quot;HomeActivity&quot;</span>)</span><br><span class="line"><span class="keyword">val</span> intent = Intent(<span class="keyword">this</span>,clazz).apply &#123;</span><br><span class="line">        putExtra(<span class="string">&quot;data&quot;</span>,<span class="string">&quot;kotlin&quot;</span>)</span><br><span class="line">        putExtra(<span class="string">&quot;second_data&quot;</span>,<span class="number">200</span>)</span><br><span class="line">&#125;</span><br><span class="line">binding.moveToHome.setOnClickListener &#123;</span><br><span class="line">        startActivity(intent)</span><br><span class="line">        overridePendingTransition(R.anim.translate_in,R.anim.translate_out)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="ARouter"><a href="#ARouter" class="headerlink" title="ARouter"></a>ARouter</h4><p>使用阿里的开源框架，详情可见：<a href="https://links.jianshu.com/go?to=https://github.com/alibaba/ARouter">https://github.com/alibaba/ARouter</a></p>
+<h3 id="我遇到的一些坑"><a href="#我遇到的一些坑" class="headerlink" title="我遇到的一些坑"></a>我遇到的一些坑</h3><h4 id="运行时产生多个“软件”"><a href="#运行时产生多个“软件”" class="headerlink" title="运行时产生多个“软件”"></a>运行时产生多个“软件”</h4><p>运行后手机桌面怎么有其他模块的图标？</p>
+<p>对各个功能模块的<code>AndroidManifest.xml</code>进行如下操作：</p>
+<p>将我注释的部分注释或删除，开发工具会自动将<code>AndroidManifest.xml</code>合并，一个App只能有一个自启动的Activity。</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=<span class="string">&quot;1.0&quot;</span> encoding=<span class="string">&quot;utf-8&quot;</span>?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">manifest</span> <span class="attr">xmlns:android</span>=<span class="string">&quot;http://schemas.android.com/apk/res/android&quot;</span></span></span><br><span class="line"><span class="tag">    <span class="attr">package</span>=<span class="string">&quot;com.example.home&quot;</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">application</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:allowBackup</span>=<span class="string">&quot;true&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:icon</span>=<span class="string">&quot;@mipmap/ic_launcher&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:label</span>=<span class="string">&quot;@string/app_name&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:roundIcon</span>=<span class="string">&quot;@mipmap/ic_launcher_round&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:supportsRtl</span>=<span class="string">&quot;true&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:theme</span>=<span class="string">&quot;@style/Theme.SkinDemo&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">activity</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:name</span>=<span class="string">&quot;.HomeActivity&quot;</span></span></span><br><span class="line"><span class="tag">            <span class="attr">android:exported</span>=<span class="string">&quot;true&quot;</span>&gt;</span></span><br><span class="line"><span class="comment">&lt;!--            &lt;intent-filter&gt;--&gt;</span></span><br><span class="line"><span class="comment">&lt;!--                &lt;action android:name=&quot;android.intent.action.MAIN&quot; /&gt;--&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!--                &lt;category android:name=&quot;android.intent.category.LAUNCHER&quot; /&gt;--&gt;</span></span><br><span class="line"><span class="comment">&lt;!--            &lt;/intent-filter&gt;--&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">application</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="跳转后还是在原来的activity中"><a href="#跳转后还是在原来的activity中" class="headerlink" title="跳转后还是在原来的activity中"></a>跳转后还是在原来的activity中</h4><p>将不同模块的activity改名即可，因为创建新模块时系统默认是main_activity</p>
+<h4 id="关于Application"><a href="#关于Application" class="headerlink" title="关于Application"></a>关于Application</h4><p>我在前面的开发技巧中提过在Application中初始化全局的context，但是在组件化中却出了点问题，最终只有一个Application会生效，但是我们又不能让app壳被其他模块依赖，否则将出现循环依赖的问题。嗯？！公共依赖库中的代码不是其他模块都可以访问嘛，可以直接只创建公共基础库的Application吗？可以，但是如果使用前面的Map方式跳转怎么办，公共基础库没有依赖其他模块，肯定注册不了啊。那么怎么办，可以让公共依赖库创建一个BaseApplication，创建context，然后让app的Application继承BaseApplication，再初始化context。</p>
+<p>BaseApplication</p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="keyword">open</span> <span class="class"><span class="keyword">class</span> <span class="title">BaseApplication</span>: <span class="type">Application</span></span>() &#123;</span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span>&#123;</span><br><span class="line">        <span class="meta">@SuppressLint(<span class="string">&quot;StaticFieldLeak&quot;</span>)</span></span><br><span class="line">        <span class="keyword">lateinit</span> <span class="keyword">var</span> context: Context</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate()</span><br><span class="line">        context = applicationContext</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>app的Application</p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SkinApplication</span>: <span class="type">BaseApplication</span></span>() &#123;</span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span>&#123;</span><br><span class="line">        <span class="meta">@SuppressLint(<span class="string">&quot;StaticFieldLeak&quot;</span>)</span></span><br><span class="line">        <span class="keyword">lateinit</span> <span class="keyword">var</span> mContext: Context</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate()</span><br><span class="line">        <span class="comment">//在注册表中注册Activity</span></span><br><span class="line">        mContext = context</span><br><span class="line">        RecordPathManager.addGroupInfo(<span class="string">&quot;app&quot;</span>,<span class="string">&quot;MainActivity&quot;</span>,MainActivity::<span class="keyword">class</span>.java)</span><br><span class="line">        RecordPathManager.addGroupInfo(<span class="string">&quot;home&quot;</span>,<span class="string">&quot;HomeActivity&quot;</span>,HomeActivity::<span class="keyword">class</span>.java)</span><br><span class="line">        RecordPathManager.addGroupInfo(<span class="string">&quot;login&quot;</span>,<span class="string">&quot;LoginActivity&quot;</span>,LoginActivity::<span class="keyword">class</span>.java)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>小提醒：别忘了在<code>AndroidManifest.xml</code>中注册app的Application。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io">搬码人</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io/2022/12/12/%E7%BB%84%E4%BB%B6%E5%8C%96%E5%BC%80%E5%8F%91/">https://gun-ctrl.github.io/2022/12/12/%E7%BB%84%E4%BB%B6%E5%8C%96%E5%BC%80%E5%8F%91/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://gun-ctrl.github.io" target="_blank">搬码人’s Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android%E7%BB%84%E4%BB%B6%E5%8C%96/">Android组件化</a></div><div class="post_share"><div class="social-share" data-image="/img/pansen.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechatpay.jpg" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/img/alipay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/alipay.jpg" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-full"><a href="/2022/12/04/%E5%BC%80%E5%8F%91%E6%8A%80%E5%B7%A7/"><img class="prev-cover" src="/img/jie.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">开发技巧（一）</div></div></a></div></nav><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">搬码人</div><div class="author-info__description">我挥舞着键盘和本子，发誓要把世界写个明明白白。</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">31</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">11</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><a id="card-info-btn" href="https://github.com/gun-ctrl"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="tencent://AddContact/?fromId=50&amp;fromSubId=1&amp;subcmd=all&amp;uin=1578684787" target="_blank" title="QQ"><i class="fab fa-qq"></i></a><a class="social-icon" href="mailto:pengchuan4314@163.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到搬码人的世界</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E7%BB%84%E4%BB%B6%E5%8C%96%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">什么是组件化？</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BB%84%E4%BB%B6%E5%8C%96%E4%BC%98%E5%8A%BF"><span class="toc-number">1.1.</span> <span class="toc-text">组件化优势</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9B%86%E6%88%90%E7%8E%AF%E5%A2%83-x2F-%E7%BB%84%E4%BB%B6%E7%8E%AF%E5%A2%83%E9%83%A8%E7%BD%B2%E9%85%8D%E7%BD%AE"><span class="toc-number">2.</span> <span class="toc-text">集成环境&#x2F;组件环境部署配置</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%96%B0%E6%A8%A1%E5%9D%97"><span class="toc-number">2.1.</span> <span class="toc-text">创建新模块</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E5%85%AC%E5%85%B1%E5%9F%BA%E7%A1%80%E5%BA%93"><span class="toc-number">2.2.</span> <span class="toc-text">创建公共基础库</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E9%83%A8%E7%BD%B2"><span class="toc-number">2.3.</span> <span class="toc-text">环境部署</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%84%E4%BB%B6%E5%8C%96%E4%B8%AD%E5%AD%90%E6%A8%A1%E5%9D%97%E4%BA%A4%E4%BA%92%E6%96%B9%E5%BC%8F"><span class="toc-number">3.</span> <span class="toc-text">组件化中子模块交互方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%B1%BB%E5%8A%A0%E8%BD%BD%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="toc-number">3.1.</span> <span class="toc-text">类加载的方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%A8%E5%B1%80Map"><span class="toc-number">3.2.</span> <span class="toc-text">全局Map</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ARouter"><span class="toc-number">3.3.</span> <span class="toc-text">ARouter</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%88%91%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9B%E5%9D%91"><span class="toc-number">4.</span> <span class="toc-text">我遇到的一些坑</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E4%BA%A7%E7%94%9F%E5%A4%9A%E4%B8%AA%E2%80%9C%E8%BD%AF%E4%BB%B6%E2%80%9D"><span class="toc-number">4.1.</span> <span class="toc-text">运行时产生多个“软件”</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%B7%B3%E8%BD%AC%E5%90%8E%E8%BF%98%E6%98%AF%E5%9C%A8%E5%8E%9F%E6%9D%A5%E7%9A%84activity%E4%B8%AD"><span class="toc-number">4.2.</span> <span class="toc-text">跳转后还是在原来的activity中</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B3%E4%BA%8EApplication"><span class="toc-number">4.3.</span> <span class="toc-text">关于Application</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/12/12/%E7%BB%84%E4%BB%B6%E5%8C%96%E5%BC%80%E5%8F%91/" title="组件化开发"><img src="/img/pansen.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="组件化开发"/></a><div class="content"><a class="title" href="/2022/12/12/%E7%BB%84%E4%BB%B6%E5%8C%96%E5%BC%80%E5%8F%91/" title="组件化开发">组件化开发</a><time datetime="2022-12-12T09:38:18.596Z" title="发表于 2022-12-12 17:38:18">2022-12-12</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/12/04/%E5%BC%80%E5%8F%91%E6%8A%80%E5%B7%A7/" title="开发技巧（一）"><img src="/img/jie.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="开发技巧（一）"/></a><div class="content"><a class="title" href="/2022/12/04/%E5%BC%80%E5%8F%91%E6%8A%80%E5%B7%A7/" title="开发技巧（一）">开发技巧（一）</a><time datetime="2022-12-04T03:04:33.638Z" title="发表于 2022-12-04 11:04:33">2022-12-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/10/31/%E9%80%9A%E7%9F%A5%E7%9A%84%E5%88%9B%E5%BB%BA/" title="通知的创建"><img src="/img/jie.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="通知的创建"/></a><div class="content"><a class="title" href="/2022/10/31/%E9%80%9A%E7%9F%A5%E7%9A%84%E5%88%9B%E5%BB%BA/" title="通知的创建">通知的创建</a><time datetime="2022-10-31T08:02:28.122Z" title="发表于 2022-10-31 16:02:28">2022-10-31</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/10/30/APP%E5%8D%A1%E9%A1%BF%E5%92%8C%E5%B8%83%E5%B1%80%E4%BC%98%E5%8C%96/" title="APP卡顿与布局优化"><img src="/img/liqing.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="APP卡顿与布局优化"/></a><div class="content"><a class="title" href="/2022/10/30/APP%E5%8D%A1%E9%A1%BF%E5%92%8C%E5%B8%83%E5%B1%80%E4%BC%98%E5%8C%96/" title="APP卡顿与布局优化">APP卡顿与布局优化</a><time datetime="2022-10-30T07:07:05.928Z" title="发表于 2022-10-30 15:07:05">2022-10-30</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/10/30/Android%20APP%E5%90%AF%E5%8A%A8%E4%BC%98%E5%8C%96/" title="Android APP启动优化"><img src="/img/bizhi1.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Android APP启动优化"/></a><div class="content"><a class="title" href="/2022/10/30/Android%20APP%E5%90%AF%E5%8A%A8%E4%BC%98%E5%8C%96/" title="Android APP启动优化">Android APP启动优化</a><time datetime="2022-10-30T02:52:44.774Z" title="发表于 2022-10-30 10:52:44">2022-10-30</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('/img/pansen.png')"><div id="footer-wrap"><div class="copyright">&copy;2022 By 搬码人</div><div class="framework-info"><span>框架 </span><a href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="聊天"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div></div></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (true){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><script>var preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',preloader.endLoading())</script><div class="js-pjax"><script>function loadValine () {
+  function initValine () {
+    const valine = new Valine(Object.assign({
+      el: '#vcomment',
+      appId: '',
+      appKey: '',
+      avatar: 'monsterid',
+      serverURLs: '',
+      emojiMaps: {"tv_doge":"6ea59c827c414b4a2955fe79e0f6fd3dcd515e24.png","tv_亲亲":"a8111ad55953ef5e3be3327ef94eb4a39d535d06.png","tv_偷笑":"bb690d4107620f1c15cff29509db529a73aee261.png","tv_再见":"180129b8ea851044ce71caf55cc8ce44bd4a4fc8.png","tv_冷漠":"b9cbc755c2b3ee43be07ca13de84e5b699a3f101.png","tv_发怒":"34ba3cd204d5b05fec70ce08fa9fa0dd612409ff.png","tv_发财":"34db290afd2963723c6eb3c4560667db7253a21a.png","tv_可爱":"9e55fd9b500ac4b96613539f1ce2f9499e314ed9.png","tv_吐血":"09dd16a7aa59b77baa1155d47484409624470c77.png","tv_呆":"fe1179ebaa191569b0d31cecafe7a2cd1c951c9d.png","tv_呕吐":"9f996894a39e282ccf5e66856af49483f81870f3.png","tv_困":"241ee304e44c0af029adceb294399391e4737ef2.png","tv_坏笑":"1f0b87f731a671079842116e0991c91c2c88645a.png","tv_大佬":"093c1e2c490161aca397afc45573c877cdead616.png","tv_大哭":"23269aeb35f99daee28dda129676f6e9ea87934f.png","tv_委屈":"d04dba7b5465779e9755d2ab6f0a897b9b33bb77.png","tv_害羞":"a37683fb5642fa3ddfc7f4e5525fd13e42a2bdb1.png","tv_尴尬":"7cfa62dafc59798a3d3fb262d421eeeff166cfa4.png","tv_微笑":"70dc5c7b56f93eb61bddba11e28fb1d18fddcd4c.png","tv_思考":"90cf159733e558137ed20aa04d09964436f618a1.png","tv_惊吓":"0d15c7e2ee58e935adc6a7193ee042388adc22af.png"},
+      path: window.location.pathname,
+      visitor: false
+    }, null))
+  }
+
+  if (typeof Valine === 'function') initValine() 
+  else getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js').then(initValine)
+}
+
+if ('Valine' === 'Valine' || !true) {
+  if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+  else setTimeout(loadValine, 0)
+} else {
+  function loadOtherComment () {
+    loadValine()
+  }
+}</script></div><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="true" data-click="true"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
