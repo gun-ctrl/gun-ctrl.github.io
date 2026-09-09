@@ -1,0 +1,309 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>开发技巧（一） | 搬码人’s Blog</title><meta name="author" content="搬码人"><meta name="copyright" content="搬码人"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 本章，小编来介绍一些省时省力的开发技巧，都是从前辈那学来的。平时做些小demo还感觉不到这些技巧的实用性，当遇到大项目时就感觉真香。  全局获取Context的技巧 我们在Android开发中难免会用到context，到底传哪个context呢？在Activity这样的类中可以传this..."><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "开发技巧（一）",
+  "url": "https://gun-ctrl.github.io/2026/09/09/%E5%BC%80%E5%8F%91%E6%8A%80%E5%B7%A7/",
+  "image": "https://gun-ctrl.github.io/img/kasa.png",
+  "datePublished": "2026-09-09T08:35:21.590Z",
+  "dateModified": "2026-09-09T08:35:21.590Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "搬码人",
+      "url": "https://gun-ctrl.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://gun-ctrl.github.io/2026/09/09/%E5%BC%80%E5%8F%91%E6%8A%80%E5%B7%A7/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":20,"languages":{"author":"作者: 搬码人","link":"链接: ","source":"来源: 搬码人’s Blog","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'null',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '开发技巧（一）',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="搬码人’s Blog" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">32</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/kasa.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">搬码人’s Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">开发技巧（一）</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">开发技巧（一）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-09-09T08:35:21.590Z" title="发表于 2026-09-09 16:35:21">2026-09-09</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-09T08:35:21.590Z" title="更新于 2026-09-09 16:35:21">2026-09-09</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E9%9A%8F%E7%AC%94/">Android随笔</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">2.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>7分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;It has been&quot;,&quot;messageNext&quot;:&quot;days since the last update, the content of the article may be outdated.&quot;,&quot;postUpdate&quot;:&quot;2026-09-09 16:35:21&quot;}" hidden></div><h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><blockquote>
+<p>本章，小编来介绍一些省时省力的开发技巧，都是从前辈那学来的。平时做些小demo还感觉不到这些技巧的实用性，当遇到大项目时就感觉真香。</p>
+</blockquote>
+<h3 id="全局获取Context的技巧"><a href="#全局获取Context的技巧" class="headerlink" title="全局获取Context的技巧"></a>全局获取Context的技巧</h3><blockquote>
+<p>我们在Android开发中难免会用到context，到底传哪个context呢？在Activity这样的类中可以传this（Activity自己就是个context），在自己创建的类中通过外部传入context，那这个context是谁？是Activity？最好不要这样，除非是涉及到跳转（这种情况只能用Activity），为什么呢？先看代码技巧，我再娓娓道来。</p>
+</blockquote>
+<p>Android提供了一个Application类，每当程序启动的时候，系统就会自动将这个类进行初始化。而我们可以定制一个自己的Application类，以便于管理程序内一些全局的状态信息，比如全局Context。</p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SkinApplication</span>: <span class="type">Application</span></span>() &#123;</span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span>&#123;</span><br><span class="line">        <span class="meta">@SuppressLint(<span class="string">&quot;StaticFieldLeak&quot;</span>)</span></span><br><span class="line">        <span class="keyword">lateinit</span> <span class="keyword">var</span> context:Context</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate()</span><br><span class="line">        context = applicationContext</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，将context设置成静态变量很容易导致内存泄漏，所以这是一种有风险的做法，因此Android Studio会给出警告。</p>
+<p>但是！由于这里获取的不是Activity或Service中的context，而是Application中的context，它在全局只会存在一份实例，并且在整个应用程序的声明周期内都不会回收，因此是不存在内存泄漏风险的。所以我上面加了个注解<code>@SuppressLint(&quot;StaticFieldLeak&quot;)</code>让Android Studio忽略上述的警告提示。前面提到最好不要使用Activity的context，现在知道为什么了吧！</p>
+<p>当然，别忘了在<code>AndroidManifest.xml</code>中注册创建的Application。</p>
+<h3 id="定制日志工具"><a href="#定制日志工具" class="headerlink" title="定制日志工具"></a>定制日志工具</h3><blockquote>
+<p>Android Studio自带的日志工具非常好用，但也存在一些缺点。</p>
+<p>我们在做大型项目时肯定会用到不少打印信息，但是当我们完成项目后，之前用于调试的那些日志，在项目上线后仍然会照常打印，这样不仅会降低程序的运行效率，还有可能将一些机密的数据泄漏出去。怎么办？</p>
+</blockquote>
+<p>我们就需要定制日志工具，使我们能够自由控制日志的打印。其实很简单，如下：</p>
+<p>创建一个LogUtil单例类</p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> *<span class="doctag">@Description</span></span></span><br><span class="line"><span class="comment"> *<span class="doctag">@Author</span> PC</span></span><br><span class="line"><span class="comment"> *<span class="doctag">@QQ</span> 1578684787</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">object</span> LogUtil &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> VERBOSE = <span class="number">1</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> DEBUG = <span class="number">2</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> INFO = <span class="number">3</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> WARN = <span class="number">4</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> ERROR = <span class="number">5</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> level = VERBOSE</span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">v</span><span class="params">(tag:<span class="type">String</span>,msg:<span class="type">String</span>)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (level &lt;= VERBOSE)&#123;</span><br><span class="line">            Log.v(tag,msg)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">d</span><span class="params">(tag: <span class="type">String</span>,msg: <span class="type">String</span>)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (level &lt;= DEBUG)&#123;</span><br><span class="line">            Log.d(tag, msg)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">i</span><span class="params">(tag: <span class="type">String</span>,msg: <span class="type">String</span>)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (level &lt;= DEBUG)&#123;</span><br><span class="line">            Log.i(tag, msg)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">w</span><span class="params">(tag: <span class="type">String</span>,msg: <span class="type">String</span>)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (level &lt;= DEBUG)&#123;</span><br><span class="line">            Log.w(tag, msg)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">e</span><span class="params">(tag: <span class="type">String</span>,msg: <span class="type">String</span>)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (level &lt;= DEBUG)&#123;</span><br><span class="line">            Log.e(tag, msg)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们只需要通过修改level变量的值，就可以自由地控制日志的打印行为。比如让level等于VERBOSE就可以把所有的日志都打印出来，让level等于ERROR就可以只打印程序的错误日志。</p>
+<p>使用这种方法之后，刚才所说的那个问题就不复存在了，你只需要在开发阶段将level指定成VERBOSE，当项目正式上线的时候将level指定成ERROE就可以了。</p>
+<h3 id="使用Intent传递对象"><a href="#使用Intent传递对象" class="headerlink" title="使用Intent传递对象"></a>使用Intent传递对象</h3><blockquote>
+<p>Intent 的用法相信大家都很熟悉，我们可以借助它来启动Activity、Service、发送广播等。在进行上述操作的时候，我们还可以在Intent中添加一些附加数据，以达到传值的效果，比如：</p>
+</blockquote>
+<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> intent = <span class="constructor">Intent(<span class="params">this</span>,SecondActivity::<span class="params">class</span>.<span class="params">java</span>)</span>.apply &#123; </span><br><span class="line">            put<span class="constructor">Extra(<span class="string">&quot;data&quot;</span>,<span class="string">&quot;hello&quot;</span>)</span></span><br><span class="line">            put<span class="constructor">Extra(<span class="string">&quot;second_data&quot;</span>,<span class="string">&quot;kotlin&quot;</span>)</span></span><br><span class="line">        &#125;</span><br><span class="line">        start<span class="constructor">Activity(<span class="params">intent</span>)</span></span><br></pre></td></tr></table></figure>
+
+<p>SecondActivity中接收数据</p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line">intent.getStringExtra(<span class="string">&quot;data&quot;</span>)</span><br><span class="line">intent.getIntExtra(<span class="string">&quot;second_data&quot;</span>,<span class="number">0</span>)</span><br></pre></td></tr></table></figure>
+
+<p>但是，不知道你发现没有，putExtra方法支持的数据类型是有限的，虽然常用的一些数据类型是受支持的，但是当你想去传递一些自定义对象的时候，就会发现无从下手。下面我们就来看看如何下手。</p>
+<h4 id="Serializable方式"><a href="#Serializable方式" class="headerlink" title="Serializable方式"></a>Serializable方式</h4><blockquote>
+<p>使用Intent来传递对象通常有两种实现方式：Serializable和Parcelable。</p>
+<p>Serializable是序列化的意思，表示将一个对象转换成可存储或可传输的状态。序列化后的对象可以在网络上进行传输，也可以存储到本地。至于序列化的方法，非常简单！只需要让一个类去实现Serializable这个接口就可以了。</p>
+</blockquote>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Person</span> :<span class="type">Serializable&#123;</span></span></span><br><span class="line">    <span class="keyword">var</span> id = <span class="number">0</span></span><br><span class="line">    <span class="keyword">var</span> name = <span class="string">&quot;&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"> <span class="keyword">val</span> student = Student().apply &#123;</span><br><span class="line">            id = <span class="number">1</span></span><br><span class="line">            name = <span class="string">&quot;joker&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line"><span class="keyword">val</span> intent = Intent(<span class="keyword">this</span>,SecondActivity::<span class="keyword">class</span>.java).apply &#123;</span><br><span class="line">            putExtra(<span class="string">&quot;data&quot;</span>,<span class="string">&quot;kotlin&quot;</span>)</span><br><span class="line">            putExtra(<span class="string">&quot;second_data&quot;</span>,<span class="number">200</span>)</span><br><span class="line">            putExtra(<span class="string">&quot;student_1&quot;</span>,student)</span><br><span class="line">        &#125;</span><br><span class="line">startActivity(intent)</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，这里我们创建了一个Student的实例，并将它直接传入了Intent的<code>putExtra()</code>方法中 。由于Student类实现了<code>Serializable</code>接口，所以才可以这样写。</p>
+<p>SecondActivity中接收数据</p>
+<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> student = intent.get<span class="constructor">SerializableExtra(<span class="string">&quot;student_1&quot;</span>)</span> <span class="keyword">as</span> Student</span><br></pre></td></tr></table></figure>
+
+<p>这里调用了Intent的<code>getSerializableExtra()</code>方法来获取通过参数传递过来的序列化对象，接着再将它向下转型成Student对象，这样我们就成功实现了使用Intent传递对象的功能。</p>
+<blockquote>
+<p>需要注意的是，这种传递对象的工作原理是将一个对象序列化成可存储或可传输的状态，传递给另外一个Activity后再将其反序列化成<strong>一个新的对象</strong>。<strong>虽然这两个对象中存储的数据完全一致，但是它们实际上是不同的对象。</strong></p>
+</blockquote>
+<h4 id="Parcelable方式"><a href="#Parcelable方式" class="headerlink" title="Parcelable方式"></a>Parcelable方式</h4><blockquote>
+<p>除了Serializable之外，使用Percelable也可以实现相同的效果，不过不同于将对象进行序列化，Parcelable方式的实现原理是<strong>将一个完成的对象进行分解，而分解后的每一部分都是Intent所支持的数据类型</strong>，这样就能实现传递对象的功能了。</p>
+<p>接下来我们来看一下Parcelable的实现方式：</p>
+</blockquote>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> *<span class="doctag">@Description</span></span></span><br><span class="line"><span class="comment"> *<span class="doctag">@Author</span> PC</span></span><br><span class="line"><span class="comment"> *<span class="doctag">@QQ</span> 1578684787</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Student</span> :<span class="type">Parcelable&#123;</span></span></span><br><span class="line">    <span class="keyword">var</span> id = <span class="number">0</span></span><br><span class="line">    <span class="keyword">var</span> name = <span class="string">&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">writeToParcel</span><span class="params">(parcel: <span class="type">Parcel</span>, flags: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">        parcel.writeInt(id)<span class="comment">//写出name</span></span><br><span class="line">        parcel.writeString(name)<span class="comment">//写出age</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">describeContents</span><span class="params">()</span></span>: <span class="built_in">Int</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span> CREATOR : Parcelable.Creator&lt;Student&gt; &#123;</span><br><span class="line">        <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">createFromParcel</span><span class="params">(parcel: <span class="type">Parcel</span>)</span></span>: Student &#123;</span><br><span class="line">            <span class="keyword">val</span> student = Student()</span><br><span class="line">            student.id = parcel.readInt()<span class="comment">//读取id</span></span><br><span class="line">            student.name = parcel.readString()?:<span class="string">&quot;&quot;</span><span class="comment">//读取name</span></span><br><span class="line">            <span class="keyword">return</span> student</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">newArray</span><span class="params">(size: <span class="type">Int</span>)</span></span>: Array&lt;Student?&gt; &#123;</span><br><span class="line">            <span class="keyword">return</span> arrayOfNulls(size)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Parcelable的实现方式要稍微复杂一些。可以看到，首先我们让Student类实现了Parcelable接口，这样就必须重写<code>describeContents()</code>和<code>writeToParcel()</code>方法。其中<code>describeContents()</code>方法直接返回0就可以了，而在<code>writeToParcel()</code>方法中，我们需要调用Parcel的<code>writeXxx()</code>方法，将Student类中的字段一一写出。注意，字符串型数据就调用writeString()方法，整型数据就调用<code>writeInt()</code>方法，以此类推。</p>
+<p>除此之外，我们还必须在Student类中提供一个名为CREATOR的匿名类实现。这里创建了<code>Parcelable.Creator</code>接口的一个实现。并将泛型指定为Student。接着需要重写<code>createFromParcel()</code>和<code>newArray()</code>这两个方法，在<code>createFromParcel()</code>方法中，我们要创建一个Student对象进行返回，并读取刚才写出的id和name字段。其中id和name都是调用Parcel的<code>readXxx()</code>方法读取到的，注意这里读取的顺序一定要和刚才写出的顺序完全相同。而<code>newArray()</code>方法中的实现就简单多了，只需要调用<code>arrayOfNulls()</code>方法，并使用参数中传入的size作为数组大小，创建一个空的Student数组即可。</p>
+<p>发送数据的方式相同，我们来看接收数据：</p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> student = intent.getParcelableExtra&lt;Student&gt;(<span class="string">&quot;student_1&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>有没有觉得上面这种方式太复杂了，这不像kotlin开发Android的风格。为此Kotlin给我们提供了另外一种更加简便的用法，但前提是传递的所有数据都必须封装在对象的主构造函数中才行。</p>
+</blockquote>
+<p>修改一下Student类的代码：</p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Parcelize</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Student</span></span>(<span class="keyword">var</span> id:<span class="built_in">Int</span>,<span class="keyword">var</span> name:String) : Parcelable </span><br></pre></td></tr></table></figure>
+
+<p>就是这么简单！将id和name这两个字段移动到主构造函数中，然后给Student类添加一个<code>@Parcelize</code>注解即可，是不是比之前的用法简——单——多——了——。</p>
+<p>这样我们就把使用Intent传递对象的两种实现方式都学习完了。对比一下，Serializable方式更简单，但由于会把整个对象进行序列化，因此效率会比Parcelable方式低一些（其中还涉及反射产生很多临时变量），所以在通常情况下，还是更加推荐使用Parcelable的方式来实现Intent传递对象的功能。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io">搬码人</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io/2026/09/09/%E5%BC%80%E5%8F%91%E6%8A%80%E5%B7%A7/">https://gun-ctrl.github.io/2026/09/09/%E5%BC%80%E5%8F%91%E6%8A%80%E5%B7%A7/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://gun-ctrl.github.io" target="_blank">搬码人’s Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%BC%80%E5%8F%91%E6%8A%80%E5%B7%A7/">开发技巧</a></div><div class="post-share"><div class="social-share" data-image="/img/kasa.png" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechatpay.jpg" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/img/alipay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/alipay.jpg" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/09/09/%E6%8B%AC%E5%8F%B7%E9%97%AE%E9%A2%98/" title="括号问题"><img class="cover" src="/img/jie.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">括号问题</div></div><div class="info-2"><div class="info-item-1">问题描述给出n对括号，请编写一个函数来生成所有的由n对括号组成的合法组合。 例如，给出n&#x3D;3，解集为： “((()))”, “(()())”, “(())()”, “()()()”, “()(())” 数据范围：0&lt;&#x3D;n&lt;&#x3D;10 要求：空间复杂度O(n)，时间复杂度O(2^n) 示例示例1 输入：1 返回值：[“()”]  示例2 输入：2 返回值：[“(())”，”()()”]  思路相当于一共n个左括号和n个右括号，可以给我们使用，我们需要依次组装这些括号。每当我们使用一个左括号之后，就剩下n-1个左括号和n个右括号给我们使用，结果拼在使用的左括号之后就行了，因此后者就是一个子问题，可以使用递归：  终止条件：左右括号都使用了n个，将结果加入数组。 返回值：每一级向上一级返回后续组装后的字符串，即子问题中搭配出来的括号序列。 本级任务：每一级就是保证左括号还有剩余的情况下，使用一次左括号进入子问题，或者右括号还有剩余且右括号使用次数少于左括号的情况下使用一次右括号进入子问题。 注意：我们需要保证左括号出现的次数比右括号多时我们再使用右...</div></div></div></a><a class="pagination-related" href="/2026/09/09/%E6%8C%89Z%E5%AD%97%E5%BD%A2%E9%A1%BA%E5%BA%8F%E6%89%93%E5%8D%B0%E4%BA%8C%E5%8F%89%E6%A0%91/" title="按Z字形顺序打印二叉树"><img class="cover" src="/img/pansen.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">按Z字形顺序打印二叉树</div></div><div class="info-2"><div class="info-item-1">问题描述给定一个二叉树，返回该二叉树的之字形层序遍历，（第一层从左向右，下一层从右向左，一直这样交替）数据范围：0≤n≤1500,树上每个节点的val满足∣val∣≤1500要求：空间复杂度：O(n)，时间复杂度：O(n) 示例 示例1 输入：{1,2,3,#,#,4,5}输出： [[1],[3,2],[4,5]]说明：如题面解释，第一层是根节点，从左到右打印结果，第二层从右到左，第三层从左到右。  思路这其实就是一个升级版的层序遍历.观察其特点,无非就是奇数层和偶数层的输出顺序不一样. 这样就有了初步的解题思路,设置标识符flag(可以为整数型,也可以为boolean类型,整数类型无非就是对奇偶数的判断).其余的思路就是层序遍历的思路,在每遍历新的一层之前,改变flag的值!flag(这里以boolean类型为例),然后就是利用Collections.reverse(list)对链表进行翻转.详情可看代码  这里,小编再提一下我初次遇到这道题的思路,前面的几乎一样,就是在实现链表反转这里,小编不熟悉Java库,没想到还有Colection.reverse这个方法可以用.所以,小...</div></div></div></a></nav><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">搬码人</div><div class="author-info-description">我挥舞着键盘和本子，发誓要把世界写个明明白白。</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">32</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><a id="card-info-btn" href="https://github.com/gun-ctrl"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="tencent://AddContact/?fromId=50&amp;fromSubId=1&amp;subcmd=all&amp;uin=1578684787" target="_blank" title="QQ"><i class="fab fa-qq"></i></a><a class="social-icon" href="mailto:pengchuan4314@163.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到搬码人的世界</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%A8%E5%B1%80%E8%8E%B7%E5%8F%96Context%E7%9A%84%E6%8A%80%E5%B7%A7"><span class="toc-number">2.</span> <span class="toc-text">全局获取Context的技巧</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E5%88%B6%E6%97%A5%E5%BF%97%E5%B7%A5%E5%85%B7"><span class="toc-number">3.</span> <span class="toc-text">定制日志工具</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8Intent%E4%BC%A0%E9%80%92%E5%AF%B9%E8%B1%A1"><span class="toc-number">4.</span> <span class="toc-text">使用Intent传递对象</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Serializable%E6%96%B9%E5%BC%8F"><span class="toc-number">4.1.</span> <span class="toc-text">Serializable方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Parcelable%E6%96%B9%E5%BC%8F"><span class="toc-number">4.2.</span> <span class="toc-text">Parcelable方式</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" title="Okhttp框架介绍"><img src="/img/qinggangying.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Okhttp框架介绍"/></a><div class="content"><a class="title" href="/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" title="Okhttp框架介绍">Okhttp框架介绍</a><time datetime="2026-09-09T09:52:24.492Z" title="发表于 2026-09-09 17:52:24">2026-09-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89LayoutManager%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E6%BB%91%E5%8A%A8/" title="自定义LayoutManager实现卡片滑动"><img src="/img/timo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="自定义LayoutManager实现卡片滑动"/></a><div class="content"><a class="title" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89LayoutManager%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E6%BB%91%E5%8A%A8/" title="自定义LayoutManager实现卡片滑动">自定义LayoutManager实现卡片滑动</a><time datetime="2026-09-09T08:35:21.592Z" title="发表于 2026-09-09 16:35:21">2026-09-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E4%B8%8E%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%9C%BA%E5%88%B6/" title="阻塞队列与线程池机制"><img src="/img/pansen.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="阻塞队列与线程池机制"/></a><div class="content"><a class="title" href="/2026/09/09/%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E4%B8%8E%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%9C%BA%E5%88%B6/" title="阻塞队列与线程池机制">阻塞队列与线程池机制</a><time datetime="2026-09-09T08:35:21.592Z" title="发表于 2026-09-09 16:35:21">2026-09-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/%E9%80%9A%E7%9F%A5%E7%9A%84%E5%88%9B%E5%BB%BA/" title="通知的创建"><img src="/img/kasa.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="通知的创建"/></a><div class="content"><a class="title" href="/2026/09/09/%E9%80%9A%E7%9F%A5%E7%9A%84%E5%88%9B%E5%BB%BA/" title="通知的创建">通知的创建</a><time datetime="2026-09-09T08:35:21.592Z" title="发表于 2026-09-09 16:35:21">2026-09-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89PhotoView%E6%89%8B%E5%8A%BF%E5%A4%84%E7%90%86/" title="自定义PhotoView手势处理"><img src="/img/bizhi1.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="自定义PhotoView手势处理"/></a><div class="content"><a class="title" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89PhotoView%E6%89%8B%E5%8A%BF%E5%A4%84%E7%90%86/" title="自定义PhotoView手势处理">自定义PhotoView手势处理</a><time datetime="2026-09-09T08:35:21.592Z" title="发表于 2026-09-09 16:35:21">2026-09-09</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2022 - 2026 By 搬码人</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const initValine = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyValine = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const valineConfig = {
+      el: '#vcomment',
+      appId: '',
+      appKey: '',
+      avatar: 'monsterid',
+      serverURLs: '',
+      emojiMaps: {"tv_doge":"6ea59c827c414b4a2955fe79e0f6fd3dcd515e24.png","tv_亲亲":"a8111ad55953ef5e3be3327ef94eb4a39d535d06.png","tv_偷笑":"bb690d4107620f1c15cff29509db529a73aee261.png","tv_再见":"180129b8ea851044ce71caf55cc8ce44bd4a4fc8.png","tv_冷漠":"b9cbc755c2b3ee43be07ca13de84e5b699a3f101.png","tv_发怒":"34ba3cd204d5b05fec70ce08fa9fa0dd612409ff.png","tv_发财":"34db290afd2963723c6eb3c4560667db7253a21a.png","tv_可爱":"9e55fd9b500ac4b96613539f1ce2f9499e314ed9.png","tv_吐血":"09dd16a7aa59b77baa1155d47484409624470c77.png","tv_呆":"fe1179ebaa191569b0d31cecafe7a2cd1c951c9d.png","tv_呕吐":"9f996894a39e282ccf5e66856af49483f81870f3.png","tv_困":"241ee304e44c0af029adceb294399391e4737ef2.png","tv_坏笑":"1f0b87f731a671079842116e0991c91c2c88645a.png","tv_大佬":"093c1e2c490161aca397afc45573c877cdead616.png","tv_大哭":"23269aeb35f99daee28dda129676f6e9ea87934f.png","tv_委屈":"d04dba7b5465779e9755d2ab6f0a897b9b33bb77.png","tv_害羞":"a37683fb5642fa3ddfc7f4e5525fd13e42a2bdb1.png","tv_尴尬":"7cfa62dafc59798a3d3fb262d421eeeff166cfa4.png","tv_微笑":"70dc5c7b56f93eb61bddba11e28fb1d18fddcd4c.png","tv_思考":"90cf159733e558137ed20aa04d09964436f618a1.png","tv_惊吓":"0d15c7e2ee58e935adc6a7193ee042388adc22af.png"},
+      visitor: false,
+      ...option,
+      path: isShuoshuo ? path : (option && option.path) || window.location.pathname
+    }
+
+    new Valine(valineConfig)
+  }
+
+  const loadValine = async (el, path) => {
+    if (typeof Valine === 'function') {
+      initValine(el, path)
+    } else {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js')
+      initValine(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Valine' === 'Valine'
+      ? window.shuoshuoComment = { loadComment: loadValine }
+      : window.loadOtherComment = loadValine
+    return
+  }
+
+  if ('Valine' === 'Valine' || !true) {
+    if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+    else setTimeout(loadValine, 0)
+  } else {
+    window.loadOtherComment = loadValine
+  }
+})()</script></div><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="true" data-click="true"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

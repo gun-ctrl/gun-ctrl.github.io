@@ -1,0 +1,425 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Okhttp框架介绍 | 搬码人’s Blog</title><meta name="author" content="搬码人"><meta name="copyright" content="搬码人"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content=" OkHttp 是由 Square 公司开源的一个高性能 HTTP 客户端，是目前 Java 和 Android 生态中最主流、事实上的网络请求标准库。Android 官方从 Android 4.4 起底层已将 HttpURLConnection 替换为 OkHttp 实现，而当下流行的 Re..."><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Okhttp框架介绍",
+  "url": "https://gun-ctrl.github.io/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/",
+  "image": "https://gun-ctrl.github.io/img/qinggangying.png",
+  "datePublished": "2026-09-09T09:52:24.492Z",
+  "dateModified": "2026-09-09T10:02:33.409Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "搬码人",
+      "url": "https://gun-ctrl.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://gun-ctrl.github.io/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":20,"languages":{"author":"作者: 搬码人","link":"链接: ","source":"来源: 搬码人’s Blog","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'null',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Okhttp框架介绍',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="搬码人’s Blog" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">32</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/qinggangying.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">搬码人’s Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">Okhttp框架介绍</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Okhttp框架介绍</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-09-09T09:52:24.492Z" title="发表于 2026-09-09 17:52:24">2026-09-09</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-09T10:02:33.409Z" title="更新于 2026-09-09 18:02:33">2026-09-09</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Android%E9%9A%8F%E7%AC%94/">Android随笔</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">1.6k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>5分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;It has been&quot;,&quot;messageNext&quot;:&quot;days since the last update, the content of the article may be outdated.&quot;,&quot;postUpdate&quot;:&quot;2026-09-09 18:02:33&quot;}" hidden></div><blockquote>
+<p>OkHttp 是由 Square 公司开源的一个高性能 HTTP 客户端，是目前 Java 和 Android 生态中最主流、事实上的网络请求标准库。Android 官方从 Android 4.4 起底层已将 HttpURLConnection 替换为 OkHttp 实现，而当下流行的 Retrofit 网络框架底层也是交由 OkHttp 负责真正的网络收发。</p>
+<p>相比 JDK 自带的 HttpURLConnection 或早期的 Apache HttpClient，OkHttp 具有显著的优势：</p>
+<ol>
+<li><strong>性能卓越</strong>：原生支持 HTTP&#x2F;2 协议（多路复用）和连接池，能够共享同一个 Socket 连接，大幅降低 TCP 握手开销与请求延迟。</li>
+<li><strong>自动处理</strong>：支持透明的 GZIP 压缩（自动压缩请求体并解压响应体，节省流量）、响应缓存（避免重复网络请求）、以及自动处理重定向和故障恢复。</li>
+<li><strong>API 简洁优雅</strong>：封装程度高，无需手动处理繁琐的流和状态码，代码量大幅减少，开发效率极高。</li>
+<li><strong>灵活的拦截器链</strong>：基于责任链设计模式，允许开发者轻松插拔日志记录、统一 Token 注入、签名校验、失败重试等功能。</li>
+</ol>
+</blockquote>
+<hr>
+<h2 id="一、整体架构"><a href="#一、整体架构" class="headerlink" title="一、整体架构"></a>一、整体架构</h2><figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line">应用层</span><br><span class="line">  ↓</span><br><span class="line">OkHttpClient（配置中心：超时、拦截器、连接池）</span><br><span class="line">  ↓</span><br><span class="line">Dispatcher（异步请求调度器，维护 ready/running 队列）</span><br><span class="line">  ↓</span><br><span class="line">拦截器链（责任链模式）</span><br><span class="line">  ↓</span><br><span class="line"><span class="built_in">Server</span>（真实网络请求）</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="二、拦截器链（最常考）"><a href="#二、拦截器链（最常考）" class="headerlink" title="二、拦截器链（最常考）"></a>二、拦截器链（最常考）</h2><p>OkHttp 核心就是<strong>拦截器责任链</strong>，请求从上往下走，响应从下往上走：</p>
+<figure class="highlight mipsasm"><table><tr><td class="code"><pre><span class="line">应用拦截器（<span class="keyword">addInterceptor）</span></span><br><span class="line"><span class="keyword"></span>    ↓</span><br><span class="line">RetryAndFollowUpInterceptor  — 重试 &amp; 重定向</span><br><span class="line">    ↓</span><br><span class="line"><span class="keyword">BridgeInterceptor </span>           — 补充请求头（Content-Type、Cookie、gzip）</span><br><span class="line">    ↓</span><br><span class="line"><span class="keyword">CacheInterceptor </span>            — 缓存处理（<span class="number">304</span>、磁盘缓存）</span><br><span class="line">    ↓</span><br><span class="line">ConnectInterceptor           — 建立 TCP 连接（连接池复用）</span><br><span class="line">    ↓</span><br><span class="line">网络拦截器（<span class="keyword">addNetworkInterceptor）</span></span><br><span class="line"><span class="keyword"></span>    ↓</span><br><span class="line">CallServerInterceptor        — 真正发送请求、读取响应</span><br></pre></td></tr></table></figure>
+
+<h3 id="关键拦截器职责"><a href="#关键拦截器职责" class="headerlink" title="关键拦截器职责"></a>关键拦截器职责</h3><table>
+<thead>
+<tr>
+<th>拦截器</th>
+<th>核心职责</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>RetryAndFollowUpInterceptor</code></td>
+<td>失败重试、301&#x2F;302 重定向、407 代理认证</td>
+</tr>
+<tr>
+<td><code>BridgeInterceptor</code></td>
+<td>补全 Content-Type、Accept-Encoding(gzip)、Cookie、User-Agent</td>
+</tr>
+<tr>
+<td><code>CacheInterceptor</code></td>
+<td>根据 Cache-Control &#x2F; ETag &#x2F; Last-Modified 判断缓存命中</td>
+</tr>
+<tr>
+<td><code>ConnectInterceptor</code></td>
+<td>从连接池取连接或新建，TLS 握手</td>
+</tr>
+<tr>
+<td><code>CallServerInterceptor</code></td>
+<td>写请求头+请求体，读响应头+响应体</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="三、连接池（ConnectionPool）"><a href="#三、连接池（ConnectionPool）" class="headerlink" title="三、连接池（ConnectionPool）"></a>三、连接池（ConnectionPool）</h2><h3 id="为什么需要连接池？"><a href="#为什么需要连接池？" class="headerlink" title="为什么需要连接池？"></a>为什么需要连接池？</h3><p>每次请求都建 TCP + TLS 握手太慢（约 1-3 秒），连接池复用已有连接。</p>
+<figure class="highlight awk"><table><tr><td class="code"><pre><span class="line">默认配置：</span><br><span class="line">  maxIdleConnections = <span class="number">5</span>     <span class="regexp">//</span> 最多空闲 <span class="number">5</span> 个连接</span><br><span class="line">  keepAliveDuration = <span class="number">5</span> min  <span class="regexp">//</span> 空闲超 <span class="number">5</span> 分钟关闭</span><br></pre></td></tr></table></figure>
+
+<h3 id="复用规则"><a href="#复用规则" class="headerlink" title="复用规则"></a>复用规则</h3><ul>
+<li>同一个 Address（host + port + proxy）可以复用</li>
+<li>HTTP&#x2F;2 可以多路复用（一个连接并发多个请求）</li>
+<li>HTTP&#x2F;1.1 默认一个连接一个请求（但连接可以排队复用）</li>
+</ul>
+<h3 id="清理机制"><a href="#清理机制" class="headerlink" title="清理机制"></a>清理机制</h3><ul>
+<li>后台线程每 5 分钟清理过期空闲连接</li>
+<li>引用计数：正在使用的连接不会被回收</li>
+</ul>
+<hr>
+<h2 id="四、缓存策略"><a href="#四、缓存策略" class="headerlink" title="四、缓存策略"></a>四、缓存策略</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 客户端启用缓存</span></span><br><span class="line"><span class="type">OkHttpClient</span> <span class="variable">client</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">OkHttpClient</span>.Builder()</span><br><span class="line">    .cache(<span class="keyword">new</span> <span class="title class_">Cache</span>(cacheDir, <span class="number">10</span> * <span class="number">1024</span> * <span class="number">1024</span>))  <span class="comment">// 10MB</span></span><br><span class="line">    .build();</span><br></pre></td></tr></table></figure>
+
+<h3 id="缓存判断流程"><a href="#缓存判断流程" class="headerlink" title="缓存判断流程"></a>缓存判断流程</h3><figure class="highlight mathematica"><table><tr><td class="code"><pre><span class="line">请求进来</span><br><span class="line">  → 有缓存吗？</span><br><span class="line">    → 没有 → 网络请求，存缓存</span><br><span class="line">    → 有：</span><br><span class="line">      → <span class="variable">Cache</span><span class="operator">-</span><span class="built_in">Control</span><span class="operator">:</span> <span class="variable">no</span><span class="operator">-</span><span class="variable">cache</span> <span class="operator">/</span> <span class="variable">max</span><span class="operator">-</span><span class="variable">age</span> 过期？</span><br><span class="line">        → 是 → 发请求带 <span class="built_in">If</span><span class="operator">-</span><span class="built_in">None</span><span class="operator">-</span><span class="variable">Match</span> <span class="operator">/</span> <span class="built_in">If</span><span class="operator">-</span><span class="variable">Modified</span><span class="operator">-</span><span class="variable">Since</span></span><br><span class="line">          → <span class="number">304</span> → 用本地缓存</span><br><span class="line">          → <span class="number">200</span> → 更新缓存</span><br><span class="line">        → 否 → 直接用本地缓存</span><br></pre></td></tr></table></figure>
+
+<h3 id="关键响应头"><a href="#关键响应头" class="headerlink" title="关键响应头"></a>关键响应头</h3><table>
+<thead>
+<tr>
+<th>头</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Cache-Control: max-age=3600</code></td>
+<td>缓存有效期（秒）</td>
+</tr>
+<tr>
+<td><code>Cache-Control: no-store</code></td>
+<td>完全不缓存</td>
+</tr>
+<tr>
+<td><code>Cache-Control: no-cache</code></td>
+<td>每次验证</td>
+</tr>
+<tr>
+<td><code>ETag</code> + <code>If-None-Match</code></td>
+<td>资源指纹，304 则不传 body</td>
+</tr>
+<tr>
+<td><code>Last-Modified</code> + <code>If-Modified-Since</code></td>
+<td>按时间判断</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="五、重试与重定向"><a href="#五、重试与重定向" class="headerlink" title="五、重试与重定向"></a>五、重试与重定向</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// RetryAndFollowUpInterceptor 核心逻辑</span></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        response = proceed(request);</span><br><span class="line">        <span class="comment">// 重定向处理</span></span><br><span class="line">        <span class="keyword">if</span> (code == <span class="number">301</span> || code == <span class="number">302</span> || code == <span class="number">307</span> || code == <span class="number">308</span>) &#123;</span><br><span class="line">            request = buildRedirectRequest(response);</span><br><span class="line">            <span class="keyword">continue</span>;  <span class="comment">// 重新走拦截器链</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> response;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">        <span class="keyword">if</span> (retry(e)) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">throw</span> e;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>默认最多重定向 <strong>20 次</strong></li>
+<li>301&#x2F;302：GET 重定向</li>
+<li>307&#x2F;308：保持原请求方法重定向</li>
+</ul>
+<hr>
+<h2 id="六、调度器（Dispatcher）"><a href="#六、调度器（Dispatcher）" class="headerlink" title="六、调度器（Dispatcher）"></a>六、调度器（Dispatcher）</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 异步请求管理</span></span><br><span class="line"><span class="type">Dispatcher</span> <span class="variable">dispatcher</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Dispatcher</span>();</span><br><span class="line"></span><br><span class="line">dispatcher.maxRequests = <span class="number">64</span>;              <span class="comment">// 最大并发请求数</span></span><br><span class="line">dispatcher.maxRequestsPerHost = <span class="number">5</span>;        <span class="comment">// 单个 host 最大并发</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 请求队列</span></span><br><span class="line">readyAsyncCalls    <span class="comment">// 等待队列</span></span><br><span class="line">runningAsyncCalls  <span class="comment">// 正在执行（HashMap）</span></span><br><span class="line">runningSyncCalls   <span class="comment">// 同步请求（只记录，不限并发）</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="异步调度流程"><a href="#异步调度流程" class="headerlink" title="异步调度流程"></a>异步调度流程</h3><ol>
+<li>请求放入 <code>readyAsyncCalls</code></li>
+<li>检查 <code>runningAsyncCalls</code> 数量 &lt; 64 且该 host &lt; 5</li>
+<li>满足条件则移到 <code>runningAsyncCalls</code>，提交到线程池执行</li>
+<li>线程池：<code>ThreadPoolExecutor</code>，核心线程 0，最大 64，空闲 60s 回收</li>
+</ol>
+<hr>
+<h2 id="七、OkHttp-vs-其他方案"><a href="#七、OkHttp-vs-其他方案" class="headerlink" title="七、OkHttp vs 其他方案"></a>七、OkHttp vs 其他方案</h2><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>OkHttp</th>
+<th>HttpURLConnection</th>
+<th>Retrofit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>层级</td>
+<td>底层 HTTP 客户端</td>
+<td>JDK 原生</td>
+<td>OkHttp 上层封装</td>
+</tr>
+<tr>
+<td>连接池</td>
+<td>内置</td>
+<td>无</td>
+<td>继承 OkHttp</td>
+</tr>
+<tr>
+<td>拦截器</td>
+<td>支持</td>
+<td>不支持</td>
+<td>支持</td>
+</tr>
+<tr>
+<td>调试</td>
+<td>EventListener</td>
+<td>无</td>
+<td>继承 OkHttp</td>
+</tr>
+<tr>
+<td>使用场景</td>
+<td>需要精细控制</td>
+<td>简单请求</td>
+<td>REST API 开发</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="八、常见问题"><a href="#八、常见问题" class="headerlink" title="八、常见问题"></a>八、常见问题</h2><h3 id="Q1-OkHttp-怎么添加公共参数？"><a href="#Q1-OkHttp-怎么添加公共参数？" class="headerlink" title="Q1: OkHttp 怎么添加公共参数？"></a>Q1: OkHttp 怎么添加公共参数？</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 应用拦截器（最常用）</span></span><br><span class="line">client.addInterceptor(chain -&gt; &#123;</span><br><span class="line">    <span class="type">Request</span> <span class="variable">request</span> <span class="operator">=</span> chain.request().newBuilder()</span><br><span class="line">        .addHeader(<span class="string">&quot;token&quot;</span>, getToken())</span><br><span class="line">        .addQueryParam(<span class="string">&quot;version&quot;</span>, <span class="string">&quot;1.0&quot;</span>)</span><br><span class="line">        .build();</span><br><span class="line">    <span class="keyword">return</span> chain.proceed(request);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<h3 id="Q2-OkHttp-怎么取消请求？"><a href="#Q2-OkHttp-怎么取消请求？" class="headerlink" title="Q2: OkHttp 怎么取消请求？"></a>Q2: OkHttp 怎么取消请求？</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">Call</span> <span class="variable">call</span> <span class="operator">=</span> client.newCall(request);</span><br><span class="line">call.execute();  <span class="comment">// 或 call.enqueue(...)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 取消</span></span><br><span class="line">call.cancel();</span><br><span class="line"><span class="comment">// 内部调用 RealCall.cancel() → 关闭 Socket</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="Q3-HTTPS-怎么配置证书固定（Certificate-Pinning）？"><a href="#Q3-HTTPS-怎么配置证书固定（Certificate-Pinning）？" class="headerlink" title="Q3: HTTPS 怎么配置证书固定（Certificate Pinning）？"></a>Q3: HTTPS 怎么配置证书固定（Certificate Pinning）？</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">CertificatePinner</span> <span class="variable">pinner</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">CertificatePinner</span>.Builder()</span><br><span class="line">    .add(<span class="string">&quot;api.example.com&quot;</span>, <span class="string">&quot;sha256/AAAA...=&quot;</span>)</span><br><span class="line">    .build();</span><br><span class="line"></span><br><span class="line"><span class="type">OkHttpClient</span> <span class="variable">client</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">OkHttpClient</span>.Builder()</span><br><span class="line">    .certificatePinner(pinner)</span><br><span class="line">    .build();</span><br></pre></td></tr></table></figure>
+
+<h3 id="Q4-OkHttp-怎么处理-Cookie？"><a href="#Q4-OkHttp-怎么处理-Cookie？" class="headerlink" title="Q4: OkHttp 怎么处理 Cookie？"></a>Q4: OkHttp 怎么处理 Cookie？</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 自动持久化</span></span><br><span class="line"><span class="type">OkHttpClient</span> <span class="variable">client</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">OkHttpClient</span>.Builder()</span><br><span class="line">    .cookieJar(<span class="keyword">new</span> <span class="title class_">CookieJar</span>() &#123;</span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">final</span> Map&lt;String, List&lt;Cookie&gt;&gt; cookieStore = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">saveFromResponse</span><span class="params">(HttpUrl url, List&lt;Cookie&gt; cookies)</span> &#123;</span><br><span class="line">            cookieStore.put(url.host(), cookies);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> List&lt;Cookie&gt; <span class="title function_">loadForRequest</span><span class="params">(HttpUrl url)</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> cookieStore.getOrDefault(url.host(), Collections.emptyList());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">    .build();</span><br></pre></td></tr></table></figure>
+
+<h3 id="Q5-HTTP-x2F-2-相比-HTTP-x2F-1-1-的优势？"><a href="#Q5-HTTP-x2F-2-相比-HTTP-x2F-1-1-的优势？" class="headerlink" title="Q5: HTTP&#x2F;2 相比 HTTP&#x2F;1.1 的优势？"></a>Q5: HTTP&#x2F;2 相比 HTTP&#x2F;1.1 的优势？</h3><ul>
+<li>多路复用：一个 TCP 连接并发多个请求（解决队头阻塞）</li>
+<li>头部压缩：HPACK 算法，减少重复 header 传输</li>
+<li>服务端推送：主动推送资源</li>
+<li>二进制分帧：解析更高效</li>
+</ul>
+<h3 id="Q6-OkHttp-的线程模型？"><a href="#Q6-OkHttp-的线程模型？" class="headerlink" title="Q6: OkHttp 的线程模型？"></a>Q6: OkHttp 的线程模型？</h3><ul>
+<li>同步 <code>execute()</code>：当前线程阻塞</li>
+<li>异步 <code>enqueue()</code>：回调在 Dispatcher 的线程池执行（非主线程）</li>
+<li>连接池清理：后台守护线程</li>
+<li>不需要手动切线程（但 UI 更新需切回主线程）</li>
+</ul>
+<hr>
+<h2 id="九、一句话总结"><a href="#九、一句话总结" class="headerlink" title="九、一句话总结"></a>九、一句话总结</h2><p><strong>OkHttp 核心是拦截器责任链 + 连接池复用。面试重点：拦截器职责、连接池原理、缓存策略、线程模型。</strong></p>
+<p>Okhttp同时支持Http&#x2F;3，但是：</p>
+<ul>
+<li><p>版本要求：需要使用Okhttp4.9以上版本。</p>
+</li>
+<li><p>依赖引入：必须额外引入<code>okhttp-quic</code>依赖</p>
+</li>
+<li><p>协议配置：需要在构建客户端时手动指定协议列表，例如：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">client = <span class="keyword">new</span> <span class="title class_">OkHttpClient</span>.Builder()</span><br><span class="line">    .protocols(Arrays.asList(Protocol.HTTP_3, Protocol.HTTP_2, Protocol.HTTP_1_1))</span><br><span class="line">    .build()</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p><strong>总结</strong>：OkHttp 开箱即用支持 HTTP&#x2F;2；如果需要 HTTP&#x2F;3，则需要升级版本、添加 QUIC 依赖并进行显式配置。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io">搬码人</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/">https://gun-ctrl.github.io/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://gun-ctrl.github.io" target="_blank">搬码人’s Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android%E9%9A%8F%E7%AC%94/">Android随笔</a></div><div class="post-share"><div class="social-share" data-image="/img/qinggangying.png" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechatpay.jpg" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/img/alipay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/alipay.jpg" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89PhotoView%E6%89%8B%E5%8A%BF%E5%A4%84%E7%90%86/" title="自定义PhotoView手势处理"><img class="cover" src="/img/bizhi1.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">自定义PhotoView手势处理</div></div><div class="info-2"><div class="info-item-1">前言  前面介绍了前面介绍了嵌套滑动、自定义Behavior等高级UI实现原理，今天介绍一种比较简单的高级UI用法——手势处理。  你可以点开自己的手机相册，点开任意一张图片，双击图片会有放大效果，再次双击会缩小为原来大小。并且双指操作可以放大缩小图片。今天，小编就来实现一下这样的PhotoView效果。但是我的效果处理肯定不是很完美，毕竟追求代码简洁。  效果展示图：  手势处理API首先，先介绍一个Android处理单指手势的API GestureDetector，在创建一个GestureDetector对象时需要传入一个监听者OnGestureListener，所以我们需要实现OnGestureListener，通常实现SimpleOnGestureListener这个接口里面的功能就足够我们使用了，所以实现它即可。 SimpleOnGestureListener的方法介绍 class PhotoScaleGestureDetector extends GestureDetector.SimpleOnGestureListener&#123;        //在ACTIO...</div></div></div></a></nav><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">搬码人</div><div class="author-info-description">我挥舞着键盘和本子，发誓要把世界写个明明白白。</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">32</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><a id="card-info-btn" href="https://github.com/gun-ctrl"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="tencent://AddContact/?fromId=50&amp;fromSubId=1&amp;subcmd=all&amp;uin=1578684787" target="_blank" title="QQ"><i class="fab fa-qq"></i></a><a class="social-icon" href="mailto:pengchuan4314@163.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到搬码人的世界</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="toc-number">1.</span> <span class="toc-text">一、整体架构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%8B%A6%E6%88%AA%E5%99%A8%E9%93%BE%EF%BC%88%E6%9C%80%E5%B8%B8%E8%80%83%EF%BC%89"><span class="toc-number">2.</span> <span class="toc-text">二、拦截器链（最常考）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E6%8B%A6%E6%88%AA%E5%99%A8%E8%81%8C%E8%B4%A3"><span class="toc-number">2.1.</span> <span class="toc-text">关键拦截器职责</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E8%BF%9E%E6%8E%A5%E6%B1%A0%EF%BC%88ConnectionPool%EF%BC%89"><span class="toc-number">3.</span> <span class="toc-text">三、连接池（ConnectionPool）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E8%BF%9E%E6%8E%A5%E6%B1%A0%EF%BC%9F"><span class="toc-number">3.1.</span> <span class="toc-text">为什么需要连接池？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%8D%E7%94%A8%E8%A7%84%E5%88%99"><span class="toc-number">3.2.</span> <span class="toc-text">复用规则</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B8%85%E7%90%86%E6%9C%BA%E5%88%B6"><span class="toc-number">3.3.</span> <span class="toc-text">清理机制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%BC%93%E5%AD%98%E7%AD%96%E7%95%A5"><span class="toc-number">4.</span> <span class="toc-text">四、缓存策略</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E5%88%A4%E6%96%AD%E6%B5%81%E7%A8%8B"><span class="toc-number">4.1.</span> <span class="toc-text">缓存判断流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E5%93%8D%E5%BA%94%E5%A4%B4"><span class="toc-number">4.2.</span> <span class="toc-text">关键响应头</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E9%87%8D%E8%AF%95%E4%B8%8E%E9%87%8D%E5%AE%9A%E5%90%91"><span class="toc-number">5.</span> <span class="toc-text">五、重试与重定向</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E8%B0%83%E5%BA%A6%E5%99%A8%EF%BC%88Dispatcher%EF%BC%89"><span class="toc-number">6.</span> <span class="toc-text">六、调度器（Dispatcher）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%82%E6%AD%A5%E8%B0%83%E5%BA%A6%E6%B5%81%E7%A8%8B"><span class="toc-number">6.1.</span> <span class="toc-text">异步调度流程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81OkHttp-vs-%E5%85%B6%E4%BB%96%E6%96%B9%E6%A1%88"><span class="toc-number">7.</span> <span class="toc-text">七、OkHttp vs 其他方案</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-number">8.</span> <span class="toc-text">八、常见问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Q1-OkHttp-%E6%80%8E%E4%B9%88%E6%B7%BB%E5%8A%A0%E5%85%AC%E5%85%B1%E5%8F%82%E6%95%B0%EF%BC%9F"><span class="toc-number">8.1.</span> <span class="toc-text">Q1: OkHttp 怎么添加公共参数？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q2-OkHttp-%E6%80%8E%E4%B9%88%E5%8F%96%E6%B6%88%E8%AF%B7%E6%B1%82%EF%BC%9F"><span class="toc-number">8.2.</span> <span class="toc-text">Q2: OkHttp 怎么取消请求？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q3-HTTPS-%E6%80%8E%E4%B9%88%E9%85%8D%E7%BD%AE%E8%AF%81%E4%B9%A6%E5%9B%BA%E5%AE%9A%EF%BC%88Certificate-Pinning%EF%BC%89%EF%BC%9F"><span class="toc-number">8.3.</span> <span class="toc-text">Q3: HTTPS 怎么配置证书固定（Certificate Pinning）？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q4-OkHttp-%E6%80%8E%E4%B9%88%E5%A4%84%E7%90%86-Cookie%EF%BC%9F"><span class="toc-number">8.4.</span> <span class="toc-text">Q4: OkHttp 怎么处理 Cookie？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q5-HTTP-x2F-2-%E7%9B%B8%E6%AF%94-HTTP-x2F-1-1-%E7%9A%84%E4%BC%98%E5%8A%BF%EF%BC%9F"><span class="toc-number">8.5.</span> <span class="toc-text">Q5: HTTP&#x2F;2 相比 HTTP&#x2F;1.1 的优势？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q6-OkHttp-%E7%9A%84%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B%EF%BC%9F"><span class="toc-number">8.6.</span> <span class="toc-text">Q6: OkHttp 的线程模型？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93"><span class="toc-number">9.</span> <span class="toc-text">九、一句话总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" title="Okhttp框架介绍"><img src="/img/qinggangying.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Okhttp框架介绍"/></a><div class="content"><a class="title" href="/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" title="Okhttp框架介绍">Okhttp框架介绍</a><time datetime="2026-09-09T09:52:24.492Z" title="发表于 2026-09-09 17:52:24">2026-09-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89LayoutManager%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E6%BB%91%E5%8A%A8/" title="自定义LayoutManager实现卡片滑动"><img src="/img/timo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="自定义LayoutManager实现卡片滑动"/></a><div class="content"><a class="title" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89LayoutManager%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E6%BB%91%E5%8A%A8/" title="自定义LayoutManager实现卡片滑动">自定义LayoutManager实现卡片滑动</a><time datetime="2026-09-09T08:35:21.592Z" title="发表于 2026-09-09 16:35:21">2026-09-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E4%B8%8E%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%9C%BA%E5%88%B6/" title="阻塞队列与线程池机制"><img src="/img/pansen.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="阻塞队列与线程池机制"/></a><div class="content"><a class="title" href="/2026/09/09/%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E4%B8%8E%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%9C%BA%E5%88%B6/" title="阻塞队列与线程池机制">阻塞队列与线程池机制</a><time datetime="2026-09-09T08:35:21.592Z" title="发表于 2026-09-09 16:35:21">2026-09-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/%E9%80%9A%E7%9F%A5%E7%9A%84%E5%88%9B%E5%BB%BA/" title="通知的创建"><img src="/img/kasa.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="通知的创建"/></a><div class="content"><a class="title" href="/2026/09/09/%E9%80%9A%E7%9F%A5%E7%9A%84%E5%88%9B%E5%BB%BA/" title="通知的创建">通知的创建</a><time datetime="2026-09-09T08:35:21.592Z" title="发表于 2026-09-09 16:35:21">2026-09-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89PhotoView%E6%89%8B%E5%8A%BF%E5%A4%84%E7%90%86/" title="自定义PhotoView手势处理"><img src="/img/bizhi1.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="自定义PhotoView手势处理"/></a><div class="content"><a class="title" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89PhotoView%E6%89%8B%E5%8A%BF%E5%A4%84%E7%90%86/" title="自定义PhotoView手势处理">自定义PhotoView手势处理</a><time datetime="2026-09-09T08:35:21.592Z" title="发表于 2026-09-09 16:35:21">2026-09-09</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2022 - 2026 By 搬码人</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const initValine = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyValine = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const valineConfig = {
+      el: '#vcomment',
+      appId: '',
+      appKey: '',
+      avatar: 'monsterid',
+      serverURLs: '',
+      emojiMaps: {"tv_doge":"6ea59c827c414b4a2955fe79e0f6fd3dcd515e24.png","tv_亲亲":"a8111ad55953ef5e3be3327ef94eb4a39d535d06.png","tv_偷笑":"bb690d4107620f1c15cff29509db529a73aee261.png","tv_再见":"180129b8ea851044ce71caf55cc8ce44bd4a4fc8.png","tv_冷漠":"b9cbc755c2b3ee43be07ca13de84e5b699a3f101.png","tv_发怒":"34ba3cd204d5b05fec70ce08fa9fa0dd612409ff.png","tv_发财":"34db290afd2963723c6eb3c4560667db7253a21a.png","tv_可爱":"9e55fd9b500ac4b96613539f1ce2f9499e314ed9.png","tv_吐血":"09dd16a7aa59b77baa1155d47484409624470c77.png","tv_呆":"fe1179ebaa191569b0d31cecafe7a2cd1c951c9d.png","tv_呕吐":"9f996894a39e282ccf5e66856af49483f81870f3.png","tv_困":"241ee304e44c0af029adceb294399391e4737ef2.png","tv_坏笑":"1f0b87f731a671079842116e0991c91c2c88645a.png","tv_大佬":"093c1e2c490161aca397afc45573c877cdead616.png","tv_大哭":"23269aeb35f99daee28dda129676f6e9ea87934f.png","tv_委屈":"d04dba7b5465779e9755d2ab6f0a897b9b33bb77.png","tv_害羞":"a37683fb5642fa3ddfc7f4e5525fd13e42a2bdb1.png","tv_尴尬":"7cfa62dafc59798a3d3fb262d421eeeff166cfa4.png","tv_微笑":"70dc5c7b56f93eb61bddba11e28fb1d18fddcd4c.png","tv_思考":"90cf159733e558137ed20aa04d09964436f618a1.png","tv_惊吓":"0d15c7e2ee58e935adc6a7193ee042388adc22af.png"},
+      visitor: false,
+      ...option,
+      path: isShuoshuo ? path : (option && option.path) || window.location.pathname
+    }
+
+    new Valine(valineConfig)
+  }
+
+  const loadValine = async (el, path) => {
+    if (typeof Valine === 'function') {
+      initValine(el, path)
+    } else {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js')
+      initValine(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Valine' === 'Valine'
+      ? window.shuoshuoComment = { loadComment: loadValine }
+      : window.loadOtherComment = loadValine
+    return
+  }
+
+  if ('Valine' === 'Valine' || !true) {
+    if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+    else setTimeout(loadValine, 0)
+  } else {
+    window.loadOtherComment = loadValine
+  }
+})()</script></div><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="true" data-click="true"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
