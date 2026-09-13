@@ -534,101 +534,6 @@
       </categories>
   </entry>
   <entry>
-    <title>Android运行时权限</title>
-    <url>/2022/09/13/Android%E8%BF%90%E8%A1%8C%E6%97%B6%E6%9D%83%E9%99%90/</url>
-    <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>我们在应用开发中如果需要联网就需要在<code>AndroidManifest.xml</code>文件中添加网络访问权限。在我们新安装应用时，往往会弹出提示框问我们是否允许系统获取定位、读取联系人、读取短信等权限。那这些权限有什么用？区别是什么？为什么会有运行时权限这一说法……下面让小编来一一梳理并解答。</p>
-<h2 id="运行时权限"><a href="#运行时权限" class="headerlink" title="运行时权限"></a>运行时权限</h2><blockquote>
-<p> Android的权限机制并不是什么新鲜事物，从系统的第一个版本开始就已经存在了。但其实之前Android的权限机制在保护安全和隐私等方面起到的作用十分有限，尤其是一些大家离不开的常用软件，非常容易“店大欺客”。为此，Android开发团队在Android6.0系统中引入了运行时权限这个功能，从而更好地保护了用户的安全和隐私。</p>
-</blockquote>
-<h2 id="Android权限机制详解"><a href="#Android权限机制详解" class="headerlink" title="Android权限机制详解"></a>Android权限机制详解</h2><p>如下，监听开机广播需要开启广播接收的权限：</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220913165504245.png" alt="image-20220913165504245"></p>
-<p>因为监听开机广播涉及了用户设备的安全，因此必须在<code>AndroidManifest.xml</code>文件中加入权限声明，否则我们的程序就会崩溃。</p>
-<p>那么问题来了，加入了这句权限声明后，对于用户来说到底有什么影响呢？为什么这样就可以保护设备的安全了呢？</p>
-<p>其实用户主要在两方面得到保护。一方面，如果用户在低于Android6.0系统的设备商安装该程序，会在安装界面弹出一连串提示。这样用户就可以知晓该程序一共申请了哪些权限，从而决定是否安装这个程序。另一方面，用户可以随时在应用程序管理界面查看任意一个程序的权限申请情况。这样该程序申请的权限就尽收眼底，什么都瞒不过用户，以此保证应用程序不会出现滥用权限的情况。</p>
-<p>但是，很多时候我们离不开的常用软件普遍存在滥用权限的情况，不管到底有没有用得到，反正先申请了再说。</p>
-<blockquote>
-<p>考虑到上述问题，Android6.0以后加入了动态申请权限功能。但是，如果安装一个应用需要不停地授权很多权限，就很繁琐，用户体验极差。那么就将权限进行了划分——普通权限与危险权限。普通权限会默认开启，而危险权限需要用户进行授权。</p>
-</blockquote>
-<h2 id="危险权限"><a href="#危险权限" class="headerlink" title="危险权限"></a>危险权限</h2><p>下面列出Android危险权限，除了这些剩余的都是普通权限。</p>
-<table>
-<thead>
-<tr>
-<th>权限组名</th>
-<th>权限名</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>CALENDAR（日历）</td>
-<td>READ_CALENDAR、WRITE_CALENDAR</td>
-</tr>
-<tr>
-<td>CAMERA（相机）</td>
-<td>CAMERA、READ_CONTACTS</td>
-</tr>
-<tr>
-<td>CONTACTS（联系人）</td>
-<td>WRITE_CONTACTS、GET_ACCOUNTS</td>
-</tr>
-<tr>
-<td>LOCATION（位置）</td>
-<td>ACCESS_FINE_LOCATION、ACCESS_COARSE_LOCATION</td>
-</tr>
-<tr>
-<td>MICROPHONE（麦克风）</td>
-<td>RECORD_AUDIO、 READ_PHONE_STATE、CALL_PHONE、ERAD_CALL_LOG</td>
-</tr>
-<tr>
-<td>PHONE（手机）</td>
-<td>WRITE_CALL_LOG、ADD_VOICEMAIL、USE_SIP、PROCESS_OUTGOING_CALLS</td>
-</tr>
-<tr>
-<td>SENSORS（传感器）</td>
-<td>BODY_SENSORS、 SEND_SMS、RECEIVE_SMS</td>
-</tr>
-<tr>
-<td>SMS（短信）</td>
-<td>READ_SMS、RECEIVE_WAP_PUSH、RECEIVE_MMS</td>
-</tr>
-<tr>
-<td>STORAGE（存储卡）</td>
-<td>READ_EXTERNAL_STORAGE、WRITE_EXTERNAL_STORAGE</td>
-</tr>
-</tbody></table>
-<p>这张表看起来不怎么轻松，因为里面的权限不都是能接触到的。不过没有关系，你不需要了解表格中每个权限的作用，只需要把它当成一个参照表来看就行了。每当需要使用一个权限时，可以查表，如果该权限出现在这张表中，那么就需要动态申请权限。</p>
-<p>另外注意，表格中每个危险权限都属于一个权限组，我们在进行运行时权限处理时使用的是权限名。原则上，用户一旦同意了某个权限申请之后，同组的其它权限都会被系统自动开启。</p>
-<p><strong>特别注意</strong>：不要基于此规则来实现任何逻辑，因为Android系统随时有可能调整权限的分组。</p>
-<h2 id="在程序运行时申请权限"><a href="#在程序运行时申请权限" class="headerlink" title="在程序运行时申请权限"></a>在程序运行时申请权限</h2><p><strong>运行效果</strong></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%BD%95%E5%88%B6_2022_09_13_17_51_50_995.gif" alt="录制_2022_09_13_17_51_50_995"></p>
-<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> : <span class="type">AppCompatActivity</span></span>() &#123;</span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span>&#123;</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">val</span> REQUEST_CODE = <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">lateinit</span> <span class="keyword">var</span> binding:ActivityMainBinding;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">(savedInstanceState: <span class="type">Bundle</span>?)</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState)</span><br><span class="line">        binding = ActivityMainBinding.inflate(layoutInflater)</span><br><span class="line">        setContentView(binding.root)</span><br><span class="line">        binding.Call.setOnClickListener &#123;</span><br><span class="line">            <span class="keyword">if</span> (ContextCompat.checkSelfPermission(<span class="keyword">this</span>,Manifest.permission.CALL_PHONE)</span><br><span class="line">            != PackageManager.PERMISSION_GRANTED)&#123;</span><br><span class="line">                ActivityCompat.requestPermissions(</span><br><span class="line">                    <span class="keyword">this</span>,</span><br><span class="line">                    arrayOf(Manifest.permission.CALL_PHONE)</span><br><span class="line">                , REQUEST_CODE)</span><br><span class="line">            &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                call()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onRequestPermissionsResult</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        requestCode: <span class="type">Int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        permissions: <span class="type">Array</span>&lt;<span class="type">out</span> <span class="type">String</span>&gt;,</span></span></span><br><span class="line"><span class="params"><span class="function">        grantResults: <span class="type">IntArray</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.onRequestPermissionsResult(requestCode, permissions, grantResults)</span><br><span class="line">        <span class="keyword">when</span>(requestCode)&#123;</span><br><span class="line">            REQUEST_CODE -&gt; &#123;</span><br><span class="line">                <span class="keyword">if</span> (grantResults.isNotEmpty() &amp;&amp; grantResults[<span class="number">0</span>] == PackageManager.PERMISSION_GRANTED)&#123;</span><br><span class="line">                    call()</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    Toast.makeText(<span class="keyword">this</span>,<span class="string">&quot;You denied the permission&quot;</span>,Toast.LENGTH_LONG).show()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">call</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">val</span> intent = Intent(Intent.ACTION_CALL)</span><br><span class="line">            intent.<span class="keyword">data</span> = Uri.parse(<span class="string">&quot;tel:10086&quot;</span>)</span><br><span class="line">            startActivity(intent)</span><br><span class="line">        &#125;<span class="keyword">catch</span> (e:SecurityException)&#123;</span><br><span class="line">            e.printStackTrace()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>上面的代码覆盖了运行时权限的完整流程，下面我们来具体分析一下。</p>
-<ul>
-<li><p>第一步就是要先判断用户是不是已经给我们进行了授权，借助的是<code>ContextCompat.checkSelfPermission()</code>方法接收两个参数：</p>
-<ul>
-<li>Context</li>
-<li>具体的权限名，比如打电话的权限名<code>Manifest.permission.CALL_PHONE</code></li>
-</ul>
-<p>然后我们使用方法的返回值与<code>PackageManager.PERMISSION_GRANTED</code>做比较，相等就说明用户已经授权，不等就表示用户没有权限。</p>
-</li>
-<li><p>如果已经授权了，直接执行拨打电话的逻辑就可以了，这里我们把拨打电话的逻辑封装到call()方法中。如果没有授权的话，则需要调用<code>ActivityCompat.requestPermissions()</code>方法向用户申请权限。<code>requestPermissions()</code>接收3个参数：</p>
-<ul>
-<li>第一个参数要求是Activity实例</li>
-<li>第二个参数是String数组，我们把要申请的权限名放到数组中即可</li>
-<li>第三个要求是请求码，只要是唯一值就可以</li>
-</ul>
-</li>
-<li><p>调用完<code>requestPermissions()</code>方法之后，系统会弹出一个权限申请的对话框，用户可以选择同意我们的权限申请。无论是哪种结果，最终都会回调 <code>onRequestPermissionsResult()</code>方法中，而授权的结果则会封装在<code>grantResults</code>参数中。这里我们只需要判断一下最后的授权结果，如果用户同意的话，就调用call()方法拨打电话；如果用户拒绝的话，我们只能放弃操作，并且弹出一条失败的提示。</p>
-</li>
-</ul>
-]]></content>
-      <categories>
-        <category>Android随笔</category>
-      </categories>
-      <tags>
-        <tag>运行时权限</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android广播机制</title>
     <url>/2022/11/19/Android%E5%B9%BF%E6%92%AD%E6%9C%BA%E5%88%B6/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
@@ -776,6 +681,227 @@
       </categories>
       <tags>
         <tag>异步任务</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>CoordinatorLayout原理解析与Behavior</title>
+    <url>/2022/08/14/CoordinatorLayout%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90%E4%B8%8EBehavior/</url>
+    <content><![CDATA[<h2 id="CoordinatorLayout的功能"><a href="#CoordinatorLayout的功能" class="headerlink" title="CoordinatorLayout的功能"></a>CoordinatorLayout的功能</h2><p><strong>事先警示：</strong>CoordinatorLayout只继承了NestedScrollParent，也就是说它只能做顶层父View，别踩坑！！！</p>
+<ol>
+<li><p>处理子控件之间依赖下的交互</p>
+</li>
+<li><p>处理子控件之间的嵌套滑动</p>
+</li>
+<li><p>处理子控件的测量与布局</p>
+</li>
+<li><p>处理子控件的事件拦截与响应</p>
+<p>以上四个功能，都建立与CoordinatorLayout中提供的一个叫做Behavior的“插件”之上。Behavior内部也提供了相应方法来对应这四个不同的功能。<br>Behavior内部集成了上述四种功能对应的方法，实现解耦。</p>
+</li>
+</ol>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806114929932.png" alt="image-20220806114929932"></p>
+<p><strong>什么是Behavior？</strong><br>可以把Behavior理解成插件，当我们的组件想实现什么样的功能的时候就使用对应的Behavior，也就是说很多种不同功能的Behavior，当然也可以自定义Behavior。</p>
+<h2 id="CoordinatorLayout下依赖交互原理"><a href="#CoordinatorLayout下依赖交互原理" class="headerlink" title="CoordinatorLayout下依赖交互原理"></a>CoordinatorLayout下依赖交互原理</h2><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115038051.png" alt="image-20220806115038051"></p>
+<blockquote>
+<p>当CoordinatorLayout中子控件dependency的位置、大小发生变化的时候，那么在CoordinatorLayout内部会通知所有依赖depandency的控件，并调用对应声明的Behavior，告知其依赖的dependency发生变化。<br>那么如何判断依赖-&gt;layoutDependsOn<br>接收到通知后如何处理-&gt;onDependentViewChanged&#x2F;onDependentViewRemoved<br>这些都是由Behavior来处理。</p>
+</blockquote>
+<h3 id="主要方法介绍"><a href="#主要方法介绍" class="headerlink" title="主要方法介绍"></a>主要方法介绍</h3><ul>
+<li><p><strong>layoutDependsOn(CoordinatorLayout parent, View child, View dependency)</strong>  表示是否给应用了Behavior 的View 指定一个依赖的布局</p>
+<ul>
+<li>参数1：coordinatorlayout对象</li>
+<li>参数2：child 被观察的View</li>
+<li>参数3：依赖变化的View（被观察的View）</li>
+</ul>
+</li>
+<li><p><strong>onDependentViewChanged(CoordinatorLayout parent, View child, View dependency)</strong> 当依赖的View发生变化的时候hi掉的方法</p>
+</li>
+<li><p><strong>onStartNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View directTargetChild, @NonNull View target, int axes, int type)</strong> 当用户手指按下的时候，你是否要处理这次操作。当你确定要处理这次操作的时候，返回true；如果返回false的时候，就不会去响应后面的回调事件了。你想怎么滑就怎么话，我都不做处理。这里的(axes)滚动方向很重要，可以通过此参数判断滚动方向！</p>
+<ul>
+<li>参数3：直接目标，相当于能滑动的控件</li>
+<li>参数4：观察的View</li>
+<li>参数5：这个可以简单理解为滚动方向<ul>
+<li>ViewCompat#SCROLL_AXIS_HORIZONTAL 水平方向</li>
+<li>ViewCompat#SCROLL_AXIS_VERTICAL 竖直方向</li>
+</ul>
+</li>
+<li>参数6：这个参数是之后有的，如果你输入的类型不是TYPE_TOUCH那么就不会相应这个滚动</li>
+</ul>
+</li>
+<li><p><strong>onNestedScrollAccepted(@NonNull CoordinatorLayout coordinatorLayout, @NonNull V child, @NonNull View directTargetChild, @NonNull View target, @ScrollAxis int axes, @NestedScrollType int type)</strong> 当onStartNestedScroll准备处理这次滑动的时候(返回true的时候)，回调这个方法。可以在这个方法中做一些响应的准备工作！</p>
+</li>
+<li><p><strong>onNestedPreScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, int dx, int dy, @NonNull int[] consumed, @NestedScrollType int type)</strong> 当滚动开始执行的时候回调这个方法。</p>
+<ul>
+<li>参数4&#x2F;参数5：用户x&#x2F;y轴滚动的距离(注意这里是每一次都回调的啊！！！)</li>
+<li>参数6：处理滚动的距离的参数，内部维护着输出距离，假设用户滑动了100px,child 做了90px的位移，你需要把consumed［1］的值改成90，这样coordinatorLayout就能知道只处理剩下的10px的滚动。其中consumed[0]代表x轴、consumed[1]代表y轴。可能你不理解这个问题，换个形象点的比喻，比如你开发某一个功能，但是你只会其中的90%那么怎么办呢？不能就不管了。好你找到了你的同事或者老大，让他去完成剩下的10%。这样问题就完美的解决了，是一个概念的！</li>
+</ul>
+</li>
+<li><p><strong>onNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int type)</strong> 上面这个方法结束的时候，coordinatorLayout处理剩下的距离，比如还剩10px。但是coordinatorLayout发现滚动2px的时候就已经到头了。那么结束其滚动，调用该方法，并将coordinatorLayout处理剩下的像素数作为参<code>(dxUnconsumed、dyUnconsumed)</code>传过来，这里传过来的就是 8px。参数中还会有coordinatorLayout处理过的像素数（dxConsumed、dyConsumed）。老大开始处理剩下的距离了！这个方法主要处理一些越界后的滚动。还是不懂对吧！还拿你们老大做比喻：比如上面还剩 10%的工作，这时老大处理了2%后发现已经可以上线了，于是老大结束了工作，并将处理剩下的内容（dxUnconsumed、dyUnconsumed）纪录下来，告诉你。老大处理了的内容（dxConsumed、dyConsumed）也告诉了你。</p>
+<ul>
+<li>参数4&#x2F;参数5：当没有滚动到顶部或者底部的时候，x&#x2F;y轴的滚动距离</li>
+<li>参数6&#x2F;参数7：当滚动到顶部或者底部的时候，x&#x2F;y轴的滚动距离</li>
+</ul>
+</li>
+<li><p>onNestedPreFling(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, float velocityX, float velocityY) 当手指松开发生惯性动作之前调用，这里提供了响应的速度，你可以根据速度判断是否需要进行折叠等一系列的操作，你要确定响应这个方法的话，返回true。</p>
+<ul>
+<li>参数4&#x2F;参数5：代表相应的速度</li>
+</ul>
+</li>
+<li><p>onStopNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, int type) 停止滚动的时候回调的方法。当你不去响应Fling的时候会直接回调这个方法。在这里可以做一些清理工作。或者其他的内容。。。</p>
+</li>
+<li><p>onLayoutChild(CoordinatorLayout parent, View child, int layoutDirection) 确定子View位置的方法，这个方法可以重新定义子View的位置(这里明确是设置behavior的那个View哦),例如下面这样</p>
+<ul>
+<li>ViewCompat#LAYOUT_DIRECTION_LTR 视图方向从左到右</li>
+<li>ViewCompat#LAYOUT_DIRECTION_RTL 视图方向从优到左</li>
+</ul>
+</li>
+</ul>
+<h2 id="CoordinatorLayout下嵌套滑动原理"><a href="#CoordinatorLayout下嵌套滑动原理" class="headerlink" title="CoordinatorLayout下嵌套滑动原理"></a>CoordinatorLayout下嵌套滑动原理</h2><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115051276.png" alt="image-20220806115051276"></p>
+<blockquote>
+<p>CoordinatorLayout实现了NestedScrollingParent2接口。那么当事件(scroll或fling)产生后，内部实现了NestedScrollingChild接口的子控件会将事件分发给CoordinatorLayout，CoordinatorLayout又会将事件传递给所有的Behavior中实现子控件的嵌套滑动。</p>
+</blockquote>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806142237581.png" alt="image-20220806142237581"></p>
+<blockquote>
+<p>相对于NestedScrollView机制（参数角色只有子控件和父控件），CoordinatorLayout中的交互角色玩出了新高度，在CoordinatorLayout下的子控件可以与多个兄弟控件进行交互。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115109848.png" alt="image-20220806115109848"></p>
+</blockquote>
+<p>大家可以看一下整个事件的流程图</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806144653508.png" alt="image-20220806144653508"></p>
+<p><strong>浅谈View的生命周期</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115156782.png" alt="image-20220806115156782"></p>
+<blockquote>
+<p>层级关系：activity-&gt;window-&gt;view<br>LayoutInflater.inflate将view解析出来<br>在onFinishInflate阶段add到content中，content属于DecorView<br>在Activity中通过attach方法new一个PhoneWindow<br>在resume阶段通过makevisible方法PhoneWindow.addView(DecorView)<br>再回调onAttachToWindow，然后已经一系列方法（包括setView-&gt;WMS…开始绘制)才呈现出View</p>
+</blockquote>
+<h2 id="源码实现"><a href="#源码实现" class="headerlink" title="源码实现"></a>源码实现</h2><p>下面是截取的重要源码截图</p>
+<p><strong>ViewTreeObserver介绍</strong></p>
+<blockquote>
+<p>ViewTreeObserver注册一个观察者来监听视图树，当是图书的布局、视图树的焦点、视图将要绘制、视图滚动等发生改变时，ViewTreeObserver都会收到通知，ViewTreeObsrver不能被实例化，可以调用，View.getViewTreeObserver()来获得</p>
+</blockquote>
+<blockquote>
+<p>dispatchOnOreDraw():通知观察者绘制即将开始，如果其中的某个观察者返回true，那么绘制会取消，并且重新安排绘制，如果想在View Layout或View hierarchy还未依附到Window时，或者在View处于CONE状态时强制绘制，可以手动调用这个方法。<br>通过ViewTreeObserver添加绘制监听</p>
+</blockquote>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115229067.png" alt="image-20220806115229067"></p>
+<p>注意，这里不是<code>getChildAt()</code>而是<code>mDependencySortedChildren.get()</code>，因为mDependencySortedChildren在这里是一个特殊的集合，因为CoordinatorLayout管理着多个子View，并且子View之间还存在依赖关系，所以还利用了有向无环图来记录View的依赖关系。只需理解原因即可，这里不用深究，否则会陷到坑里面去。<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115313761.png" alt="image-20220806115313761"><br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115333029.png" alt="image-20220806115333029"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115712870.png" alt="image-20220806115712870"></p>
+<p>Behavior在哪里被实例化？<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115344751.png" alt="image-20220806115344751"></p>
+<p>如果自定义ViewGroup并且需要提供一些特殊的属性给子View，那么就需要重写LayoutParams</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115427736.png" alt="image-20220806115427736"><br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115502591.png" alt="image-20220806115444264"></p>
+<p><code>HierarchyChangeListener</code>回调监听，当childView添加与删除时调用</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115502591.png" alt="image-20220806115502591"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115532076.png" alt="image-20220806115532076"></p>
+<p>前面提到了mDependencySortedChildren，那么mDependencySortedChildren在哪初始化呢？</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115554255.png" alt="image-20220806115554255"><br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115611892.png" alt="image-20220806115611892"><br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115633713.png" alt="image-20220806115633713"></p>
+<h2 id="Demo"><a href="#Demo" class="headerlink" title="Demo"></a>Demo</h2><p><strong>效果展示</strong></p>
+<p>这是利用Behavior实现的嵌套滑动效果，上滑时顶部会隐藏，往下滑时顶部又会回显出来</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%BD%95%E5%88%B6_2022_08_06_15_07_40_12.gif" alt="录制_2022_08_06_15_07_40_12"></p>
+<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">public <span class="keyword">class</span> SampleHeaderBehavior extends CoordinatorLayout.Behavior&lt;TextView&gt; &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">int</span> mOffsetTopAndBottom;</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">int</span> mLayoutTop;</span><br><span class="line">    public <span class="constructor">SampleHeaderBehavior()</span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    public <span class="constructor">SampleHeaderBehavior(Context <span class="params">context</span>, AttributeSet <span class="params">attrs</span>)</span>&#123;</span><br><span class="line">        super(context,attrs);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean on<span class="constructor">LayoutChild(@NonNull CoordinatorLayout <span class="params">parent</span>, @NonNull TextView <span class="params">child</span>, <span class="params">int</span> <span class="params">layoutDirection</span>)</span> &#123;</span><br><span class="line">        parent.on<span class="constructor">LayoutChild(<span class="params">child</span>,<span class="params">layoutDirection</span>)</span>;</span><br><span class="line">        mLayoutTop = child.get<span class="constructor">Top()</span>;</span><br><span class="line">        return <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean on<span class="constructor">StartNestedScroll(@NonNull CoordinatorLayout <span class="params">coordinatorLayout</span>, @NonNull TextView <span class="params">child</span>, @NonNull View <span class="params">directTargetChild</span>, @NonNull View <span class="params">target</span>, <span class="params">int</span> <span class="params">axes</span>, <span class="params">int</span> <span class="params">type</span>)</span> &#123;</span><br><span class="line">        return <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void on<span class="constructor">NestedPreScroll(@NonNull CoordinatorLayout <span class="params">coordinatorLayout</span>, @NonNull TextView <span class="params">child</span>, @NonNull View <span class="params">target</span>, <span class="params">int</span> <span class="params">dx</span>, <span class="params">int</span> <span class="params">dy</span>, @NonNull <span class="params">int</span>[] <span class="params">consumed</span>, <span class="params">int</span> <span class="params">type</span>)</span> &#123;</span><br><span class="line">        <span class="built_in">int</span> consumedy = <span class="number">0</span>;<span class="comment">//记录消费的距离</span></span><br><span class="line">        <span class="built_in">int</span> offset = mOffsetTopAndBottom - dy;</span><br><span class="line">        <span class="comment">//因为offset是带方向的，这里获取到最大可滑动距离需要在前面添加负号</span></span><br><span class="line">        <span class="built_in">int</span> minOffset = -get<span class="constructor">ChildScrollRange(<span class="params">child</span>)</span>;</span><br><span class="line">        <span class="built_in">int</span> maxOffset = <span class="number">0</span>;</span><br><span class="line">        offset = offset&lt;minOffset? minOffset:(<span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>min(offset, maxOffset));</span><br><span class="line">        <span class="module-access"><span class="module"><span class="identifier">ViewCompat</span>.</span></span>offset<span class="constructor">TopAndBottom(<span class="params">child</span>,<span class="params">offset</span>-(<span class="params">child</span>.<span class="params">getTop</span>()</span>-mLayoutTop));</span><br><span class="line">        consumedy = mOffsetTopAndBottom - offset;</span><br><span class="line">        <span class="comment">//将本次滑动到的位置记录下来</span></span><br><span class="line">        mOffsetTopAndBottom = offset;</span><br><span class="line">        consumed<span class="literal">[<span class="number">1</span>]</span> = consumedy;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//获取childView最大可滑动距离</span></span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">int</span> get<span class="constructor">ChildScrollRange(View <span class="params">childView</span>)</span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (childView==null)&#123;</span><br><span class="line">            return <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        return childView.get<span class="constructor">Height()</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">------------------------------------------------------------------------------------------------------------</span><br><span class="line">public <span class="keyword">class</span> ScrollerBehavior extends CoordinatorLayout.Behavior&lt;RecyclerView&gt; &#123;</span><br><span class="line">    public <span class="constructor">ScrollerBehavior()</span> &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public <span class="constructor">ScrollerBehavior(Context <span class="params">context</span>, AttributeSet <span class="params">attrs</span>)</span> &#123;</span><br><span class="line">        super(context, attrs);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean layout<span class="constructor">DependsOn(@NonNull CoordinatorLayout <span class="params">parent</span>, @NonNull RecyclerView <span class="params">child</span>, @NonNull View <span class="params">dependency</span>)</span> &#123;</span><br><span class="line">        return dependency instanceof TextView;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean on<span class="constructor">DependentViewChanged(@NonNull CoordinatorLayout <span class="params">parent</span>, @NonNull RecyclerView <span class="params">child</span>, @NonNull View <span class="params">dependency</span>)</span> &#123;</span><br><span class="line">        <span class="module-access"><span class="module"><span class="identifier">ViewCompat</span>.</span></span>offset<span class="constructor">TopAndBottom(<span class="params">child</span>,<span class="params">dependency</span>.<span class="params">getBottom</span>()</span>-child.get<span class="constructor">Top()</span>);</span><br><span class="line">        return <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<p>上面demo其实是对前面提到的嵌套滑动方法的实践。而这个例子才是对依赖与被依赖组件关系的效果展示，红色方块是被依赖方，而“跟随兄弟”和变色兄弟都是依赖方，会根据红色方块的位置变化而变化。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%BD%95%E5%88%B6_2022_08_06_15_09_45_364.gif" alt="录制_2022_08_06_15_09_45_364"></p>
+<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">public <span class="keyword">class</span> DependedView extends View &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">float</span> mLastX;</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">float</span> mLastY;</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">int</span> mDragSlop;</span><br><span class="line">    public <span class="constructor">DependedView(Context <span class="params">context</span>, <span class="params">int</span> <span class="params">mDragSlop</span>)</span> &#123;</span><br><span class="line">        super(context);</span><br><span class="line">        this.mDragSlop = mDragSlop;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public <span class="constructor">DependedView(Context <span class="params">context</span>, @Nullable AttributeSet <span class="params">attrs</span>)</span> &#123;</span><br><span class="line">        super(context, attrs);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public <span class="constructor">DependedView(Context <span class="params">context</span>, @Nullable AttributeSet <span class="params">attrs</span>, <span class="params">int</span> <span class="params">defStyleAttr</span>)</span> &#123;</span><br><span class="line">        super(context, attrs, defStyleAttr);</span><br><span class="line">        mDragSlop = <span class="module-access"><span class="module"><span class="identifier">ViewConfiguration</span>.</span></span>get(context).get<span class="constructor">ScaledTouchSlop()</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    @Override</span><br><span class="line">    public boolean on<span class="constructor">TouchEvent(MotionEvent <span class="params">event</span>)</span> &#123;</span><br><span class="line">        <span class="built_in">int</span> action = event.get<span class="constructor">Action()</span>;</span><br><span class="line">        switch (action) &#123;</span><br><span class="line">            case MotionEvent.ACTION_DOWN:</span><br><span class="line">                mLastX = event.get<span class="constructor">X()</span>;</span><br><span class="line">                mLastY = event.get<span class="constructor">Y()</span>;</span><br><span class="line">                break;</span><br><span class="line"></span><br><span class="line">            case MotionEvent.ACTION_MOVE:</span><br><span class="line">                <span class="built_in">int</span> dx = (<span class="built_in">int</span>) (event.get<span class="constructor">X()</span> - mLastX);</span><br><span class="line">                <span class="built_in">int</span> dy = (<span class="built_in">int</span>) (event.get<span class="constructor">Y()</span> - mLastY);</span><br><span class="line">                <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>abs(dx) &gt; mDragSlop<span class="operator"> || </span><span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>abs(dy) &gt; mDragSlop) &#123;</span><br><span class="line">                    <span class="module-access"><span class="module"><span class="identifier">ViewCompat</span>.</span></span>offset<span class="constructor">TopAndBottom(<span class="params">this</span>, <span class="params">dy</span>)</span>;</span><br><span class="line">                    <span class="module-access"><span class="module"><span class="identifier">ViewCompat</span>.</span></span>offset<span class="constructor">LeftAndRight(<span class="params">this</span>, <span class="params">dx</span>)</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                mLastX = event.get<span class="constructor">X()</span>;</span><br><span class="line">                mLastY = event.get<span class="constructor">Y()</span>;</span><br><span class="line">                break;</span><br><span class="line"></span><br><span class="line">            default:</span><br><span class="line">                break;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">------------------------------------------------------------------------------------------------------------</span><br><span class="line">public <span class="keyword">class</span> BrotherChameleonBehavior extends CoordinatorLayout.Behavior&lt;View&gt; &#123;</span><br><span class="line">    <span class="keyword">private</span> ArgbEvaluator mArgbEvaluator = <span class="keyword">new</span> <span class="constructor">ArgbEvaluator()</span>;</span><br><span class="line">    public <span class="constructor">BrotherChameleonBehavior(Context <span class="params">context</span>, AttributeSet <span class="params">attrs</span>)</span> &#123;</span><br><span class="line">        super(context, attrs);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean layout<span class="constructor">DependsOn(@NonNull CoordinatorLayout <span class="params">parent</span>, @NonNull View <span class="params">child</span>, @NonNull View <span class="params">dependency</span>)</span> &#123;</span><br><span class="line">        return dependency instanceof DependedView;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean on<span class="constructor">DependentViewChanged(@NonNull CoordinatorLayout <span class="params">parent</span>, @NonNull View <span class="params">child</span>, @NonNull View <span class="params">dependency</span>)</span> &#123;</span><br><span class="line">        <span class="built_in">int</span> color = (<span class="built_in">int</span>)mArgbEvaluator.evaluate(dependency.get<span class="constructor">Y()</span>/parent.get<span class="constructor">Height()</span>, Color.WHITE,Color.BLACK);</span><br><span class="line">        child.set<span class="constructor">BackgroundColor(<span class="params">color</span>)</span>;</span><br><span class="line">        return <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">------------------------------------------------------------------------------------------------------------</span><br><span class="line">public <span class="keyword">class</span> BrotherFollowBehavior extends CoordinatorLayout.Behavior&lt;View&gt; &#123;</span><br><span class="line">    public <span class="constructor">BrotherFollowBehavior(Context <span class="params">context</span>, AttributeSet <span class="params">attrs</span>)</span> &#123;</span><br><span class="line">        super(context, attrs);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean layout<span class="constructor">DependsOn(CoordinatorLayout <span class="params">parent</span>, View <span class="params">child</span>, View <span class="params">dependency</span>)</span> &#123;</span><br><span class="line">        return dependency instanceof DependedView;</span><br><span class="line">    &#125;</span><br><span class="line">    @Override</span><br><span class="line">    public boolean on<span class="constructor">DependentViewChanged(CoordinatorLayout <span class="params">parent</span>, View <span class="params">child</span>, View <span class="params">dependency</span>)</span> &#123;</span><br><span class="line">        child.set<span class="constructor">Y(<span class="params">dependency</span>.<span class="params">getBottom</span>()</span> + <span class="number">50</span>);</span><br><span class="line">        child.set<span class="constructor">X(<span class="params">dependency</span>.<span class="params">getX</span>()</span>);</span><br><span class="line">        return <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>用好Behavior对我们做好看的UI效果有很大的帮助，毕竟NestedScrollParent和NestedScrollChild也只能实现两个组件之间的嵌套关系，而Behavior能够实现一对多的嵌套关系。这节内容主要是对CoordinatorLayout的介绍以及只是对自定义Behavior的浅尝试，后面小编将写一篇真正意义的自定义Behavior的Demo介绍与实现。</p>
+<p><a href="https://github.com/gun-ctrl/CoordanatorLayout">代码链接</a></p>
+]]></content>
+      <categories>
+        <category>高级UI</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Android运行时权限</title>
+    <url>/2022/09/13/Android%E8%BF%90%E8%A1%8C%E6%97%B6%E6%9D%83%E9%99%90/</url>
+    <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>我们在应用开发中如果需要联网就需要在<code>AndroidManifest.xml</code>文件中添加网络访问权限。在我们新安装应用时，往往会弹出提示框问我们是否允许系统获取定位、读取联系人、读取短信等权限。那这些权限有什么用？区别是什么？为什么会有运行时权限这一说法……下面让小编来一一梳理并解答。</p>
+<h2 id="运行时权限"><a href="#运行时权限" class="headerlink" title="运行时权限"></a>运行时权限</h2><blockquote>
+<p> Android的权限机制并不是什么新鲜事物，从系统的第一个版本开始就已经存在了。但其实之前Android的权限机制在保护安全和隐私等方面起到的作用十分有限，尤其是一些大家离不开的常用软件，非常容易“店大欺客”。为此，Android开发团队在Android6.0系统中引入了运行时权限这个功能，从而更好地保护了用户的安全和隐私。</p>
+</blockquote>
+<h2 id="Android权限机制详解"><a href="#Android权限机制详解" class="headerlink" title="Android权限机制详解"></a>Android权限机制详解</h2><p>如下，监听开机广播需要开启广播接收的权限：</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220913165504245.png" alt="image-20220913165504245"></p>
+<p>因为监听开机广播涉及了用户设备的安全，因此必须在<code>AndroidManifest.xml</code>文件中加入权限声明，否则我们的程序就会崩溃。</p>
+<p>那么问题来了，加入了这句权限声明后，对于用户来说到底有什么影响呢？为什么这样就可以保护设备的安全了呢？</p>
+<p>其实用户主要在两方面得到保护。一方面，如果用户在低于Android6.0系统的设备商安装该程序，会在安装界面弹出一连串提示。这样用户就可以知晓该程序一共申请了哪些权限，从而决定是否安装这个程序。另一方面，用户可以随时在应用程序管理界面查看任意一个程序的权限申请情况。这样该程序申请的权限就尽收眼底，什么都瞒不过用户，以此保证应用程序不会出现滥用权限的情况。</p>
+<p>但是，很多时候我们离不开的常用软件普遍存在滥用权限的情况，不管到底有没有用得到，反正先申请了再说。</p>
+<blockquote>
+<p>考虑到上述问题，Android6.0以后加入了动态申请权限功能。但是，如果安装一个应用需要不停地授权很多权限，就很繁琐，用户体验极差。那么就将权限进行了划分——普通权限与危险权限。普通权限会默认开启，而危险权限需要用户进行授权。</p>
+</blockquote>
+<h2 id="危险权限"><a href="#危险权限" class="headerlink" title="危险权限"></a>危险权限</h2><p>下面列出Android危险权限，除了这些剩余的都是普通权限。</p>
+<table>
+<thead>
+<tr>
+<th>权限组名</th>
+<th>权限名</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CALENDAR（日历）</td>
+<td>READ_CALENDAR、WRITE_CALENDAR</td>
+</tr>
+<tr>
+<td>CAMERA（相机）</td>
+<td>CAMERA、READ_CONTACTS</td>
+</tr>
+<tr>
+<td>CONTACTS（联系人）</td>
+<td>WRITE_CONTACTS、GET_ACCOUNTS</td>
+</tr>
+<tr>
+<td>LOCATION（位置）</td>
+<td>ACCESS_FINE_LOCATION、ACCESS_COARSE_LOCATION</td>
+</tr>
+<tr>
+<td>MICROPHONE（麦克风）</td>
+<td>RECORD_AUDIO、 READ_PHONE_STATE、CALL_PHONE、ERAD_CALL_LOG</td>
+</tr>
+<tr>
+<td>PHONE（手机）</td>
+<td>WRITE_CALL_LOG、ADD_VOICEMAIL、USE_SIP、PROCESS_OUTGOING_CALLS</td>
+</tr>
+<tr>
+<td>SENSORS（传感器）</td>
+<td>BODY_SENSORS、 SEND_SMS、RECEIVE_SMS</td>
+</tr>
+<tr>
+<td>SMS（短信）</td>
+<td>READ_SMS、RECEIVE_WAP_PUSH、RECEIVE_MMS</td>
+</tr>
+<tr>
+<td>STORAGE（存储卡）</td>
+<td>READ_EXTERNAL_STORAGE、WRITE_EXTERNAL_STORAGE</td>
+</tr>
+</tbody></table>
+<p>这张表看起来不怎么轻松，因为里面的权限不都是能接触到的。不过没有关系，你不需要了解表格中每个权限的作用，只需要把它当成一个参照表来看就行了。每当需要使用一个权限时，可以查表，如果该权限出现在这张表中，那么就需要动态申请权限。</p>
+<p>另外注意，表格中每个危险权限都属于一个权限组，我们在进行运行时权限处理时使用的是权限名。原则上，用户一旦同意了某个权限申请之后，同组的其它权限都会被系统自动开启。</p>
+<p><strong>特别注意</strong>：不要基于此规则来实现任何逻辑，因为Android系统随时有可能调整权限的分组。</p>
+<h2 id="在程序运行时申请权限"><a href="#在程序运行时申请权限" class="headerlink" title="在程序运行时申请权限"></a>在程序运行时申请权限</h2><p><strong>运行效果</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%BD%95%E5%88%B6_2022_09_13_17_51_50_995.gif" alt="录制_2022_09_13_17_51_50_995"></p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MainActivity</span> : <span class="type">AppCompatActivity</span></span>() &#123;</span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span>&#123;</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">val</span> REQUEST_CODE = <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">lateinit</span> <span class="keyword">var</span> binding:ActivityMainBinding;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onCreate</span><span class="params">(savedInstanceState: <span class="type">Bundle</span>?)</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState)</span><br><span class="line">        binding = ActivityMainBinding.inflate(layoutInflater)</span><br><span class="line">        setContentView(binding.root)</span><br><span class="line">        binding.Call.setOnClickListener &#123;</span><br><span class="line">            <span class="keyword">if</span> (ContextCompat.checkSelfPermission(<span class="keyword">this</span>,Manifest.permission.CALL_PHONE)</span><br><span class="line">            != PackageManager.PERMISSION_GRANTED)&#123;</span><br><span class="line">                ActivityCompat.requestPermissions(</span><br><span class="line">                    <span class="keyword">this</span>,</span><br><span class="line">                    arrayOf(Manifest.permission.CALL_PHONE)</span><br><span class="line">                , REQUEST_CODE)</span><br><span class="line">            &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                call()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">onRequestPermissionsResult</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        requestCode: <span class="type">Int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        permissions: <span class="type">Array</span>&lt;<span class="type">out</span> <span class="type">String</span>&gt;,</span></span></span><br><span class="line"><span class="params"><span class="function">        grantResults: <span class="type">IntArray</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span> &#123;</span><br><span class="line">        <span class="keyword">super</span>.onRequestPermissionsResult(requestCode, permissions, grantResults)</span><br><span class="line">        <span class="keyword">when</span>(requestCode)&#123;</span><br><span class="line">            REQUEST_CODE -&gt; &#123;</span><br><span class="line">                <span class="keyword">if</span> (grantResults.isNotEmpty() &amp;&amp; grantResults[<span class="number">0</span>] == PackageManager.PERMISSION_GRANTED)&#123;</span><br><span class="line">                    call()</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    Toast.makeText(<span class="keyword">this</span>,<span class="string">&quot;You denied the permission&quot;</span>,Toast.LENGTH_LONG).show()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">call</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">val</span> intent = Intent(Intent.ACTION_CALL)</span><br><span class="line">            intent.<span class="keyword">data</span> = Uri.parse(<span class="string">&quot;tel:10086&quot;</span>)</span><br><span class="line">            startActivity(intent)</span><br><span class="line">        &#125;<span class="keyword">catch</span> (e:SecurityException)&#123;</span><br><span class="line">            e.printStackTrace()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面的代码覆盖了运行时权限的完整流程，下面我们来具体分析一下。</p>
+<ul>
+<li><p>第一步就是要先判断用户是不是已经给我们进行了授权，借助的是<code>ContextCompat.checkSelfPermission()</code>方法接收两个参数：</p>
+<ul>
+<li>Context</li>
+<li>具体的权限名，比如打电话的权限名<code>Manifest.permission.CALL_PHONE</code></li>
+</ul>
+<p>然后我们使用方法的返回值与<code>PackageManager.PERMISSION_GRANTED</code>做比较，相等就说明用户已经授权，不等就表示用户没有权限。</p>
+</li>
+<li><p>如果已经授权了，直接执行拨打电话的逻辑就可以了，这里我们把拨打电话的逻辑封装到call()方法中。如果没有授权的话，则需要调用<code>ActivityCompat.requestPermissions()</code>方法向用户申请权限。<code>requestPermissions()</code>接收3个参数：</p>
+<ul>
+<li>第一个参数要求是Activity实例</li>
+<li>第二个参数是String数组，我们把要申请的权限名放到数组中即可</li>
+<li>第三个要求是请求码，只要是唯一值就可以</li>
+</ul>
+</li>
+<li><p>调用完<code>requestPermissions()</code>方法之后，系统会弹出一个权限申请的对话框，用户可以选择同意我们的权限申请。无论是哪种结果，最终都会回调 <code>onRequestPermissionsResult()</code>方法中，而授权的结果则会封装在<code>grantResults</code>参数中。这里我们只需要判断一下最后的授权结果，如果用户同意的话，就调用call()方法拨打电话；如果用户拒绝的话，我们只能放弃操作，并且弹出一条失败的提示。</p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Android随笔</category>
+      </categories>
+      <tags>
+        <tag>运行时权限</tag>
       </tags>
   </entry>
   <entry>
@@ -1124,132 +1250,6 @@
 ]]></content>
       <categories>
         <category>Java筑基</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>CoordinatorLayout原理解析与Behavior</title>
-    <url>/2022/08/14/CoordinatorLayout%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90%E4%B8%8EBehavior/</url>
-    <content><![CDATA[<h2 id="CoordinatorLayout的功能"><a href="#CoordinatorLayout的功能" class="headerlink" title="CoordinatorLayout的功能"></a>CoordinatorLayout的功能</h2><p><strong>事先警示：</strong>CoordinatorLayout只继承了NestedScrollParent，也就是说它只能做顶层父View，别踩坑！！！</p>
-<ol>
-<li><p>处理子控件之间依赖下的交互</p>
-</li>
-<li><p>处理子控件之间的嵌套滑动</p>
-</li>
-<li><p>处理子控件的测量与布局</p>
-</li>
-<li><p>处理子控件的事件拦截与响应</p>
-<p>以上四个功能，都建立与CoordinatorLayout中提供的一个叫做Behavior的“插件”之上。Behavior内部也提供了相应方法来对应这四个不同的功能。<br>Behavior内部集成了上述四种功能对应的方法，实现解耦。</p>
-</li>
-</ol>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806114929932.png" alt="image-20220806114929932"></p>
-<p><strong>什么是Behavior？</strong><br>可以把Behavior理解成插件，当我们的组件想实现什么样的功能的时候就使用对应的Behavior，也就是说很多种不同功能的Behavior，当然也可以自定义Behavior。</p>
-<h2 id="CoordinatorLayout下依赖交互原理"><a href="#CoordinatorLayout下依赖交互原理" class="headerlink" title="CoordinatorLayout下依赖交互原理"></a>CoordinatorLayout下依赖交互原理</h2><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115038051.png" alt="image-20220806115038051"></p>
-<blockquote>
-<p>当CoordinatorLayout中子控件dependency的位置、大小发生变化的时候，那么在CoordinatorLayout内部会通知所有依赖depandency的控件，并调用对应声明的Behavior，告知其依赖的dependency发生变化。<br>那么如何判断依赖-&gt;layoutDependsOn<br>接收到通知后如何处理-&gt;onDependentViewChanged&#x2F;onDependentViewRemoved<br>这些都是由Behavior来处理。</p>
-</blockquote>
-<h3 id="主要方法介绍"><a href="#主要方法介绍" class="headerlink" title="主要方法介绍"></a>主要方法介绍</h3><ul>
-<li><p><strong>layoutDependsOn(CoordinatorLayout parent, View child, View dependency)</strong>  表示是否给应用了Behavior 的View 指定一个依赖的布局</p>
-<ul>
-<li>参数1：coordinatorlayout对象</li>
-<li>参数2：child 被观察的View</li>
-<li>参数3：依赖变化的View（被观察的View）</li>
-</ul>
-</li>
-<li><p><strong>onDependentViewChanged(CoordinatorLayout parent, View child, View dependency)</strong> 当依赖的View发生变化的时候hi掉的方法</p>
-</li>
-<li><p><strong>onStartNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View directTargetChild, @NonNull View target, int axes, int type)</strong> 当用户手指按下的时候，你是否要处理这次操作。当你确定要处理这次操作的时候，返回true；如果返回false的时候，就不会去响应后面的回调事件了。你想怎么滑就怎么话，我都不做处理。这里的(axes)滚动方向很重要，可以通过此参数判断滚动方向！</p>
-<ul>
-<li>参数3：直接目标，相当于能滑动的控件</li>
-<li>参数4：观察的View</li>
-<li>参数5：这个可以简单理解为滚动方向<ul>
-<li>ViewCompat#SCROLL_AXIS_HORIZONTAL 水平方向</li>
-<li>ViewCompat#SCROLL_AXIS_VERTICAL 竖直方向</li>
-</ul>
-</li>
-<li>参数6：这个参数是之后有的，如果你输入的类型不是TYPE_TOUCH那么就不会相应这个滚动</li>
-</ul>
-</li>
-<li><p><strong>onNestedScrollAccepted(@NonNull CoordinatorLayout coordinatorLayout, @NonNull V child, @NonNull View directTargetChild, @NonNull View target, @ScrollAxis int axes, @NestedScrollType int type)</strong> 当onStartNestedScroll准备处理这次滑动的时候(返回true的时候)，回调这个方法。可以在这个方法中做一些响应的准备工作！</p>
-</li>
-<li><p><strong>onNestedPreScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, int dx, int dy, @NonNull int[] consumed, @NestedScrollType int type)</strong> 当滚动开始执行的时候回调这个方法。</p>
-<ul>
-<li>参数4&#x2F;参数5：用户x&#x2F;y轴滚动的距离(注意这里是每一次都回调的啊！！！)</li>
-<li>参数6：处理滚动的距离的参数，内部维护着输出距离，假设用户滑动了100px,child 做了90px的位移，你需要把consumed［1］的值改成90，这样coordinatorLayout就能知道只处理剩下的10px的滚动。其中consumed[0]代表x轴、consumed[1]代表y轴。可能你不理解这个问题，换个形象点的比喻，比如你开发某一个功能，但是你只会其中的90%那么怎么办呢？不能就不管了。好你找到了你的同事或者老大，让他去完成剩下的10%。这样问题就完美的解决了，是一个概念的！</li>
-</ul>
-</li>
-<li><p><strong>onNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, int dxConsumed, int dyConsumed, int dxUnconsumed, int dyUnconsumed, int type)</strong> 上面这个方法结束的时候，coordinatorLayout处理剩下的距离，比如还剩10px。但是coordinatorLayout发现滚动2px的时候就已经到头了。那么结束其滚动，调用该方法，并将coordinatorLayout处理剩下的像素数作为参<code>(dxUnconsumed、dyUnconsumed)</code>传过来，这里传过来的就是 8px。参数中还会有coordinatorLayout处理过的像素数（dxConsumed、dyConsumed）。老大开始处理剩下的距离了！这个方法主要处理一些越界后的滚动。还是不懂对吧！还拿你们老大做比喻：比如上面还剩 10%的工作，这时老大处理了2%后发现已经可以上线了，于是老大结束了工作，并将处理剩下的内容（dxUnconsumed、dyUnconsumed）纪录下来，告诉你。老大处理了的内容（dxConsumed、dyConsumed）也告诉了你。</p>
-<ul>
-<li>参数4&#x2F;参数5：当没有滚动到顶部或者底部的时候，x&#x2F;y轴的滚动距离</li>
-<li>参数6&#x2F;参数7：当滚动到顶部或者底部的时候，x&#x2F;y轴的滚动距离</li>
-</ul>
-</li>
-<li><p>onNestedPreFling(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, float velocityX, float velocityY) 当手指松开发生惯性动作之前调用，这里提供了响应的速度，你可以根据速度判断是否需要进行折叠等一系列的操作，你要确定响应这个方法的话，返回true。</p>
-<ul>
-<li>参数4&#x2F;参数5：代表相应的速度</li>
-</ul>
-</li>
-<li><p>onStopNestedScroll(@NonNull CoordinatorLayout coordinatorLayout, @NonNull View child, @NonNull View target, int type) 停止滚动的时候回调的方法。当你不去响应Fling的时候会直接回调这个方法。在这里可以做一些清理工作。或者其他的内容。。。</p>
-</li>
-<li><p>onLayoutChild(CoordinatorLayout parent, View child, int layoutDirection) 确定子View位置的方法，这个方法可以重新定义子View的位置(这里明确是设置behavior的那个View哦),例如下面这样</p>
-<ul>
-<li>ViewCompat#LAYOUT_DIRECTION_LTR 视图方向从左到右</li>
-<li>ViewCompat#LAYOUT_DIRECTION_RTL 视图方向从优到左</li>
-</ul>
-</li>
-</ul>
-<h2 id="CoordinatorLayout下嵌套滑动原理"><a href="#CoordinatorLayout下嵌套滑动原理" class="headerlink" title="CoordinatorLayout下嵌套滑动原理"></a>CoordinatorLayout下嵌套滑动原理</h2><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115051276.png" alt="image-20220806115051276"></p>
-<blockquote>
-<p>CoordinatorLayout实现了NestedScrollingParent2接口。那么当事件(scroll或fling)产生后，内部实现了NestedScrollingChild接口的子控件会将事件分发给CoordinatorLayout，CoordinatorLayout又会将事件传递给所有的Behavior中实现子控件的嵌套滑动。</p>
-</blockquote>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806142237581.png" alt="image-20220806142237581"></p>
-<blockquote>
-<p>相对于NestedScrollView机制（参数角色只有子控件和父控件），CoordinatorLayout中的交互角色玩出了新高度，在CoordinatorLayout下的子控件可以与多个兄弟控件进行交互。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115109848.png" alt="image-20220806115109848"></p>
-</blockquote>
-<p>大家可以看一下整个事件的流程图</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806144653508.png" alt="image-20220806144653508"></p>
-<p><strong>浅谈View的生命周期</strong></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115156782.png" alt="image-20220806115156782"></p>
-<blockquote>
-<p>层级关系：activity-&gt;window-&gt;view<br>LayoutInflater.inflate将view解析出来<br>在onFinishInflate阶段add到content中，content属于DecorView<br>在Activity中通过attach方法new一个PhoneWindow<br>在resume阶段通过makevisible方法PhoneWindow.addView(DecorView)<br>再回调onAttachToWindow，然后已经一系列方法（包括setView-&gt;WMS…开始绘制)才呈现出View</p>
-</blockquote>
-<h2 id="源码实现"><a href="#源码实现" class="headerlink" title="源码实现"></a>源码实现</h2><p>下面是截取的重要源码截图</p>
-<p><strong>ViewTreeObserver介绍</strong></p>
-<blockquote>
-<p>ViewTreeObserver注册一个观察者来监听视图树，当是图书的布局、视图树的焦点、视图将要绘制、视图滚动等发生改变时，ViewTreeObserver都会收到通知，ViewTreeObsrver不能被实例化，可以调用，View.getViewTreeObserver()来获得</p>
-</blockquote>
-<blockquote>
-<p>dispatchOnOreDraw():通知观察者绘制即将开始，如果其中的某个观察者返回true，那么绘制会取消，并且重新安排绘制，如果想在View Layout或View hierarchy还未依附到Window时，或者在View处于CONE状态时强制绘制，可以手动调用这个方法。<br>通过ViewTreeObserver添加绘制监听</p>
-</blockquote>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115229067.png" alt="image-20220806115229067"></p>
-<p>注意，这里不是<code>getChildAt()</code>而是<code>mDependencySortedChildren.get()</code>，因为mDependencySortedChildren在这里是一个特殊的集合，因为CoordinatorLayout管理着多个子View，并且子View之间还存在依赖关系，所以还利用了有向无环图来记录View的依赖关系。只需理解原因即可，这里不用深究，否则会陷到坑里面去。<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115313761.png" alt="image-20220806115313761"><br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115333029.png" alt="image-20220806115333029"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115712870.png" alt="image-20220806115712870"></p>
-<p>Behavior在哪里被实例化？<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115344751.png" alt="image-20220806115344751"></p>
-<p>如果自定义ViewGroup并且需要提供一些特殊的属性给子View，那么就需要重写LayoutParams</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115427736.png" alt="image-20220806115427736"><br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115502591.png" alt="image-20220806115444264"></p>
-<p><code>HierarchyChangeListener</code>回调监听，当childView添加与删除时调用</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115502591.png" alt="image-20220806115502591"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115532076.png" alt="image-20220806115532076"></p>
-<p>前面提到了mDependencySortedChildren，那么mDependencySortedChildren在哪初始化呢？</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115554255.png" alt="image-20220806115554255"><br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115611892.png" alt="image-20220806115611892"><br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220806115633713.png" alt="image-20220806115633713"></p>
-<h2 id="Demo"><a href="#Demo" class="headerlink" title="Demo"></a>Demo</h2><p><strong>效果展示</strong></p>
-<p>这是利用Behavior实现的嵌套滑动效果，上滑时顶部会隐藏，往下滑时顶部又会回显出来</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%BD%95%E5%88%B6_2022_08_06_15_07_40_12.gif" alt="录制_2022_08_06_15_07_40_12"></p>
-<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">public <span class="keyword">class</span> SampleHeaderBehavior extends CoordinatorLayout.Behavior&lt;TextView&gt; &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">int</span> mOffsetTopAndBottom;</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">int</span> mLayoutTop;</span><br><span class="line">    public <span class="constructor">SampleHeaderBehavior()</span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    public <span class="constructor">SampleHeaderBehavior(Context <span class="params">context</span>, AttributeSet <span class="params">attrs</span>)</span>&#123;</span><br><span class="line">        super(context,attrs);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean on<span class="constructor">LayoutChild(@NonNull CoordinatorLayout <span class="params">parent</span>, @NonNull TextView <span class="params">child</span>, <span class="params">int</span> <span class="params">layoutDirection</span>)</span> &#123;</span><br><span class="line">        parent.on<span class="constructor">LayoutChild(<span class="params">child</span>,<span class="params">layoutDirection</span>)</span>;</span><br><span class="line">        mLayoutTop = child.get<span class="constructor">Top()</span>;</span><br><span class="line">        return <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean on<span class="constructor">StartNestedScroll(@NonNull CoordinatorLayout <span class="params">coordinatorLayout</span>, @NonNull TextView <span class="params">child</span>, @NonNull View <span class="params">directTargetChild</span>, @NonNull View <span class="params">target</span>, <span class="params">int</span> <span class="params">axes</span>, <span class="params">int</span> <span class="params">type</span>)</span> &#123;</span><br><span class="line">        return <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void on<span class="constructor">NestedPreScroll(@NonNull CoordinatorLayout <span class="params">coordinatorLayout</span>, @NonNull TextView <span class="params">child</span>, @NonNull View <span class="params">target</span>, <span class="params">int</span> <span class="params">dx</span>, <span class="params">int</span> <span class="params">dy</span>, @NonNull <span class="params">int</span>[] <span class="params">consumed</span>, <span class="params">int</span> <span class="params">type</span>)</span> &#123;</span><br><span class="line">        <span class="built_in">int</span> consumedy = <span class="number">0</span>;<span class="comment">//记录消费的距离</span></span><br><span class="line">        <span class="built_in">int</span> offset = mOffsetTopAndBottom - dy;</span><br><span class="line">        <span class="comment">//因为offset是带方向的，这里获取到最大可滑动距离需要在前面添加负号</span></span><br><span class="line">        <span class="built_in">int</span> minOffset = -get<span class="constructor">ChildScrollRange(<span class="params">child</span>)</span>;</span><br><span class="line">        <span class="built_in">int</span> maxOffset = <span class="number">0</span>;</span><br><span class="line">        offset = offset&lt;minOffset? minOffset:(<span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>min(offset, maxOffset));</span><br><span class="line">        <span class="module-access"><span class="module"><span class="identifier">ViewCompat</span>.</span></span>offset<span class="constructor">TopAndBottom(<span class="params">child</span>,<span class="params">offset</span>-(<span class="params">child</span>.<span class="params">getTop</span>()</span>-mLayoutTop));</span><br><span class="line">        consumedy = mOffsetTopAndBottom - offset;</span><br><span class="line">        <span class="comment">//将本次滑动到的位置记录下来</span></span><br><span class="line">        mOffsetTopAndBottom = offset;</span><br><span class="line">        consumed<span class="literal">[<span class="number">1</span>]</span> = consumedy;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//获取childView最大可滑动距离</span></span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">int</span> get<span class="constructor">ChildScrollRange(View <span class="params">childView</span>)</span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (childView==null)&#123;</span><br><span class="line">            return <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        return childView.get<span class="constructor">Height()</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">------------------------------------------------------------------------------------------------------------</span><br><span class="line">public <span class="keyword">class</span> ScrollerBehavior extends CoordinatorLayout.Behavior&lt;RecyclerView&gt; &#123;</span><br><span class="line">    public <span class="constructor">ScrollerBehavior()</span> &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public <span class="constructor">ScrollerBehavior(Context <span class="params">context</span>, AttributeSet <span class="params">attrs</span>)</span> &#123;</span><br><span class="line">        super(context, attrs);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean layout<span class="constructor">DependsOn(@NonNull CoordinatorLayout <span class="params">parent</span>, @NonNull RecyclerView <span class="params">child</span>, @NonNull View <span class="params">dependency</span>)</span> &#123;</span><br><span class="line">        return dependency instanceof TextView;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean on<span class="constructor">DependentViewChanged(@NonNull CoordinatorLayout <span class="params">parent</span>, @NonNull RecyclerView <span class="params">child</span>, @NonNull View <span class="params">dependency</span>)</span> &#123;</span><br><span class="line">        <span class="module-access"><span class="module"><span class="identifier">ViewCompat</span>.</span></span>offset<span class="constructor">TopAndBottom(<span class="params">child</span>,<span class="params">dependency</span>.<span class="params">getBottom</span>()</span>-child.get<span class="constructor">Top()</span>);</span><br><span class="line">        return <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-
-
-<p>上面demo其实是对前面提到的嵌套滑动方法的实践。而这个例子才是对依赖与被依赖组件关系的效果展示，红色方块是被依赖方，而“跟随兄弟”和变色兄弟都是依赖方，会根据红色方块的位置变化而变化。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/%E5%BD%95%E5%88%B6_2022_08_06_15_09_45_364.gif" alt="录制_2022_08_06_15_09_45_364"></p>
-<figure class="highlight reasonml"><table><tr><td class="code"><pre><span class="line">public <span class="keyword">class</span> DependedView extends View &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">float</span> mLastX;</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">float</span> mLastY;</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">int</span> mDragSlop;</span><br><span class="line">    public <span class="constructor">DependedView(Context <span class="params">context</span>, <span class="params">int</span> <span class="params">mDragSlop</span>)</span> &#123;</span><br><span class="line">        super(context);</span><br><span class="line">        this.mDragSlop = mDragSlop;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public <span class="constructor">DependedView(Context <span class="params">context</span>, @Nullable AttributeSet <span class="params">attrs</span>)</span> &#123;</span><br><span class="line">        super(context, attrs);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public <span class="constructor">DependedView(Context <span class="params">context</span>, @Nullable AttributeSet <span class="params">attrs</span>, <span class="params">int</span> <span class="params">defStyleAttr</span>)</span> &#123;</span><br><span class="line">        super(context, attrs, defStyleAttr);</span><br><span class="line">        mDragSlop = <span class="module-access"><span class="module"><span class="identifier">ViewConfiguration</span>.</span></span>get(context).get<span class="constructor">ScaledTouchSlop()</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    @Override</span><br><span class="line">    public boolean on<span class="constructor">TouchEvent(MotionEvent <span class="params">event</span>)</span> &#123;</span><br><span class="line">        <span class="built_in">int</span> action = event.get<span class="constructor">Action()</span>;</span><br><span class="line">        switch (action) &#123;</span><br><span class="line">            case MotionEvent.ACTION_DOWN:</span><br><span class="line">                mLastX = event.get<span class="constructor">X()</span>;</span><br><span class="line">                mLastY = event.get<span class="constructor">Y()</span>;</span><br><span class="line">                break;</span><br><span class="line"></span><br><span class="line">            case MotionEvent.ACTION_MOVE:</span><br><span class="line">                <span class="built_in">int</span> dx = (<span class="built_in">int</span>) (event.get<span class="constructor">X()</span> - mLastX);</span><br><span class="line">                <span class="built_in">int</span> dy = (<span class="built_in">int</span>) (event.get<span class="constructor">Y()</span> - mLastY);</span><br><span class="line">                <span class="keyword">if</span> (<span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>abs(dx) &gt; mDragSlop<span class="operator"> || </span><span class="module-access"><span class="module"><span class="identifier">Math</span>.</span></span>abs(dy) &gt; mDragSlop) &#123;</span><br><span class="line">                    <span class="module-access"><span class="module"><span class="identifier">ViewCompat</span>.</span></span>offset<span class="constructor">TopAndBottom(<span class="params">this</span>, <span class="params">dy</span>)</span>;</span><br><span class="line">                    <span class="module-access"><span class="module"><span class="identifier">ViewCompat</span>.</span></span>offset<span class="constructor">LeftAndRight(<span class="params">this</span>, <span class="params">dx</span>)</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                mLastX = event.get<span class="constructor">X()</span>;</span><br><span class="line">                mLastY = event.get<span class="constructor">Y()</span>;</span><br><span class="line">                break;</span><br><span class="line"></span><br><span class="line">            default:</span><br><span class="line">                break;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">------------------------------------------------------------------------------------------------------------</span><br><span class="line">public <span class="keyword">class</span> BrotherChameleonBehavior extends CoordinatorLayout.Behavior&lt;View&gt; &#123;</span><br><span class="line">    <span class="keyword">private</span> ArgbEvaluator mArgbEvaluator = <span class="keyword">new</span> <span class="constructor">ArgbEvaluator()</span>;</span><br><span class="line">    public <span class="constructor">BrotherChameleonBehavior(Context <span class="params">context</span>, AttributeSet <span class="params">attrs</span>)</span> &#123;</span><br><span class="line">        super(context, attrs);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean layout<span class="constructor">DependsOn(@NonNull CoordinatorLayout <span class="params">parent</span>, @NonNull View <span class="params">child</span>, @NonNull View <span class="params">dependency</span>)</span> &#123;</span><br><span class="line">        return dependency instanceof DependedView;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean on<span class="constructor">DependentViewChanged(@NonNull CoordinatorLayout <span class="params">parent</span>, @NonNull View <span class="params">child</span>, @NonNull View <span class="params">dependency</span>)</span> &#123;</span><br><span class="line">        <span class="built_in">int</span> color = (<span class="built_in">int</span>)mArgbEvaluator.evaluate(dependency.get<span class="constructor">Y()</span>/parent.get<span class="constructor">Height()</span>, Color.WHITE,Color.BLACK);</span><br><span class="line">        child.set<span class="constructor">BackgroundColor(<span class="params">color</span>)</span>;</span><br><span class="line">        return <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">------------------------------------------------------------------------------------------------------------</span><br><span class="line">public <span class="keyword">class</span> BrotherFollowBehavior extends CoordinatorLayout.Behavior&lt;View&gt; &#123;</span><br><span class="line">    public <span class="constructor">BrotherFollowBehavior(Context <span class="params">context</span>, AttributeSet <span class="params">attrs</span>)</span> &#123;</span><br><span class="line">        super(context, attrs);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean layout<span class="constructor">DependsOn(CoordinatorLayout <span class="params">parent</span>, View <span class="params">child</span>, View <span class="params">dependency</span>)</span> &#123;</span><br><span class="line">        return dependency instanceof DependedView;</span><br><span class="line">    &#125;</span><br><span class="line">    @Override</span><br><span class="line">    public boolean on<span class="constructor">DependentViewChanged(CoordinatorLayout <span class="params">parent</span>, View <span class="params">child</span>, View <span class="params">dependency</span>)</span> &#123;</span><br><span class="line">        child.set<span class="constructor">Y(<span class="params">dependency</span>.<span class="params">getBottom</span>()</span> + <span class="number">50</span>);</span><br><span class="line">        child.set<span class="constructor">X(<span class="params">dependency</span>.<span class="params">getX</span>()</span>);</span><br><span class="line">        return <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>用好Behavior对我们做好看的UI效果有很大的帮助，毕竟NestedScrollParent和NestedScrollChild也只能实现两个组件之间的嵌套关系，而Behavior能够实现一对多的嵌套关系。这节内容主要是对CoordinatorLayout的介绍以及只是对自定义Behavior的浅尝试，后面小编将写一篇真正意义的自定义Behavior的Demo介绍与实现。</p>
-<p><a href="https://github.com/gun-ctrl/CoordanatorLayout">代码链接</a></p>
-]]></content>
-      <categories>
-        <category>高级UI</category>
       </categories>
   </entry>
   <entry>
@@ -1610,7 +1610,7 @@
   </entry>
   <entry>
     <title>Okhttp框架介绍</title>
-    <url>/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/</url>
+    <url>/2023/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/</url>
     <content><![CDATA[<blockquote>
 <p>OkHttp 是由 Square 公司开源的一个高性能 HTTP 客户端，是目前 Java 和 Android 生态中最主流、事实上的网络请求标准库。Android 官方从 Android 4.4 起底层已将 HttpURLConnection 替换为 OkHttp 实现，而当下流行的 Retrofit 网络框架底层也是交由 OkHttp 负责真正的网络收发。</p>
 <p>相比 JDK 自带的 HttpURLConnection 或早期的 Apache HttpClient，OkHttp 具有显著的优势：</p>
@@ -2413,328 +2413,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Android性能优化：APK瘦身</title>
-    <url>/2022/09/15/apk%E7%98%A6%E8%BA%AB/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
-<p>随着业务迭代，APK体积逐渐变大。项目中积累的无用资源，未压缩的图片资源等，都为apk带来了不必要的体积增加，而APK的大小会影响应用加载速度、使用的内存量以及消耗的电量。</p>
-</blockquote>
-<h2 id="了解APK结构"><a href="#了解APK结构" class="headerlink" title="了解APK结构"></a>了解APK结构</h2><p>在讨论如何缩减应用的大小之前，有必要了解下应用APK的结构。APK文件由一个Zip压缩文件组成，其中包含构成应用的所有文件，这些文件包括Java类文件、资源文件和包含已编译资源的文件。</p>
-<p>APK包含以下目录：</p>
-<ul>
-<li><p><code>META-INF/</code>：包含<code>CERT.SF</code>和<code>CERT.RSA</code>签名文件，以及<code>MANIFEST.MF</code>清单文件。</p>
-</li>
-<li><p><code>assets/</code>：包含应用的资源；应用可以使用AssetManager对象检索这些资源。</p>
-</li>
-<li><p><code>res/</code>：包含未编译到<code>resources.arsc</code>中的资源（图片、音视频等）。</p>
-</li>
-<li><p><code>lib/</code>：包含特定于处理器软件层的已编译代码。此目录包含每种平台类型的子目录，如<code>armeabi、armeabi-v7a、arm64-v8a、x86、x86_64</code>和<code>mips</code>。</p>
-</li>
-</ul>
-<p>APK还包含以下文件。在这些文件中，只有AndroidMainfest.xml是必须的。</p>
-<ul>
-<li><p><code>resources.arsc</code>：包含已编译的资源。此文件包含<code>res/values/</code> 文件夹的所有配置中的XML内容、打包工具会提取此XML内容，将其编译为二进制文件格式，并压缩内容、此内容包括语言字符串和格式，以及为直接包括在<code>resources.arsc</code>文件中的内容（例如布局文件和图片）的路径。</p>
-</li>
-<li><p><code>classes.dex</code>：包含以Dalvik&#x2F;ART虚拟机可理解的DEX文件格式编译的类。</p>
-</li>
-<li><p><code>AndroidManifest.xml</code>：包括核心Android清单文件、此文件列出了应用的名称、版本、访问权限和引用的库文件。该文件使用Android的二进制XML格式。</p>
-</li>
-</ul>
-<h2 id="Android-Size-Analyzer（已弃用）"><a href="#Android-Size-Analyzer（已弃用）" class="headerlink" title="Android Size Analyzer（已弃用）"></a>Android Size Analyzer（已弃用）</h2><p>虽然已弃用，不过其提供的缩减策略还是很值得学习的,其实也就是后续介绍的一些方法。</p>
-<p>Android Size Analyzer 工具可轻松地发现和实施多种缩减应用发小的策略。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172318943.png" alt="image-20220915172318943"></p>
-<p>首先在 Android Studio中的插件市场下载安装Android Size Analyzer插件。安装插件后，从菜单栏中依次选择Analyze &gt; Analyze App Size，对当前项目运行应用大小分析。分析了项目后，系统会显示一个工具窗口，其中包含有关如何缩减应用大小的建议。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172348018.png" alt="image-20220915172348018"></p>
-<p>如image转webp的建议</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172447629.png" alt="image-20220915172447629"></p>
-<p>也可以用以下方式转webp</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172459940.png" alt="image-20220915172459940"></p>
-<h2 id="移除未使用资源"><a href="#移除未使用资源" class="headerlink" title="移除未使用资源"></a>移除未使用资源</h2><p>APK瘦身关键就在一个字：删！没用的就删了。</p>
-<h3 id="启用资源缩减"><a href="#启用资源缩减" class="headerlink" title="启用资源缩减"></a>启用资源缩减</h3><p>如果在应用的build.gradle文件中启用了资源缩减：shrinkResources，则Gradle在打包APK时可以自动忽略未使用资源。资源缩减只有在与代码缩减：minifyEnabled配合使用时才能发挥作用。在代码缩减器移除所有不使用的代码后，资源缩减器便可确定应用仍要使用的资源，从而在打包时优化这些资源。</p>
-<p>优化后，并没有将不用的资源文件删除掉，而是将文件内容给优化掉。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172611565.png" alt="image-20220915172611565"></p>
-<p><strong>注意</strong>：开启优化，混淆也在其中，也就是说混淆也会被开启，那么就需要注意一些不能被混淆的资源，比如一些三方库的包</p>
-<p><strong>添加keep：</strong></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172644031.png" alt="image-20220915172644031"></p>
-<p>也可以使用@Keep修饰不混淆的类——哪里不对@Keep哪里</p>
-<h4 id="混淆规则"><a href="#混淆规则" class="headerlink" title="混淆规则"></a>混淆规则</h4><ul>
-<li><p>jni方法不可混淆，因为需要与native方法保持一致；</p>
-</li>
-<li><p>反射用到的类不能混淆（否则反射可能出现问题）；</p>
-</li>
-<li><p>AndroidMainfest中的类不混淆，四大组件和Application的子类和FrameWork层下所有的类默认不会进行混淆；</p>
-</li>
-<li><p>Parceable的子类和Creator静态成员变量不混淆，否则产生Android.os.BadParceableException异常；</p>
-</li>
-<li><p>使用GSON、fastjson等框架时，所写的JSON对象类不混淆，否则无法将JSON解析成对应的对象；</p>
-</li>
-<li><p>使用第三方开源库或者引用其他第三方的SDK包时，需要在混淆文件中加入对应的混淆规则；</p>
-</li>
-<li><p>有用到WebView的JS调用也需要保证写的接口方法不混淆；</p>
-</li>
-<li><p>使用enum类型时需要注意避免以下两个方法混淆，因为enum类的特殊性，以下两个方法会被反射调用</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172907262.png" alt="image-20220915172907262"></p>
-</li>
-</ul>
-<h4 id="关于混淆的语法"><a href="#关于混淆的语法" class="headerlink" title="关于混淆的语法"></a>关于混淆的语法</h4><p><strong>Proguard关键字：</strong></p>
-<table>
-<thead>
-<tr>
-<th>关键字</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>keep</td>
-<td>保留类和类中的成员，防止被混淆或移除</td>
-</tr>
-<tr>
-<td>keepnames</td>
-<td>保留类和类中的成员，防止被混淆，成员没有被引用会被移除</td>
-</tr>
-<tr>
-<td>keepclassmembers</td>
-<td>只保留类中的成员，防止被混淆或移除</td>
-</tr>
-<tr>
-<td>keepclassmembernames</td>
-<td>只保留类中的成员，防止被混淆，成员没有被引用会被移除</td>
-</tr>
-<tr>
-<td>keepclasseswithmembers</td>
-<td>保留类和类中的成员，防止被混淆或移除，保留指名的成员</td>
-</tr>
-<tr>
-<td>keepclasseswithmembernames</td>
-<td>保留类和类中的成员，防止被混淆，保留指名的成员，成员没有引用会被移除</td>
-</tr>
-</tbody></table>
-<p><strong>Proguard通配符</strong></p>
-<table>
-<thead>
-<tr>
-<th>通配符</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><field></td>
-<td>匹配类中的所有字段</td>
-</tr>
-<tr>
-<td><method></td>
-<td>匹配类中的所有方法</td>
-</tr>
-<tr>
-<td><init></td>
-<td>匹配类中的所有构造函数</td>
-</tr>
-<tr>
-<td>*</td>
-<td>匹配任意长度字符，不包含包名分隔符”.”</td>
-</tr>
-<tr>
-<td>**</td>
-<td>匹配任意长度字符，包含包名分隔符”.”</td>
-</tr>
-<tr>
-<td>***</td>
-<td>匹配任意参数类型</td>
-</tr>
-</tbody></table>
-<blockquote>
-<p><strong>如果既想保持类名，又想保持里面的内容不被混淆，使用：</strong></p>
-<p>-keep class com.XX.test.* {*;}</p>
-<p><strong>在此基础上，我们也可以使用Java的基本规则来保护特定类不被混淆，比如我们可以用extends，implements等这些Java规则。如下例子就避免所有继承Activity的类被混淆</strong></p>
-<p>-keep public class * extends android.app.Activity</p>
-<p> <strong>如果我们要保留一个类中的内部类不被混淆则需要用$符号，如下例子表示保持XxFragment内部类JavaScriptInterface中的所有public内容不被混淆。</strong></p>
-<p>-keepclassmembers class com.XX.ui.fragment.XxFragment$JavaScriptInterface {</p>
-<p>  public *;</p>
-<p>}</p>
-<p><strong>如果一个类中你不希望保持全部内容不被混淆，而只是希望保护类下的特定内容，可以使用</strong></p>
-<p><init>;   &#x2F;&#x2F;匹配所有构造器</p>
-<p><fields>;  &#x2F;&#x2F;匹配所有域</p>
-<p><methods>;  &#x2F;&#x2F;匹配所有方法方法</p>
-<p><strong>还可以在<fields>或<methods>前面加上private 、public、</strong><a href="https://so.csdn.net/so/search?q=native&spm=1001.2101.3001.7020"><strong>native</strong></a><strong>等来进一步指定不被混淆的内容，比如下面代码，表示名为Demo的类下的所有Public方法都不会被混淆</strong></p>
-<p>-keep class com.XX.test.Demo {</p>
-<p>  public <methods>;</p>
-<p>}</p>
-<p><strong>比如下面代码表示用JSONObject作为入参的构造函数不会被混淆</strong></p>
-<p>-keep class com.XX.test.Demo {</p>
-<p>  public <init>(org.json.JSONObject);</p>
-<p>}</p>
-<p><strong>5分钟快速完成混淆配置：</strong></p>
-<p><a href="https://blog.csdn.net/qq_34317125/article/details/81127744"><strong>https://blog.csdn.net/qq_34317125&#x2F;article&#x2F;details&#x2F;81127744</strong></a></p>
-</blockquote>
-<h3 id="使用Lint分析器（物理删除）"><a href="#使用Lint分析器（物理删除）" class="headerlink" title="使用Lint分析器（物理删除）"></a>使用Lint分析器（物理删除）</h3><p>lint工具是Android Studio中附带的静态代码分析器，可检测到res&#x2F;文件夹中未被代码引用的资源。</p>
-<p>从菜单栏中依次选择Analyze &gt; Run Inspection By Name</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915173612451.png" alt="image-20220915173612451"></p>
-<p>分析完成后会出现以下弹窗</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915173625037.png" alt="image-20220915173625037"></p>
-<p><strong>注意</strong>：lint工具不会扫描assets&#x2F;文件夹、通过反射引用的资源或已链接至应用的库文件。此外，它也不会移除资源，只会提醒您它们的存在。与资源缩减不同，这里点击删除，那就是把文件删了。所以，使用lint时谨慎删除文件，最好不要使用Remove All Unused Resources。</p>
-<blockquote>
-<p>反射引用资源：getResources().getIdentifier(“layout_main”,”layout”,getPackageName());</p>
-</blockquote>
-<h3 id="自定义要保留的资源"><a href="#自定义要保留的资源" class="headerlink" title="自定义要保留的资源"></a>自定义要保留的资源</h3><p>如果有想要特别声明需要保留或舍弃的特定资源，在项目中创建一个包含<resources>标记的XML文件，并在tools:keep属性中指定每个要保留的资源，在tools:discard属性中指定每个要舍弃的资源。这两个属性都接受以逗号分隔的资源名称列表。还可以将星号字符用作通配符。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915173716035.png" alt="image-20220915173716035"></p>
-<p>将该文件保存在项目资源中，例如，保存在res&#x2F;raw&#x2F;keep.xml中。构建系统不会将此文件打包到APK中。</p>
-<h3 id="一键删除无用资源"><a href="#一键删除无用资源" class="headerlink" title="一键删除无用资源"></a>一键删除无用资源</h3><p>Android Studio给我们提供了一键移除所有无用的资源。从菜单栏中依次选择Refactor &gt; Remove UnusedResources，但是这种方式不建议使用，因为如果某资源仅存在动态获取资源id的方式，那么这个资源会被认为没有使用过，从而会直接被删除。</p>
-<h3 id="移除未使用的备用资源"><a href="#移除未使用的备用资源" class="headerlink" title="移除未使用的备用资源"></a>移除未使用的备用资源</h3><p>Gradle资源缩减器只会移除未由应用代码引用的资源，这意味着，它不会移除用于不同设备配置的备用资源。可以使用Android Gradle插件的resConfigs属性移除应用不需要的备用资源文件。</p>
-<p>例如，如果使用的是包含语言资源的库（如AppCompat），那么APK中将包含这些库中所有已翻译语言的字符串。如果只想保留应用正式支持的语言，则可以使用resConfig属性指定这些语言。系统会移除未指定语言的所有资源。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915173818290.png" alt="image-20220915173818290"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915173833863.png" alt="image-20220915173833863"></p>
-<p>配置resConfigs只打包默认与简体中文资源。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps1.jpg" alt="img"></p>
-<h2 id="动态打包配置"><a href="#动态打包配置" class="headerlink" title="动态打包配置"></a>动态打包配置</h2><p>so文件是由ndk编译出来的动态库，是c&#x2F;c++写的，所以不是跨平台的。ABI是应用程序二进制接口简称（Application Binary Interface），定义了二进制文件（尤其是.so文件）如何运行在相应的系统平台上，从使用的指令集，内存对齐到可用的系统函数库。在Android系统中，每一个CPU架构对应一个ABI，目前支持的有：armeabi-v7a，arm64- v8a，x86，x86_64。目前市面上手机设备基本上都是arm架构，armeabi-v7a几乎能兼容所有设备。因此可以配置：</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps2.jpg" alt="img"></p>
-<p>对于第三方服务，如百度地图、Bugly等会提供全平台的cpu架构。进行了上面的配置之后，表示只会把armeabiv7a打包进入Apk。从而减少APK大小。</p>
-<p>对于arm64架构的设备，如果使用armeabi-v7a也能够兼容，但是不如使用arm64的so性能。因此现在部分应用市场会根据设备提供不同架构的Apk安装。此时我们需要打包出针对arm64的apk与armv7a的apk，可以使用productFlavor。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps3.jpg" alt="img"> </p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915174015302.png" alt="image-20220915174015302"> </p>
-<p>也可以使用：</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps5.jpg" alt="img"> </p>
-<h2 id="使用矢量图与webp"><a href="#使用矢量图与webp" class="headerlink" title="使用矢量图与webp"></a>使用矢量图与webp</h2><p>Apk中图片应该算是占用空间最多的资源。我们可以使用webp减少png、jpg图片占用空间的大小。对于小图标也可以使用矢量图。</p>
-<p><img src="C:\Users\15786\AppData\Local\Temp\ksohtml20268\wps6.jpg" alt="img"> </p>
-<p>矢量图可以创建与分辨率无关的图标和其他可伸缩媒体。使用这些图形可以极大地减少APK占用的空间。矢量图片在Android中以VectorDrawable对象的形式表示。借助VectorDrawable对象，100字节的文件可以生成与屏幕大小相同的清晰图片</p>
-<p>不过，系统渲染每个VectorDrawable对象需要花费大量时间，而较大的图片则需要更长的时间才能显示在屏幕上。因此，建议仅在显示小图片时使用这些矢量图。</p>
-<blockquote>
-<p>新工程默认Icon就是矢量图</p>
-</blockquote>
-<h3 id="重复使用资源"><a href="#重复使用资源" class="headerlink" title="重复使用资源"></a>重复使用资源</h3><p>现在我们有一个矢量图：</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps7.jpg" alt="img"> </p>
-<p>它的显示效果：</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps8.jpg" alt="img"> </p>
-<p>如果我们需要让矢量图显示红色怎么办？这种情况，我们不需要再去创建一个新的矢量图。可以直接给ImageView设置android:tint属性来完成颜色的修改。</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps9.jpg" alt="img"> </p>
-<p>如果需要让矢量图实现触摸变色。只需要创建selector，设置给tint即可</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps10.jpg" alt="img"> </p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps10.jpg" alt="img"> </p>
-<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><ul>
-<li><p>主动移除无用代码（开启R8&#x2F;Progurad自动移除）</p>
-</li>
-<li><p>避免使用枚举，使用@IntDef代替</p>
-</li>
-<li><p>开启资源混淆：<a href="https://gitee.com/ahr6e170zl/AndResGuard?_from=gitee_search%E6%88%96https://github.com/shwenzhang/AndResGuard">https://gitee.com/ahr6e170zl/AndResGuard?_from=gitee_search或https://github.com/shwenzhang/AndResGuard</a></p>
-</li>
-</ul>
-]]></content>
-      <categories>
-        <category>性能优化</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>adb获取应用包入口的方案</title>
-    <url>/2022/07/27/adb%E8%8E%B7%E5%8F%96%E5%BA%94%E7%94%A8%E5%8C%85%E5%85%A5%E5%8F%A3%E7%9A%84%E6%96%B9%E6%A1%88/</url>
-    <content><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>小编最近在入手adb调试，刚开始还是挺顺利的，不过后面就遇到了一些小插曲，其中一个就是获取应用包的入口，开启一个应用。<br>这个问题在网上可以找到很多解决方案，但不都是有用，并且有些方法有一点麻烦。<br>这里，小编介绍一下意外摸索到的解决方案。</p>
-<h3 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h3><p>1、点开需要打开的应用，使用获取前台Activity命令</p>
-<figure class="highlight 1c"><table><tr><td class="code"><pre><span class="line">adb shell dumpsys activity activities <span class="string">| findstr mResumedActivity</span></span><br></pre></td></tr></table></figure>
-<p>这样便能获得应用包的启动入口<br>比如，获取有道词典的启动入口<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-2420606065b22c18.png" alt="image.png"></p>
-<p>2、使用adb启动应用包</p>
-<figure class="highlight css"><table><tr><td class="code"><pre><span class="line">adb shell am start -n <span class="selector-attr">[应用包名]</span> /<span class="selector-attr">[入口]</span></span><br></pre></td></tr></table></figure>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-444cb9956734d120.png" alt="image.png"></p>
-]]></content>
-      <categories>
-        <category>Android随笔</category>
-      </categories>
-      <tags>
-        <tag>adb</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>京东淘宝首页二级联动</title>
-    <url>/2022/07/19/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/</url>
-    <content><![CDATA[<p><strong>说明：</strong>这篇文章主要用于作者临时观看，因为涉及版权问题，所以短时间内会删除</p>
-<h2 id="京东淘宝首页二级联动"><a href="#京东淘宝首页二级联动" class="headerlink" title="京东淘宝首页二级联动"></a>京东淘宝首页二级联动</h2><h3 id="单点触摸与多点触摸"><a href="#单点触摸与多点触摸" class="headerlink" title="单点触摸与多点触摸"></a>单点触摸与多点触摸</h3><p>####单点触摸</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212127652.png" alt="image-20220718212127652"></p>
-<p>####多点触摸</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212142549.png" alt="image-20220718212142549"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212203113.png" alt="image-20220718212203113"></p>
-<blockquote>
-<p>面试题</p>
-<p>一个move事件 中间有多少个手指的信息-&gt;有多少个手指就有多少个手指信息-&gt;最多32个</p>
-</blockquote>
-<h3 id="Touch事件源码"><a href="#Touch事件源码" class="headerlink" title="Touch事件源码"></a>Touch事件源码</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212217242.png" alt="image-20220718212217242"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212232559.png" alt="image-20220718212232559"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212254074.png" alt="image-20220718212254074"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212316235.png" alt="image-20220718212316235"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212335895.png" alt="image-20220718212335895"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212349700.png" alt="image-20220718212349700"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212414454.png" alt="image-20220718212414454"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212432841.png" alt="image-20220718212432841"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212452115.png" alt="image-20220718212452115"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212515213.png" alt="image-20220718212515213"></p>
-<p>上述的disallowIntercept及相关内容就是所谓的“尚方宝剑”</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212536424.png" alt="image-20220718212536424"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212555410.png" alt="image-20220718212555410"></p>
-<p> <img src="C:\Users\15786\AppData\Roaming\Typora\typora-user-images\image-20220718212609465.png" alt="image-20220718212609465"></p>
-<h3 id="嵌套滑动"><a href="#嵌套滑动" class="headerlink" title="嵌套滑动"></a>嵌套滑动</h3><blockquote>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212649556.png" alt="image-20220718212649556"></p>
-</blockquote>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212704210.png" alt="image-20220718212704210"></p>
-<p>并且从上面可以看出NestedScrollView既可以做“父亲”，也可以做“孩子”</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212718655.png" alt="image-20220718212718655"></p>
-<p>“孩子”有三个版本</p>
-<p>三个版本之间是的关系  同样“父亲”也是一样</p>
-<blockquote>
-<p>版本2与版本1相比  增加了type 如惯性滑动效果</p>
-</blockquote>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212737829.png" alt="image-20220718212737829"></p>
-<h4 id="吸顶效果"><a href="#吸顶效果" class="headerlink" title="吸顶效果"></a>吸顶效果</h4><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212758009.png" alt="image-20220718212758009"></p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212818443.png" alt="image-20220718212818443"></p>
-<p>onFinishInflate()中获取第一个孩子的第二个孩子，从下图可以看出也就是是第二个LinearLayout</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212839006.png" alt="image-20220718212839006"></p>
-<h4 id="继续嵌套滑动"><a href="#继续嵌套滑动" class="headerlink" title="继续嵌套滑动"></a>继续嵌套滑动</h4><p>嵌套滑动-&gt;是由孩子主动的   触发的</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212906775.png" alt="image-20220718212906775"></p>
-<p>google为了方便我们处理嵌套滑动，所以提供了这个帮助类 -&gt; getScrollingChildHelper()</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212928635.png" alt="image-20220718212928635"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212942972.png" alt="image-20220718212942972"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213001121.png" alt="image-20220718213001121"></p>
-<p>while(p!&#x3D;null)一直找，直到找到支持嵌套滑动</p>
-<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213017801.png" alt="image-20220718213017801"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213043191.png" alt="image-20220718213043191"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213058717.png" alt="image-20220718213058717"></p>
-<p>所以它没有滑，“父亲”划不动的时候，它(NestedScrollView)才动</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213122243.png" alt="image-20220718213122243"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213138627.png" alt="image-20220718213138627"></p>
-<p>问题描述：需求是整个页面滑动，当父View滑不动的时候，子View才动。问题出现的原因就是上面的文字描述，要想解决</p>
-<p>问题的解决：重写onNestedPreScroll()方法，做一些设置，如果自己还能滑，那么就自己滑，并且需要记录一下（consumed[1]，0记录的x，1记录的y）</p>
-<ul>
-<li><p>注意：NetestScrollLayout是自定义继承NetestScrollView的</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213208543.png" alt="image-20220718213208543"></p>
-</li>
-</ul>
-<h3 id="惯性滑动"><a href="#惯性滑动" class="headerlink" title="惯性滑动"></a>惯性滑动</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213227462.png" alt="image-20220718213227462"></p>
-<p>记录下速度 velocityY</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213246067.png" alt="image-20220718213246067"></p>
-<blockquote>
-<ul>
-<li>1、记下来速度 velocity</li>
-<li>2、转化成 距离</li>
-<li>3、自己滑了多少距离 根据速度转换后的距离 -&gt; 我自己的滑动距离 &#x3D; 孩子应该滑的距离</li>
-<li>4、孩子应该滑的距离又要转化成速度</li>
-</ul>
-</blockquote>
-<ul>
-<li>google提供的速度转距离的工具</li>
-</ul>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213300370.png" alt="image-20220718213300370"></p>
-<p>孩子 -&gt;如recyclerView又会将距离转换成速度(因为RecyclerView只支持fling，所以需要转化成速度再转成距离)</p>
-<p>下面两个方法分别对应上述步骤中的第3步和第4步</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213317734.png" alt="image-20220718213317734"></p>
-<p><strong>关于totalDy</strong></p>
-<p>下面注解一处错误：第一个，其实是Viewpager2，不是RecyclerView，通过前面有一张布局截图可以看出最后下面那个是ViewPager2</p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213340340.png" alt="image-20220718213340340"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213358954.png" alt="image-20220718213358954"></p>
-<h3 id="关于内部拦截"><a href="#关于内部拦截" class="headerlink" title="关于内部拦截"></a>关于内部拦截</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213415057.png" alt="image-20220718213415057"></p>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213428785.png" alt="image-20220718213428785"></p>
-]]></content>
-      <categories>
-        <category>高级UI</category>
-      </categories>
-      <tags>
-        <tag>高级UI</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>adb小结</title>
     <url>/2022/07/26/adb%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93/</url>
     <content><![CDATA[<p><a href="http://banmaman.com/2022/07/19/adb%E5%91%BD%E4%BB%A4/">adb常用命令</a></p>
@@ -3067,6 +2745,328 @@
       </tags>
   </entry>
   <entry>
+    <title>adb获取应用包入口的方案</title>
+    <url>/2022/07/27/adb%E8%8E%B7%E5%8F%96%E5%BA%94%E7%94%A8%E5%8C%85%E5%85%A5%E5%8F%A3%E7%9A%84%E6%96%B9%E6%A1%88/</url>
+    <content><![CDATA[<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3><p>小编最近在入手adb调试，刚开始还是挺顺利的，不过后面就遇到了一些小插曲，其中一个就是获取应用包的入口，开启一个应用。<br>这个问题在网上可以找到很多解决方案，但不都是有用，并且有些方法有一点麻烦。<br>这里，小编介绍一下意外摸索到的解决方案。</p>
+<h3 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h3><p>1、点开需要打开的应用，使用获取前台Activity命令</p>
+<figure class="highlight 1c"><table><tr><td class="code"><pre><span class="line">adb shell dumpsys activity activities <span class="string">| findstr mResumedActivity</span></span><br></pre></td></tr></table></figure>
+<p>这样便能获得应用包的启动入口<br>比如，获取有道词典的启动入口<br><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-2420606065b22c18.png" alt="image.png"></p>
+<p>2、使用adb启动应用包</p>
+<figure class="highlight css"><table><tr><td class="code"><pre><span class="line">adb shell am start -n <span class="selector-attr">[应用包名]</span> /<span class="selector-attr">[入口]</span></span><br></pre></td></tr></table></figure>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-444cb9956734d120.png" alt="image.png"></p>
+]]></content>
+      <categories>
+        <category>Android随笔</category>
+      </categories>
+      <tags>
+        <tag>adb</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android性能优化：APK瘦身</title>
+    <url>/2022/09/15/apk%E7%98%A6%E8%BA%AB/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
+<p>随着业务迭代，APK体积逐渐变大。项目中积累的无用资源，未压缩的图片资源等，都为apk带来了不必要的体积增加，而APK的大小会影响应用加载速度、使用的内存量以及消耗的电量。</p>
+</blockquote>
+<h2 id="了解APK结构"><a href="#了解APK结构" class="headerlink" title="了解APK结构"></a>了解APK结构</h2><p>在讨论如何缩减应用的大小之前，有必要了解下应用APK的结构。APK文件由一个Zip压缩文件组成，其中包含构成应用的所有文件，这些文件包括Java类文件、资源文件和包含已编译资源的文件。</p>
+<p>APK包含以下目录：</p>
+<ul>
+<li><p><code>META-INF/</code>：包含<code>CERT.SF</code>和<code>CERT.RSA</code>签名文件，以及<code>MANIFEST.MF</code>清单文件。</p>
+</li>
+<li><p><code>assets/</code>：包含应用的资源；应用可以使用AssetManager对象检索这些资源。</p>
+</li>
+<li><p><code>res/</code>：包含未编译到<code>resources.arsc</code>中的资源（图片、音视频等）。</p>
+</li>
+<li><p><code>lib/</code>：包含特定于处理器软件层的已编译代码。此目录包含每种平台类型的子目录，如<code>armeabi、armeabi-v7a、arm64-v8a、x86、x86_64</code>和<code>mips</code>。</p>
+</li>
+</ul>
+<p>APK还包含以下文件。在这些文件中，只有AndroidMainfest.xml是必须的。</p>
+<ul>
+<li><p><code>resources.arsc</code>：包含已编译的资源。此文件包含<code>res/values/</code> 文件夹的所有配置中的XML内容、打包工具会提取此XML内容，将其编译为二进制文件格式，并压缩内容、此内容包括语言字符串和格式，以及为直接包括在<code>resources.arsc</code>文件中的内容（例如布局文件和图片）的路径。</p>
+</li>
+<li><p><code>classes.dex</code>：包含以Dalvik&#x2F;ART虚拟机可理解的DEX文件格式编译的类。</p>
+</li>
+<li><p><code>AndroidManifest.xml</code>：包括核心Android清单文件、此文件列出了应用的名称、版本、访问权限和引用的库文件。该文件使用Android的二进制XML格式。</p>
+</li>
+</ul>
+<h2 id="Android-Size-Analyzer（已弃用）"><a href="#Android-Size-Analyzer（已弃用）" class="headerlink" title="Android Size Analyzer（已弃用）"></a>Android Size Analyzer（已弃用）</h2><p>虽然已弃用，不过其提供的缩减策略还是很值得学习的,其实也就是后续介绍的一些方法。</p>
+<p>Android Size Analyzer 工具可轻松地发现和实施多种缩减应用发小的策略。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172318943.png" alt="image-20220915172318943"></p>
+<p>首先在 Android Studio中的插件市场下载安装Android Size Analyzer插件。安装插件后，从菜单栏中依次选择Analyze &gt; Analyze App Size，对当前项目运行应用大小分析。分析了项目后，系统会显示一个工具窗口，其中包含有关如何缩减应用大小的建议。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172348018.png" alt="image-20220915172348018"></p>
+<p>如image转webp的建议</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172447629.png" alt="image-20220915172447629"></p>
+<p>也可以用以下方式转webp</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172459940.png" alt="image-20220915172459940"></p>
+<h2 id="移除未使用资源"><a href="#移除未使用资源" class="headerlink" title="移除未使用资源"></a>移除未使用资源</h2><p>APK瘦身关键就在一个字：删！没用的就删了。</p>
+<h3 id="启用资源缩减"><a href="#启用资源缩减" class="headerlink" title="启用资源缩减"></a>启用资源缩减</h3><p>如果在应用的build.gradle文件中启用了资源缩减：shrinkResources，则Gradle在打包APK时可以自动忽略未使用资源。资源缩减只有在与代码缩减：minifyEnabled配合使用时才能发挥作用。在代码缩减器移除所有不使用的代码后，资源缩减器便可确定应用仍要使用的资源，从而在打包时优化这些资源。</p>
+<p>优化后，并没有将不用的资源文件删除掉，而是将文件内容给优化掉。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172611565.png" alt="image-20220915172611565"></p>
+<p><strong>注意</strong>：开启优化，混淆也在其中，也就是说混淆也会被开启，那么就需要注意一些不能被混淆的资源，比如一些三方库的包</p>
+<p><strong>添加keep：</strong></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172644031.png" alt="image-20220915172644031"></p>
+<p>也可以使用@Keep修饰不混淆的类——哪里不对@Keep哪里</p>
+<h4 id="混淆规则"><a href="#混淆规则" class="headerlink" title="混淆规则"></a>混淆规则</h4><ul>
+<li><p>jni方法不可混淆，因为需要与native方法保持一致；</p>
+</li>
+<li><p>反射用到的类不能混淆（否则反射可能出现问题）；</p>
+</li>
+<li><p>AndroidMainfest中的类不混淆，四大组件和Application的子类和FrameWork层下所有的类默认不会进行混淆；</p>
+</li>
+<li><p>Parceable的子类和Creator静态成员变量不混淆，否则产生Android.os.BadParceableException异常；</p>
+</li>
+<li><p>使用GSON、fastjson等框架时，所写的JSON对象类不混淆，否则无法将JSON解析成对应的对象；</p>
+</li>
+<li><p>使用第三方开源库或者引用其他第三方的SDK包时，需要在混淆文件中加入对应的混淆规则；</p>
+</li>
+<li><p>有用到WebView的JS调用也需要保证写的接口方法不混淆；</p>
+</li>
+<li><p>使用enum类型时需要注意避免以下两个方法混淆，因为enum类的特殊性，以下两个方法会被反射调用</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915172907262.png" alt="image-20220915172907262"></p>
+</li>
+</ul>
+<h4 id="关于混淆的语法"><a href="#关于混淆的语法" class="headerlink" title="关于混淆的语法"></a>关于混淆的语法</h4><p><strong>Proguard关键字：</strong></p>
+<table>
+<thead>
+<tr>
+<th>关键字</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>keep</td>
+<td>保留类和类中的成员，防止被混淆或移除</td>
+</tr>
+<tr>
+<td>keepnames</td>
+<td>保留类和类中的成员，防止被混淆，成员没有被引用会被移除</td>
+</tr>
+<tr>
+<td>keepclassmembers</td>
+<td>只保留类中的成员，防止被混淆或移除</td>
+</tr>
+<tr>
+<td>keepclassmembernames</td>
+<td>只保留类中的成员，防止被混淆，成员没有被引用会被移除</td>
+</tr>
+<tr>
+<td>keepclasseswithmembers</td>
+<td>保留类和类中的成员，防止被混淆或移除，保留指名的成员</td>
+</tr>
+<tr>
+<td>keepclasseswithmembernames</td>
+<td>保留类和类中的成员，防止被混淆，保留指名的成员，成员没有引用会被移除</td>
+</tr>
+</tbody></table>
+<p><strong>Proguard通配符</strong></p>
+<table>
+<thead>
+<tr>
+<th>通配符</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><field></td>
+<td>匹配类中的所有字段</td>
+</tr>
+<tr>
+<td><method></td>
+<td>匹配类中的所有方法</td>
+</tr>
+<tr>
+<td><init></td>
+<td>匹配类中的所有构造函数</td>
+</tr>
+<tr>
+<td>*</td>
+<td>匹配任意长度字符，不包含包名分隔符”.”</td>
+</tr>
+<tr>
+<td>**</td>
+<td>匹配任意长度字符，包含包名分隔符”.”</td>
+</tr>
+<tr>
+<td>***</td>
+<td>匹配任意参数类型</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>如果既想保持类名，又想保持里面的内容不被混淆，使用：</strong></p>
+<p>-keep class com.XX.test.* {*;}</p>
+<p><strong>在此基础上，我们也可以使用Java的基本规则来保护特定类不被混淆，比如我们可以用extends，implements等这些Java规则。如下例子就避免所有继承Activity的类被混淆</strong></p>
+<p>-keep public class * extends android.app.Activity</p>
+<p> <strong>如果我们要保留一个类中的内部类不被混淆则需要用$符号，如下例子表示保持XxFragment内部类JavaScriptInterface中的所有public内容不被混淆。</strong></p>
+<p>-keepclassmembers class com.XX.ui.fragment.XxFragment$JavaScriptInterface {</p>
+<p>  public *;</p>
+<p>}</p>
+<p><strong>如果一个类中你不希望保持全部内容不被混淆，而只是希望保护类下的特定内容，可以使用</strong></p>
+<p><init>;   &#x2F;&#x2F;匹配所有构造器</p>
+<p><fields>;  &#x2F;&#x2F;匹配所有域</p>
+<p><methods>;  &#x2F;&#x2F;匹配所有方法方法</p>
+<p><strong>还可以在<fields>或<methods>前面加上private 、public、</strong><a href="https://so.csdn.net/so/search?q=native&spm=1001.2101.3001.7020"><strong>native</strong></a><strong>等来进一步指定不被混淆的内容，比如下面代码，表示名为Demo的类下的所有Public方法都不会被混淆</strong></p>
+<p>-keep class com.XX.test.Demo {</p>
+<p>  public <methods>;</p>
+<p>}</p>
+<p><strong>比如下面代码表示用JSONObject作为入参的构造函数不会被混淆</strong></p>
+<p>-keep class com.XX.test.Demo {</p>
+<p>  public <init>(org.json.JSONObject);</p>
+<p>}</p>
+<p><strong>5分钟快速完成混淆配置：</strong></p>
+<p><a href="https://blog.csdn.net/qq_34317125/article/details/81127744"><strong>https://blog.csdn.net/qq_34317125&#x2F;article&#x2F;details&#x2F;81127744</strong></a></p>
+</blockquote>
+<h3 id="使用Lint分析器（物理删除）"><a href="#使用Lint分析器（物理删除）" class="headerlink" title="使用Lint分析器（物理删除）"></a>使用Lint分析器（物理删除）</h3><p>lint工具是Android Studio中附带的静态代码分析器，可检测到res&#x2F;文件夹中未被代码引用的资源。</p>
+<p>从菜单栏中依次选择Analyze &gt; Run Inspection By Name</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915173612451.png" alt="image-20220915173612451"></p>
+<p>分析完成后会出现以下弹窗</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915173625037.png" alt="image-20220915173625037"></p>
+<p><strong>注意</strong>：lint工具不会扫描assets&#x2F;文件夹、通过反射引用的资源或已链接至应用的库文件。此外，它也不会移除资源，只会提醒您它们的存在。与资源缩减不同，这里点击删除，那就是把文件删了。所以，使用lint时谨慎删除文件，最好不要使用Remove All Unused Resources。</p>
+<blockquote>
+<p>反射引用资源：getResources().getIdentifier(“layout_main”,”layout”,getPackageName());</p>
+</blockquote>
+<h3 id="自定义要保留的资源"><a href="#自定义要保留的资源" class="headerlink" title="自定义要保留的资源"></a>自定义要保留的资源</h3><p>如果有想要特别声明需要保留或舍弃的特定资源，在项目中创建一个包含<resources>标记的XML文件，并在tools:keep属性中指定每个要保留的资源，在tools:discard属性中指定每个要舍弃的资源。这两个属性都接受以逗号分隔的资源名称列表。还可以将星号字符用作通配符。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915173716035.png" alt="image-20220915173716035"></p>
+<p>将该文件保存在项目资源中，例如，保存在res&#x2F;raw&#x2F;keep.xml中。构建系统不会将此文件打包到APK中。</p>
+<h3 id="一键删除无用资源"><a href="#一键删除无用资源" class="headerlink" title="一键删除无用资源"></a>一键删除无用资源</h3><p>Android Studio给我们提供了一键移除所有无用的资源。从菜单栏中依次选择Refactor &gt; Remove UnusedResources，但是这种方式不建议使用，因为如果某资源仅存在动态获取资源id的方式，那么这个资源会被认为没有使用过，从而会直接被删除。</p>
+<h3 id="移除未使用的备用资源"><a href="#移除未使用的备用资源" class="headerlink" title="移除未使用的备用资源"></a>移除未使用的备用资源</h3><p>Gradle资源缩减器只会移除未由应用代码引用的资源，这意味着，它不会移除用于不同设备配置的备用资源。可以使用Android Gradle插件的resConfigs属性移除应用不需要的备用资源文件。</p>
+<p>例如，如果使用的是包含语言资源的库（如AppCompat），那么APK中将包含这些库中所有已翻译语言的字符串。如果只想保留应用正式支持的语言，则可以使用resConfig属性指定这些语言。系统会移除未指定语言的所有资源。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915173818290.png" alt="image-20220915173818290"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915173833863.png" alt="image-20220915173833863"></p>
+<p>配置resConfigs只打包默认与简体中文资源。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps1.jpg" alt="img"></p>
+<h2 id="动态打包配置"><a href="#动态打包配置" class="headerlink" title="动态打包配置"></a>动态打包配置</h2><p>so文件是由ndk编译出来的动态库，是c&#x2F;c++写的，所以不是跨平台的。ABI是应用程序二进制接口简称（Application Binary Interface），定义了二进制文件（尤其是.so文件）如何运行在相应的系统平台上，从使用的指令集，内存对齐到可用的系统函数库。在Android系统中，每一个CPU架构对应一个ABI，目前支持的有：armeabi-v7a，arm64- v8a，x86，x86_64。目前市面上手机设备基本上都是arm架构，armeabi-v7a几乎能兼容所有设备。因此可以配置：</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps2.jpg" alt="img"></p>
+<p>对于第三方服务，如百度地图、Bugly等会提供全平台的cpu架构。进行了上面的配置之后，表示只会把armeabiv7a打包进入Apk。从而减少APK大小。</p>
+<p>对于arm64架构的设备，如果使用armeabi-v7a也能够兼容，但是不如使用arm64的so性能。因此现在部分应用市场会根据设备提供不同架构的Apk安装。此时我们需要打包出针对arm64的apk与armv7a的apk，可以使用productFlavor。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps3.jpg" alt="img"> </p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220915174015302.png" alt="image-20220915174015302"> </p>
+<p>也可以使用：</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps5.jpg" alt="img"> </p>
+<h2 id="使用矢量图与webp"><a href="#使用矢量图与webp" class="headerlink" title="使用矢量图与webp"></a>使用矢量图与webp</h2><p>Apk中图片应该算是占用空间最多的资源。我们可以使用webp减少png、jpg图片占用空间的大小。对于小图标也可以使用矢量图。</p>
+<p><img src="C:\Users\15786\AppData\Local\Temp\ksohtml20268\wps6.jpg" alt="img"> </p>
+<p>矢量图可以创建与分辨率无关的图标和其他可伸缩媒体。使用这些图形可以极大地减少APK占用的空间。矢量图片在Android中以VectorDrawable对象的形式表示。借助VectorDrawable对象，100字节的文件可以生成与屏幕大小相同的清晰图片</p>
+<p>不过，系统渲染每个VectorDrawable对象需要花费大量时间，而较大的图片则需要更长的时间才能显示在屏幕上。因此，建议仅在显示小图片时使用这些矢量图。</p>
+<blockquote>
+<p>新工程默认Icon就是矢量图</p>
+</blockquote>
+<h3 id="重复使用资源"><a href="#重复使用资源" class="headerlink" title="重复使用资源"></a>重复使用资源</h3><p>现在我们有一个矢量图：</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps7.jpg" alt="img"> </p>
+<p>它的显示效果：</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps8.jpg" alt="img"> </p>
+<p>如果我们需要让矢量图显示红色怎么办？这种情况，我们不需要再去创建一个新的矢量图。可以直接给ImageView设置android:tint属性来完成颜色的修改。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps9.jpg" alt="img"> </p>
+<p>如果需要让矢量图实现触摸变色。只需要创建selector，设置给tint即可</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps10.jpg" alt="img"> </p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/wps10.jpg" alt="img"> </p>
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><ul>
+<li><p>主动移除无用代码（开启R8&#x2F;Progurad自动移除）</p>
+</li>
+<li><p>避免使用枚举，使用@IntDef代替</p>
+</li>
+<li><p>开启资源混淆：<a href="https://gitee.com/ahr6e170zl/AndResGuard?_from=gitee_search%E6%88%96https://github.com/shwenzhang/AndResGuard">https://gitee.com/ahr6e170zl/AndResGuard?_from=gitee_search或https://github.com/shwenzhang/AndResGuard</a></p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>性能优化</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>京东淘宝首页二级联动</title>
+    <url>/2022/07/19/%E4%BA%AC%E4%B8%9C%E6%B7%98%E5%AE%9D%E9%A6%96%E9%A1%B5%E4%BA%8C%E7%BA%A7%E8%81%94%E5%8A%A8/</url>
+    <content><![CDATA[<p><strong>说明：</strong>这篇文章主要用于作者临时观看，因为涉及版权问题，所以短时间内会删除</p>
+<h2 id="京东淘宝首页二级联动"><a href="#京东淘宝首页二级联动" class="headerlink" title="京东淘宝首页二级联动"></a>京东淘宝首页二级联动</h2><h3 id="单点触摸与多点触摸"><a href="#单点触摸与多点触摸" class="headerlink" title="单点触摸与多点触摸"></a>单点触摸与多点触摸</h3><p>####单点触摸</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212127652.png" alt="image-20220718212127652"></p>
+<p>####多点触摸</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212142549.png" alt="image-20220718212142549"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212203113.png" alt="image-20220718212203113"></p>
+<blockquote>
+<p>面试题</p>
+<p>一个move事件 中间有多少个手指的信息-&gt;有多少个手指就有多少个手指信息-&gt;最多32个</p>
+</blockquote>
+<h3 id="Touch事件源码"><a href="#Touch事件源码" class="headerlink" title="Touch事件源码"></a>Touch事件源码</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212217242.png" alt="image-20220718212217242"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212232559.png" alt="image-20220718212232559"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212254074.png" alt="image-20220718212254074"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212316235.png" alt="image-20220718212316235"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212335895.png" alt="image-20220718212335895"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212349700.png" alt="image-20220718212349700"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212414454.png" alt="image-20220718212414454"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212432841.png" alt="image-20220718212432841"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212452115.png" alt="image-20220718212452115"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212515213.png" alt="image-20220718212515213"></p>
+<p>上述的disallowIntercept及相关内容就是所谓的“尚方宝剑”</p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212536424.png" alt="image-20220718212536424"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212555410.png" alt="image-20220718212555410"></p>
+<p> <img src="C:\Users\15786\AppData\Roaming\Typora\typora-user-images\image-20220718212609465.png" alt="image-20220718212609465"></p>
+<h3 id="嵌套滑动"><a href="#嵌套滑动" class="headerlink" title="嵌套滑动"></a>嵌套滑动</h3><blockquote>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212649556.png" alt="image-20220718212649556"></p>
+</blockquote>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212704210.png" alt="image-20220718212704210"></p>
+<p>并且从上面可以看出NestedScrollView既可以做“父亲”，也可以做“孩子”</p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212718655.png" alt="image-20220718212718655"></p>
+<p>“孩子”有三个版本</p>
+<p>三个版本之间是的关系  同样“父亲”也是一样</p>
+<blockquote>
+<p>版本2与版本1相比  增加了type 如惯性滑动效果</p>
+</blockquote>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212737829.png" alt="image-20220718212737829"></p>
+<h4 id="吸顶效果"><a href="#吸顶效果" class="headerlink" title="吸顶效果"></a>吸顶效果</h4><p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212758009.png" alt="image-20220718212758009"></p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212818443.png" alt="image-20220718212818443"></p>
+<p>onFinishInflate()中获取第一个孩子的第二个孩子，从下图可以看出也就是是第二个LinearLayout</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212839006.png" alt="image-20220718212839006"></p>
+<h4 id="继续嵌套滑动"><a href="#继续嵌套滑动" class="headerlink" title="继续嵌套滑动"></a>继续嵌套滑动</h4><p>嵌套滑动-&gt;是由孩子主动的   触发的</p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212906775.png" alt="image-20220718212906775"></p>
+<p>google为了方便我们处理嵌套滑动，所以提供了这个帮助类 -&gt; getScrollingChildHelper()</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212928635.png" alt="image-20220718212928635"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718212942972.png" alt="image-20220718212942972"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213001121.png" alt="image-20220718213001121"></p>
+<p>while(p!&#x3D;null)一直找，直到找到支持嵌套滑动</p>
+<p> <img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213017801.png" alt="image-20220718213017801"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213043191.png" alt="image-20220718213043191"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213058717.png" alt="image-20220718213058717"></p>
+<p>所以它没有滑，“父亲”划不动的时候，它(NestedScrollView)才动</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213122243.png" alt="image-20220718213122243"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213138627.png" alt="image-20220718213138627"></p>
+<p>问题描述：需求是整个页面滑动，当父View滑不动的时候，子View才动。问题出现的原因就是上面的文字描述，要想解决</p>
+<p>问题的解决：重写onNestedPreScroll()方法，做一些设置，如果自己还能滑，那么就自己滑，并且需要记录一下（consumed[1]，0记录的x，1记录的y）</p>
+<ul>
+<li><p>注意：NetestScrollLayout是自定义继承NetestScrollView的</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213208543.png" alt="image-20220718213208543"></p>
+</li>
+</ul>
+<h3 id="惯性滑动"><a href="#惯性滑动" class="headerlink" title="惯性滑动"></a>惯性滑动</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213227462.png" alt="image-20220718213227462"></p>
+<p>记录下速度 velocityY</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213246067.png" alt="image-20220718213246067"></p>
+<blockquote>
+<ul>
+<li>1、记下来速度 velocity</li>
+<li>2、转化成 距离</li>
+<li>3、自己滑了多少距离 根据速度转换后的距离 -&gt; 我自己的滑动距离 &#x3D; 孩子应该滑的距离</li>
+<li>4、孩子应该滑的距离又要转化成速度</li>
+</ul>
+</blockquote>
+<ul>
+<li>google提供的速度转距离的工具</li>
+</ul>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213300370.png" alt="image-20220718213300370"></p>
+<p>孩子 -&gt;如recyclerView又会将距离转换成速度(因为RecyclerView只支持fling，所以需要转化成速度再转成距离)</p>
+<p>下面两个方法分别对应上述步骤中的第3步和第4步</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213317734.png" alt="image-20220718213317734"></p>
+<p><strong>关于totalDy</strong></p>
+<p>下面注解一处错误：第一个，其实是Viewpager2，不是RecyclerView，通过前面有一张布局截图可以看出最后下面那个是ViewPager2</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213340340.png" alt="image-20220718213340340"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213358954.png" alt="image-20220718213358954"></p>
+<h3 id="关于内部拦截"><a href="#关于内部拦截" class="headerlink" title="关于内部拦截"></a>关于内部拦截</h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213415057.png" alt="image-20220718213415057"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220718213428785.png" alt="image-20220718213428785"></p>
+]]></content>
+      <categories>
+        <category>高级UI</category>
+      </categories>
+      <tags>
+        <tag>高级UI</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>删除有序链表中重复的元素</title>
     <url>/2022/09/25/%E5%88%A0%E9%99%A4%E6%9C%89%E5%BA%8F%E9%93%BE%E8%A1%A8%E4%B8%AD%E7%9A%84%E9%87%8D%E5%A4%8D%E5%85%83%E7%B4%A0/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
@@ -3248,7 +3248,7 @@
   </entry>
   <entry>
     <title>浏览器渲染机制</title>
-    <url>/2026/09/13/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6/</url>
+    <url>/2023/09/13/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6/</url>
     <content><![CDATA[<blockquote>
 <p>关于浏览器渲染机制的整体介绍</p>
 </blockquote>
@@ -3653,6 +3653,24 @@
       </categories>
   </entry>
   <entry>
+    <title>第一次上传测试</title>
+    <url>/2022/07/12/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+]]></content>
+  </entry>
+  <entry>
     <title>深入理解并发编程和归纳总结</title>
     <url>/2022/10/13/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E5%92%8C%E5%BD%92%E7%BA%B3%E6%80%BB%E7%BB%93/</url>
     <content><![CDATA[<h2 id="AQS"><a href="#AQS" class="headerlink" title="AQS"></a>AQS</h2><h3 id="什么是AQS"><a href="#什么是AQS" class="headerlink" title="什么是AQS"></a>什么是AQS</h3><p>AbstractQueueSynchronizer（抽象队列同步器）</p>
@@ -3787,74 +3805,6 @@
       <categories>
         <category>Java筑基</category>
       </categories>
-  </entry>
-  <entry>
-    <title>第一次上传测试</title>
-    <url>/2022/07/12/%E7%AC%AC%E4%B8%80%E6%AC%A1%E4%B8%8A%E4%BC%A0/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-]]></content>
-  </entry>
-  <entry>
-    <title>自定义LayoutManager实现卡片滑动</title>
-    <url>/2022/07/24/%E8%87%AA%E5%AE%9A%E4%B9%89LayoutManager%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E6%BB%91%E5%8A%A8/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
-<p>前面介绍了利用自定义ItemDecoration实现RecyclerView吸顶效果，重点就在onDraw -&gt; ItemView -&gt; onDrawOver的绘制流程，同时注意预留空间的利用。</p>
-<p>今天介绍一个新的知识点与demo，利用自定义LayoutManager的方式实现卡片滑动。有时候系统提供的LayoutManager已经不能够满足我们的需求，这个时候我们就需要自定义LayoutManager。</p>
-</blockquote>
-<h2 id="卡片滑动效果介绍"><a href="#卡片滑动效果介绍" class="headerlink" title="卡片滑动效果介绍"></a>卡片滑动效果介绍</h2><p>卡片滑动的效果如下图所示。</p>
-<p>分析一下卡片效果，顶部的卡片是正常摆放，接着的后面两张会随着位置变化缩小、下移，产生视觉上的叠层效果，再然后的卡片就与第三张重叠摆放。可以滑动移除图片，下面的卡片会自动补全。</p>
-<ul>
-<li>实现这样的效果突破点在于两点：</li>
-</ul>
-<ol>
-<li>要实现这样重叠式布局的效果，我们就需要自定义LayoutManager，就像系统自带的<code>LinearLayoutManager</code>、<code>GridLayoutManager</code>一样。</li>
-<li>滑动移除效果的实现，没有重写<code>scrollVerticallyBy</code>以及<code>scrollHorizontallyBy</code>，这就需要一个重要的帮助类<code>ItemTouchHelper</code></li>
-</ol>
-<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/SlideCard.gif" alt="SlideCard"></p>
-<h2 id="卡片滑动实现"><a href="#卡片滑动实现" class="headerlink" title="卡片滑动实现"></a>卡片滑动实现</h2><ul>
-<li><p>实现思路</p>
-<blockquote>
-<ol>
-<li>摆放策略交给LayoutManager-&gt;具体怎么摆，每一个卡片布局策略和数据绑定由Adapter负责</li>
-<li>LayoutManager必须重写<code>onLayoutChildren</code>方法，当数据发生改变时，会重新布局，detachAndScrapAttachedViews处理回收，recycler.getViewForPosition(i)获取对应位置的View。</li>
-<li>测量view，摆放时需要考虑通过ItemDecoration预留的间距<code>layoutDecoratedWithMargins</code></li>
-<li>卡片采用的是倒序摆放，即从第8张到第一张的顺序摆放</li>
-<li>利用<code>ItemTouchHelper</code>实现滑动移除，并且需要重写onChildDraw，实现滑动动画开始时，下方图片缩放效果。TouchHelper是ItemDecoration的子类，在onDraw时根据滑动距离来影响后面view的大小</li>
-</ol>
-</blockquote>
-</li>
-<li><p>关键代码块：</p>
-</li>
-</ul>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SlideCardLayoutManager</span>:RecyclerView.LayoutManager() &#123;</span><br><span class="line">    override fun <span class="title function_">generateDefaultLayoutParams</span><span class="params">()</span>: RecyclerView.LayoutParams &#123;</span><br><span class="line">        <span class="keyword">return</span> RecyclerView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,</span><br><span class="line">        ViewGroup.LayoutParams.WRAP_CONTENT)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun <span class="title function_">onLayoutChildren</span><span class="params">(recycler: RecyclerView.Recycler?, state: RecyclerView.State?)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onLayoutChildren(recycler, state)</span><br><span class="line">        detachAndScrapAttachedViews(recycler!!)</span><br><span class="line">        <span class="type">val</span> <span class="variable">itemCount</span> <span class="operator">=</span> itemCount</span><br><span class="line">        <span class="type">var</span> <span class="variable">bottomPosition</span> <span class="operator">=</span> <span class="number">0</span></span><br><span class="line">        <span class="keyword">if</span> (itemCount&lt;CardConfig.MAX_SHOW_COUNT)&#123;</span><br><span class="line">            bottomPosition = <span class="number">0</span></span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            bottomPosition = itemCount - CardConfig.MAX_SHOW_COUNT</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (i in bottomPosition until  itemCount)&#123;</span><br><span class="line">            <span class="type">val</span> <span class="variable">view</span> <span class="operator">=</span> recycler.getViewForPosition(i)</span><br><span class="line">            addView(view)</span><br><span class="line">            <span class="comment">//测量</span></span><br><span class="line">            measureChildWithMargins(view,<span class="number">0</span>,<span class="number">0</span>)</span><br><span class="line">            <span class="type">val</span> <span class="variable">widthSpace</span> <span class="operator">=</span> width - getDecoratedMeasuredHeight(view)</span><br><span class="line">            <span class="type">val</span> <span class="variable">heightSpace</span> <span class="operator">=</span> height - getDecoratedMeasuredHeight(view)</span><br><span class="line">            <span class="comment">//布局</span></span><br><span class="line">            layoutDecoratedWithMargins(view,</span><br><span class="line">            widthSpace/<span class="number">2</span>,</span><br><span class="line">            heightSpace/<span class="number">2</span>,</span><br><span class="line">            widthSpace/<span class="number">2</span>+getDecoratedMeasuredWidth(view),</span><br><span class="line">            heightSpace/<span class="number">2</span>+getDecoratedMeasuredHeight(view))</span><br><span class="line">            <span class="type">var</span> <span class="variable">level</span> <span class="operator">=</span> itemCount -i -<span class="number">1</span></span><br><span class="line">            <span class="keyword">if</span> (level&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                <span class="keyword">if</span> (level&lt;CardConfig.MAX_SHOW_COUNT-<span class="number">1</span>)&#123;<span class="comment">//提示，这里CardConfig.MAX_SHOW_COUNT=4，可见小编所有代码</span></span><br><span class="line">                    view.translationY = CardConfig.TRANS_Y_GAP * level</span><br><span class="line">                    view.scaleX = <span class="number">1</span>-CardConfig.SCALE_GAP*level</span><br><span class="line">                    view.scaleY = <span class="number">1</span>-CardConfig.SCALE_GAP*level</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    view.translationY = CardConfig.TRANS_Y_GAP * (level-<span class="number">1</span>)</span><br><span class="line">                    view.scaleX = <span class="number">1</span>-CardConfig.SCALE_GAP*(level-<span class="number">1</span>)</span><br><span class="line">                    view.scaleY = <span class="number">1</span>-CardConfig.SCALE_GAP*(level-<span class="number">1</span>)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>注意：这里继承的是<code>ItemTouchHelper.SimpleCallback</code>，<code>ItemTouchHelper.Callback</code>需要重写的方法太多。</li>
-<li>重写onChildDraw，因为notifyDataSetChanged()会走onDraw流程，而onDraw又会调用onChildDraw。</li>
-</ul>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SlideCallBack</span>(</span><br><span class="line">    <span class="keyword">private</span> val adapter:SlideCardAdapter,</span><br><span class="line">    <span class="keyword">private</span> val mData:MutableList&lt;SlideCardBean&gt;</span><br><span class="line">):ItemTouchHelper.SimpleCallback(<span class="number">0</span>,<span class="number">15</span>) &#123;</span><br><span class="line">    override fun <span class="title function_">onMove</span><span class="params">(</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        viewHolder: RecyclerView.ViewHolder,</span></span><br><span class="line"><span class="params">        target: RecyclerView.ViewHolder</span></span><br><span class="line"><span class="params">    )</span>: Boolean &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@SuppressLint(&quot;NotifyDataSetChanged&quot;)</span></span><br><span class="line">    override fun <span class="title function_">onSwiped</span><span class="params">(viewHolder: RecyclerView.ViewHolder, direction: Int)</span> &#123;</span><br><span class="line">        <span class="type">val</span> <span class="variable">remove</span> <span class="operator">=</span> mData.removeAt(viewHolder.layoutPosition)</span><br><span class="line">        mData.add(<span class="number">0</span>,remove)</span><br><span class="line">        adapter.notifyDataSetChanged()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun <span class="title function_">onChildDraw</span><span class="params">(</span></span><br><span class="line"><span class="params">        c: Canvas,</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        viewHolder: RecyclerView.ViewHolder,</span></span><br><span class="line"><span class="params">        dX: Float,</span></span><br><span class="line"><span class="params">        dY: Float,</span></span><br><span class="line"><span class="params">        actionState: Int,</span></span><br><span class="line"><span class="params">        isCurrentlyActive: Boolean</span></span><br><span class="line"><span class="params">    )</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)</span><br><span class="line">        <span class="type">val</span> <span class="variable">maxDistance</span> <span class="operator">=</span> recyclerView.width * <span class="number">0.5f</span></span><br><span class="line">        <span class="type">val</span> <span class="variable">distance</span> <span class="operator">=</span> sqrt((dX*dX+dY*dY).toDouble())</span><br><span class="line">        <span class="type">var</span> <span class="variable">fraction</span> <span class="operator">=</span> distance/maxDistance</span><br><span class="line">        <span class="title function_">if</span> <span class="params">(fraction&gt;<span class="number">1</span>)</span>&#123;</span><br><span class="line">            fraction= <span class="number">1.0</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">val</span> <span class="variable">itemCount</span> <span class="operator">=</span> recyclerView.childCount</span><br><span class="line">        Log.v(<span class="string">&quot;ppp&quot;</span>,<span class="string">&quot;itemCount: $itemCount&quot;</span>)</span><br><span class="line">        <span class="keyword">for</span>(i in <span class="number">0</span> until itemCount)&#123;</span><br><span class="line">            <span class="type">val</span> <span class="variable">view</span> <span class="operator">=</span> recyclerView.getChildAt(i)</span><br><span class="line">            <span class="type">val</span> <span class="variable">level</span> <span class="operator">=</span> itemCount - i - <span class="number">1</span></span><br><span class="line">            Log.v(<span class="string">&quot;pc&quot;</span>,<span class="string">&quot;level: $level&quot;</span>)</span><br><span class="line">            <span class="keyword">if</span> (level&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                <span class="comment">//重绘level=1，2 -&gt;也就是i=5,6</span></span><br><span class="line">                <span class="keyword">if</span> (level&lt;CardConfig.MAX_SHOW_COUNT-<span class="number">1</span>)&#123;</span><br><span class="line">                    view.translationY = (CardConfig.TRANS_Y_GAP * (level-fraction)).toFloat()</span><br><span class="line">                    view.scaleX = (<span class="number">1</span>-CardConfig.SCALE_GAP*level+fraction*CardConfig.SCALE_GAP).toFloat()</span><br><span class="line">                    view.scaleY = (<span class="number">1</span>-CardConfig.SCALE_GAP*level+fraction*CardConfig.SCALE_GAP).toFloat()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//s时间</span></span><br><span class="line">    override fun <span class="title function_">getAnimationDuration</span><span class="params">(</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        animationType: Int,</span></span><br><span class="line"><span class="params">        animateDx: Float,</span></span><br><span class="line"><span class="params">        animateDy: Float</span></span><br><span class="line"><span class="params">    )</span>: Long &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">500</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>目前为止，小编已经介绍了RecyclerView自定义用法的两种，自定义ItemDecoration和自定义LayoutManager。这里有一个逻辑上的坑点：顶部的卡片是正常摆放，我们自定义LayoutManager中不用管它，所以在上方两个代码块中都有<code>level&gt;0</code>和<code>level&lt;CardConfig.MAX_SHOW_COUNT-1</code>，也就是重绘索引值<code>i=5,6</code>即第6和7个，在<code>SlideCardLayoutManager</code>中，第5张卡片即一下的重叠在第6张的下面。这个点烦恼了小编好久，刚开始一直不明白顶部的摆放去哪了，从这点可以看出了解原理看源码的重要性。下一章，我们将对RecyclerView源码机制进行解读，再结合这一章的内容，将会对RecyclerView的原理有个更深层次的理解。</p>
-<p><a href="https://github.com/gun-ctrl/SlideCard">全部代码地址</a></p>
-]]></content>
-      <categories>
-        <category>高级UI</category>
-      </categories>
-      <tags>
-        <tag>高级UI</tag>
-      </tags>
   </entry>
   <entry>
     <title>组件化开发</title>
@@ -4089,6 +4039,56 @@
       </categories>
       <tags>
         <tag>自定义View</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>自定义LayoutManager实现卡片滑动</title>
+    <url>/2022/07/24/%E8%87%AA%E5%AE%9A%E4%B9%89LayoutManager%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E6%BB%91%E5%8A%A8/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
+<p>前面介绍了利用自定义ItemDecoration实现RecyclerView吸顶效果，重点就在onDraw -&gt; ItemView -&gt; onDrawOver的绘制流程，同时注意预留空间的利用。</p>
+<p>今天介绍一个新的知识点与demo，利用自定义LayoutManager的方式实现卡片滑动。有时候系统提供的LayoutManager已经不能够满足我们的需求，这个时候我们就需要自定义LayoutManager。</p>
+</blockquote>
+<h2 id="卡片滑动效果介绍"><a href="#卡片滑动效果介绍" class="headerlink" title="卡片滑动效果介绍"></a>卡片滑动效果介绍</h2><p>卡片滑动的效果如下图所示。</p>
+<p>分析一下卡片效果，顶部的卡片是正常摆放，接着的后面两张会随着位置变化缩小、下移，产生视觉上的叠层效果，再然后的卡片就与第三张重叠摆放。可以滑动移除图片，下面的卡片会自动补全。</p>
+<ul>
+<li>实现这样的效果突破点在于两点：</li>
+</ul>
+<ol>
+<li>要实现这样重叠式布局的效果，我们就需要自定义LayoutManager，就像系统自带的<code>LinearLayoutManager</code>、<code>GridLayoutManager</code>一样。</li>
+<li>滑动移除效果的实现，没有重写<code>scrollVerticallyBy</code>以及<code>scrollHorizontallyBy</code>，这就需要一个重要的帮助类<code>ItemTouchHelper</code></li>
+</ol>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/SlideCard.gif" alt="SlideCard"></p>
+<h2 id="卡片滑动实现"><a href="#卡片滑动实现" class="headerlink" title="卡片滑动实现"></a>卡片滑动实现</h2><ul>
+<li><p>实现思路</p>
+<blockquote>
+<ol>
+<li>摆放策略交给LayoutManager-&gt;具体怎么摆，每一个卡片布局策略和数据绑定由Adapter负责</li>
+<li>LayoutManager必须重写<code>onLayoutChildren</code>方法，当数据发生改变时，会重新布局，detachAndScrapAttachedViews处理回收，recycler.getViewForPosition(i)获取对应位置的View。</li>
+<li>测量view，摆放时需要考虑通过ItemDecoration预留的间距<code>layoutDecoratedWithMargins</code></li>
+<li>卡片采用的是倒序摆放，即从第8张到第一张的顺序摆放</li>
+<li>利用<code>ItemTouchHelper</code>实现滑动移除，并且需要重写onChildDraw，实现滑动动画开始时，下方图片缩放效果。TouchHelper是ItemDecoration的子类，在onDraw时根据滑动距离来影响后面view的大小</li>
+</ol>
+</blockquote>
+</li>
+<li><p>关键代码块：</p>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SlideCardLayoutManager</span>:RecyclerView.LayoutManager() &#123;</span><br><span class="line">    override fun <span class="title function_">generateDefaultLayoutParams</span><span class="params">()</span>: RecyclerView.LayoutParams &#123;</span><br><span class="line">        <span class="keyword">return</span> RecyclerView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,</span><br><span class="line">        ViewGroup.LayoutParams.WRAP_CONTENT)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun <span class="title function_">onLayoutChildren</span><span class="params">(recycler: RecyclerView.Recycler?, state: RecyclerView.State?)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onLayoutChildren(recycler, state)</span><br><span class="line">        detachAndScrapAttachedViews(recycler!!)</span><br><span class="line">        <span class="type">val</span> <span class="variable">itemCount</span> <span class="operator">=</span> itemCount</span><br><span class="line">        <span class="type">var</span> <span class="variable">bottomPosition</span> <span class="operator">=</span> <span class="number">0</span></span><br><span class="line">        <span class="keyword">if</span> (itemCount&lt;CardConfig.MAX_SHOW_COUNT)&#123;</span><br><span class="line">            bottomPosition = <span class="number">0</span></span><br><span class="line">        &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">            bottomPosition = itemCount - CardConfig.MAX_SHOW_COUNT</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (i in bottomPosition until  itemCount)&#123;</span><br><span class="line">            <span class="type">val</span> <span class="variable">view</span> <span class="operator">=</span> recycler.getViewForPosition(i)</span><br><span class="line">            addView(view)</span><br><span class="line">            <span class="comment">//测量</span></span><br><span class="line">            measureChildWithMargins(view,<span class="number">0</span>,<span class="number">0</span>)</span><br><span class="line">            <span class="type">val</span> <span class="variable">widthSpace</span> <span class="operator">=</span> width - getDecoratedMeasuredHeight(view)</span><br><span class="line">            <span class="type">val</span> <span class="variable">heightSpace</span> <span class="operator">=</span> height - getDecoratedMeasuredHeight(view)</span><br><span class="line">            <span class="comment">//布局</span></span><br><span class="line">            layoutDecoratedWithMargins(view,</span><br><span class="line">            widthSpace/<span class="number">2</span>,</span><br><span class="line">            heightSpace/<span class="number">2</span>,</span><br><span class="line">            widthSpace/<span class="number">2</span>+getDecoratedMeasuredWidth(view),</span><br><span class="line">            heightSpace/<span class="number">2</span>+getDecoratedMeasuredHeight(view))</span><br><span class="line">            <span class="type">var</span> <span class="variable">level</span> <span class="operator">=</span> itemCount -i -<span class="number">1</span></span><br><span class="line">            <span class="keyword">if</span> (level&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                <span class="keyword">if</span> (level&lt;CardConfig.MAX_SHOW_COUNT-<span class="number">1</span>)&#123;<span class="comment">//提示，这里CardConfig.MAX_SHOW_COUNT=4，可见小编所有代码</span></span><br><span class="line">                    view.translationY = CardConfig.TRANS_Y_GAP * level</span><br><span class="line">                    view.scaleX = <span class="number">1</span>-CardConfig.SCALE_GAP*level</span><br><span class="line">                    view.scaleY = <span class="number">1</span>-CardConfig.SCALE_GAP*level</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    view.translationY = CardConfig.TRANS_Y_GAP * (level-<span class="number">1</span>)</span><br><span class="line">                    view.scaleX = <span class="number">1</span>-CardConfig.SCALE_GAP*(level-<span class="number">1</span>)</span><br><span class="line">                    view.scaleY = <span class="number">1</span>-CardConfig.SCALE_GAP*(level-<span class="number">1</span>)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>注意：这里继承的是<code>ItemTouchHelper.SimpleCallback</code>，<code>ItemTouchHelper.Callback</code>需要重写的方法太多。</li>
+<li>重写onChildDraw，因为notifyDataSetChanged()会走onDraw流程，而onDraw又会调用onChildDraw。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SlideCallBack</span>(</span><br><span class="line">    <span class="keyword">private</span> val adapter:SlideCardAdapter,</span><br><span class="line">    <span class="keyword">private</span> val mData:MutableList&lt;SlideCardBean&gt;</span><br><span class="line">):ItemTouchHelper.SimpleCallback(<span class="number">0</span>,<span class="number">15</span>) &#123;</span><br><span class="line">    override fun <span class="title function_">onMove</span><span class="params">(</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        viewHolder: RecyclerView.ViewHolder,</span></span><br><span class="line"><span class="params">        target: RecyclerView.ViewHolder</span></span><br><span class="line"><span class="params">    )</span>: Boolean &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@SuppressLint(&quot;NotifyDataSetChanged&quot;)</span></span><br><span class="line">    override fun <span class="title function_">onSwiped</span><span class="params">(viewHolder: RecyclerView.ViewHolder, direction: Int)</span> &#123;</span><br><span class="line">        <span class="type">val</span> <span class="variable">remove</span> <span class="operator">=</span> mData.removeAt(viewHolder.layoutPosition)</span><br><span class="line">        mData.add(<span class="number">0</span>,remove)</span><br><span class="line">        adapter.notifyDataSetChanged()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    override fun <span class="title function_">onChildDraw</span><span class="params">(</span></span><br><span class="line"><span class="params">        c: Canvas,</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        viewHolder: RecyclerView.ViewHolder,</span></span><br><span class="line"><span class="params">        dX: Float,</span></span><br><span class="line"><span class="params">        dY: Float,</span></span><br><span class="line"><span class="params">        actionState: Int,</span></span><br><span class="line"><span class="params">        isCurrentlyActive: Boolean</span></span><br><span class="line"><span class="params">    )</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)</span><br><span class="line">        <span class="type">val</span> <span class="variable">maxDistance</span> <span class="operator">=</span> recyclerView.width * <span class="number">0.5f</span></span><br><span class="line">        <span class="type">val</span> <span class="variable">distance</span> <span class="operator">=</span> sqrt((dX*dX+dY*dY).toDouble())</span><br><span class="line">        <span class="type">var</span> <span class="variable">fraction</span> <span class="operator">=</span> distance/maxDistance</span><br><span class="line">        <span class="title function_">if</span> <span class="params">(fraction&gt;<span class="number">1</span>)</span>&#123;</span><br><span class="line">            fraction= <span class="number">1.0</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">val</span> <span class="variable">itemCount</span> <span class="operator">=</span> recyclerView.childCount</span><br><span class="line">        Log.v(<span class="string">&quot;ppp&quot;</span>,<span class="string">&quot;itemCount: $itemCount&quot;</span>)</span><br><span class="line">        <span class="keyword">for</span>(i in <span class="number">0</span> until itemCount)&#123;</span><br><span class="line">            <span class="type">val</span> <span class="variable">view</span> <span class="operator">=</span> recyclerView.getChildAt(i)</span><br><span class="line">            <span class="type">val</span> <span class="variable">level</span> <span class="operator">=</span> itemCount - i - <span class="number">1</span></span><br><span class="line">            Log.v(<span class="string">&quot;pc&quot;</span>,<span class="string">&quot;level: $level&quot;</span>)</span><br><span class="line">            <span class="keyword">if</span> (level&gt;<span class="number">0</span>)&#123;</span><br><span class="line">                <span class="comment">//重绘level=1，2 -&gt;也就是i=5,6</span></span><br><span class="line">                <span class="keyword">if</span> (level&lt;CardConfig.MAX_SHOW_COUNT-<span class="number">1</span>)&#123;</span><br><span class="line">                    view.translationY = (CardConfig.TRANS_Y_GAP * (level-fraction)).toFloat()</span><br><span class="line">                    view.scaleX = (<span class="number">1</span>-CardConfig.SCALE_GAP*level+fraction*CardConfig.SCALE_GAP).toFloat()</span><br><span class="line">                    view.scaleY = (<span class="number">1</span>-CardConfig.SCALE_GAP*level+fraction*CardConfig.SCALE_GAP).toFloat()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//s时间</span></span><br><span class="line">    override fun <span class="title function_">getAnimationDuration</span><span class="params">(</span></span><br><span class="line"><span class="params">        recyclerView: RecyclerView,</span></span><br><span class="line"><span class="params">        animationType: Int,</span></span><br><span class="line"><span class="params">        animateDx: Float,</span></span><br><span class="line"><span class="params">        animateDy: Float</span></span><br><span class="line"><span class="params">    )</span>: Long &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">500</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>目前为止，小编已经介绍了RecyclerView自定义用法的两种，自定义ItemDecoration和自定义LayoutManager。这里有一个逻辑上的坑点：顶部的卡片是正常摆放，我们自定义LayoutManager中不用管它，所以在上方两个代码块中都有<code>level&gt;0</code>和<code>level&lt;CardConfig.MAX_SHOW_COUNT-1</code>，也就是重绘索引值<code>i=5,6</code>即第6和7个，在<code>SlideCardLayoutManager</code>中，第5张卡片即一下的重叠在第6张的下面。这个点烦恼了小编好久，刚开始一直不明白顶部的摆放去哪了，从这点可以看出了解原理看源码的重要性。下一章，我们将对RecyclerView源码机制进行解读，再结合这一章的内容，将会对RecyclerView的原理有个更深层次的理解。</p>
+<p><a href="https://github.com/gun-ctrl/SlideCard">全部代码地址</a></p>
+]]></content>
+      <categories>
+        <category>高级UI</category>
+      </categories>
+      <tags>
+        <tag>高级UI</tag>
       </tags>
   </entry>
   <entry>
