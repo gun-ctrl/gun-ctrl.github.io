@@ -1,0 +1,366 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>阻塞队列与线程池机制 | 搬码人’s Blog</title><meta name="author" content="搬码人"><meta name="copyright" content="搬码人"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="创建线程的方式 1.Thread 2.Runnable（实例化接口，重新run方法，放入Thread中执行）  为什么Callable方式不算?   首先，我们都知道创建线程都需要通过Thread，那么我们来看一下Thread的构造函数  可以看到，Thread构造函数中压根就没有Callab..."><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "阻塞队列与线程池机制",
+  "url": "https://gun-ctrl.github.io/2022/07/31/%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E4%B8%8E%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%9C%BA%E5%88%B6/",
+  "image": "https://gun-ctrl.github.io/img/jianji.png",
+  "datePublished": "2022-07-31T03:58:00.000Z",
+  "dateModified": "2026-09-13T08:31:14.085Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "搬码人",
+      "url": "https://gun-ctrl.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://gun-ctrl.github.io/2022/07/31/%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E4%B8%8E%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%9C%BA%E5%88%B6/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":20,"languages":{"author":"作者: 搬码人","link":"链接: ","source":"来源: 搬码人’s Blog","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'null',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '阻塞队列与线程池机制',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="搬码人’s Blog" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">33</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/jianji.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">搬码人’s Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">阻塞队列与线程池机制</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">阻塞队列与线程池机制</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-07-31T03:58:00.000Z" title="发表于 2022-07-31 11:58:00">2022-07-31</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-13T08:31:14.085Z" title="更新于 2026-09-13 16:31:14">2026-09-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Java%E7%AD%91%E5%9F%BA/">Java筑基</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>6分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;It has been&quot;,&quot;messageNext&quot;:&quot;days since the last update, the content of the article may be outdated.&quot;,&quot;postUpdate&quot;:&quot;2026-09-13 16:31:14&quot;}" hidden></div><h2 id="创建线程的方式"><a href="#创建线程的方式" class="headerlink" title="创建线程的方式"></a>创建线程的方式</h2><ul>
+<li>1.Thread</li>
+<li>2.Runnable（实例化接口，重新run方法，放入Thread中执行）</li>
+</ul>
+<p>为什么Callable方式不算?</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654148325145.png" alt="1654148325145"></p>
+<blockquote>
+<p>首先，我们都知道创建线程都需要通过Thread，那么我们来看一下Thread的构造函数</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654148402777.png" alt="1654148402777"></p>
+<p>可以看到，Thread构造函数中压根就没有Callable类型的参数</p>
+<p>接着，我们再来看看Callable，Callable是继承自FutureTask</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654148426071.png" alt="1654148426071"></p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654148455965.png" alt="1654148455965"></p>
+<p>通过上面的源码截图，我们可以看出来Callable本质上还是Runnable的一种实现</p>
+</blockquote>
+<h2 id="CAS"><a href="#CAS" class="headerlink" title="CAS"></a>CAS</h2><p><strong>Compare And Swap</strong></p>
+<blockquote>
+<p>提及CAS之前，我们先来提一下原子操作，原子操作就是一气呵成，中间不能被打断，学过操作系统的朋友应该和熟悉，没错，就类似于操作系统中的中断原语。</p>
+</blockquote>
+<h3 id="CAS原理"><a href="#CAS原理" class="headerlink" title="CAS原理"></a>CAS原理</h3><p>利用了现代处理器都支持的CAS的指令，循环这个指令，直到成功为止。</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220730211300257.png" alt="image-20220730211300257"></p>
+<blockquote>
+<p>会有两个重要的属性变量，旧值与新值（需要更改的值），每次进入前都会用旧值与内存中的变量值进行比较，如果相同，就会用新值替换内存中的变量值，否则将再次循环上述过程。</p>
+</blockquote>
+<h3 id="CAS的问题"><a href="#CAS的问题" class="headerlink" title="CAS的问题"></a>CAS的问题</h3><h4 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h4><p><strong>什么是ABA问题呢？</strong></p>
+<blockquote>
+<p>就是旧值为A，被替换为新值B，后面的线程又替换为新值A。再后面的线程对比其存储的旧值与内存中的值相等，但是它并不知道中间有个A-&gt;B-&gt;A的过程。</p>
+</blockquote>
+<p><strong>解决方案</strong></p>
+<p>通过打标识的方式标记：</p>
+<p>1.AtomicMarkableReference-&gt;仅仅标识发生了ABA现象</p>
+<p>2.AtomicStampedReference-&gt;可以知道发生了几次ABA现象</p>
+<h4 id="开销问题"><a href="#开销问题" class="headerlink" title="开销问题"></a>开销问题</h4><blockquote>
+<p>CAS是一个不断循环检测的过程，毫无疑问，这将带来一定的开销。</p>
+</blockquote>
+<h4 id="只能保证一个共享变量的原子操作"><a href="#只能保证一个共享变量的原子操作" class="headerlink" title="只能保证一个共享变量的原子操作"></a>只能保证一个共享变量的原子操作</h4><ul>
+<li>jdk中相关原子操作类的使用<ul>
+<li>更新基本类型：AtomicBoolean，AtomicInteger，AtomicLong</li>
+<li>更新数组：AtomicIntegerArray，AtomicLongArray，AtomicReferenceArray</li>
+<li>更新引用类型：AtomicReference，AtomicMarkableReference（只关心该没改过），AtomicStampedReference（还关心改过几次）</li>
+</ul>
+</li>
+</ul>
+<p>有些时候对于某些简单的操作采用加锁的话未免有些过重了，可以采用原子类型如果你需要改变多个变量，可以进行封装，通过AtomicReference来管理。</p>
+<h2 id="线程池机制"><a href="#线程池机制" class="headerlink" title="线程池机制"></a>线程池机制</h2><h3 id="ThreadLocal简介"><a href="#ThreadLocal简介" class="headerlink" title="ThreadLocal简介"></a>ThreadLocal简介</h3><blockquote>
+<p>线程本地变量，也有些地方叫做线程本地存储，其实意思差不多。ThreadLocal可以让每个线程拥有属于自己的变量的副本，不会和其他线程的变量副本冲突，实现了线程的数据隔离</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/20123021-867510bb5ec6c143.png" alt="threadLocal"></p>
+</blockquote>
+<h3 id="线程池简介"><a href="#线程池简介" class="headerlink" title="线程池简介"></a>线程池简介</h3><p><strong>什么是线程池？为什么要用线程池？</strong></p>
+<blockquote>
+<ul>
+<li>Thread线程属于操作系统的资源，消耗CPU、内存 -&gt;降低资源消耗</li>
+<li>线程有创建、执行、销毁的时间，所以为什么不事先准备好呢？-&gt;提高响应度</li>
+<li>所以需要一个策略机制来管理线程-&gt;提高线程的可管理性</li>
+</ul>
+</blockquote>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/image-20220731114721901.png" alt="image-20220731114721901"></p>
+<h3 id="线程池的参数"><a href="#线程池的参数" class="headerlink" title="线程池的参数"></a><strong>线程池的参数</strong></h3><p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654579455105.png" alt="1654140925994"></p>
+<ul>
+<li><p>keepAliveSize和TimeUnit这俩参数控制空闲线程存活的时间</p>
+</li>
+<li><p>ThreadFactory对创建线程时做这些微调工作</p>
+</li>
+<li><p>RejectedExecutionHandler 拒绝策略（阻塞队列满，任务数超过了最大线程数，那么就会拒绝）</p>
+<ul>
+<li>DiscardOldestPolicy 抛弃最老的，也就是队列队首的任务</li>
+<li>AbortPolicy 直接抛出异常</li>
+<li>CallerRunsPolicy  谁调用谁执行</li>
+<li>DiscardPolicy 丢弃最新提交的任务</li>
+</ul>
+<p>当然也可以自己实现接口自定义拒绝策略</p>
+</li>
+<li><p>阻塞队列BlockingQueue</p>
+</li>
+</ul>
+<h3 id="阻塞队列"><a href="#阻塞队列" class="headerlink" title="阻塞队列"></a>阻塞队列</h3><ul>
+<li>ArrayBlockingQueue：一个由数组结构组成的有界阻塞队列</li>
+<li>LinkedBlockingQueue：一个由链表结构组成的有界阻塞队列</li>
+<li>PriorityBlockingQueue：一个支持优先级排序的无界阻塞队列</li>
+<li>DelayQueue：一个使用优先级队列实现的无界阻塞队列</li>
+<li>SynchronousQueue：一个不存储元素的阻塞队列</li>
+<li>LinkedTransferQueue：一个由链表结构组成的无界阻塞队列</li>
+<li>LinkedBlockingDeque：一个由链表结构组成的双向阻塞队列</li>
+</ul>
+<p>这里以okhttp中的实用场景对其中几种做简介：</p>
+<p>在OkHttp的分发器中的线程池定义如上，其实就和 Executors.newCachedThreadPool()创建的线程一样。首先核心线程为0，表示线程池不会一直为我们缓存线程，线程池中所有线程都是在60s内没有工作就会被回收。而最大线程Integer .MAX_VALUE与等待队列synchronousQueue的组合能够得到最大的吞吐量。即当需要线程池执行任务时，如果不存在空闲线程不需要等待，马上新建线程执行任务!等待队列的不同指定了线程池的不同排队机制。一般来说，等待队列BlockingQueue有: (ArrayBlockingQueue 、LinkedBlockingQueue 与synchronousQueue 。</p>
+<p>假设向线程池提交任务时，核心线程都被占用的情况下:</p>
+<p>ArrayBlockingQueue :基于数组的阻塞队列，初始化需要指定固定大小</p>
+<p>当使用此队列时，向线程池提交任务，会首先加入到等待队列中，当等待队列满了之后，再次提交任务，尝试加入队列就会失败，这时就会检查如果当前线程池中的线程数未达到最大线程，则会新建线程执行新提交的任务。所以最终可能出现后提交的任务先执行，而先提交的任务一直在等待。</p>
+<p>LinkedBlockingQueue :基于链表实现的阻塞队列，初始化可以指定大小，也可以不指定。</p>
+<p>当指定大小后，行为就和ArrayBlockingQueue一致。而如果未指定大小，则会使用默认的Integer.MAX_VALUE作为队列大小。这时候就会出现线程池的最大线程数参数无用，因为无论如何，向线程池提交任务加入等待队列都会成功。最终意味着所有任务都是在核心线程执行。如果核心线程一直被占，那就一直等待。</p>
+<p>SynchronousQueue :无容量的队列。</p>
+<p>使用此队列意味着希望获得最大并发量。因为无论如何，向线程池提交任务，往队列提交任务都会失败。而失败后如果没有空闲的非核心线程，就会检查如果当前线程池中的线程数未达到最大线程，则会新建线程执行新提交的任务。完全没有任何等待，唯一制约它的就是最大线程数的个数。因此一般配合Integer.MAX_VALUE就实现了真正的无等待。</p>
+<p>但是需要注意的时，我们都知道，进程的内存是存在限制的，而每一个线程都需要分配一定的内存。所以线程并不能无限个数。那么当设置最大线程数为Integer.MAX_VALUE时，OkHttp同时还有最大请求任务执行个数: 64的限制。这样即解决了这个问题同时也能获得最大吞吐。</p>
+<h3 id="两种线程池的提交任务的方法"><a href="#两种线程池的提交任务的方法" class="headerlink" title="两种线程池的提交任务的方法"></a>两种线程池的提交任务的方法</h3><ul>
+<li><p>execute(不关心有无返回结果)</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654579682668.png" alt="1654142332347"></p>
+</li>
+<li><p>submit</p>
+<p><img src="https://banmaman-1312858980.cos.ap-chengdu.myqcloud.com/1654579624953.png" alt="1654142400705"></p>
+</li>
+</ul>
+<h3 id="线程池的关闭"><a href="#线程池的关闭" class="headerlink" title="线程池的关闭"></a>线程池的关闭</h3><ul>
+<li><p>shutdown 尝试关闭一个线程，把当前没有执行任务的线程中断</p>
+</li>
+<li><p>shutdownNow 不管有没有执行任务的线程，都尝试中断</p>
+<p>但是不一定成功  所谓线程的中断是一个协作机制  看任务执行方</p>
+</li>
+</ul>
+<h3 id="合理配置线程池资源"><a href="#合理配置线程池资源" class="headerlink" title="合理配置线程池资源"></a>合理配置线程池资源</h3><p><strong>任务特性</strong></p>
+<ul>
+<li><p>CPU密集型  纯计算</p>
+<p>配置最大线程数不要超过机器的CPU核心数（Runtime.getRuntime()）顶多+1（保证核心线程有事做），否则切换线程带来时间浪费</p>
+</li>
+<li><p>IO密集型 与网络、读取磁盘等IO操作相关的</p>
+<p>最大线程数：机器的CPU核心线程数*2（推荐的经验值）</p>
+</li>
+<li><p>混合型 兼并上面两者 </p>
+<p>如果两者的执行时间相差不大，拆分成两个线程池专门处理各自类型</p>
+<p>如果两者相差很大，不用拆分（谁大配置谁）。</p>
+</li>
+</ul>
+<p>核心线程数，看业务（详情参考Okhttp）</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io">搬码人</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io/2022/07/31/%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E4%B8%8E%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%9C%BA%E5%88%B6/">https://gun-ctrl.github.io/2022/07/31/%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E4%B8%8E%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%9C%BA%E5%88%B6/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://gun-ctrl.github.io" target="_blank">搬码人’s Blog</a>！</span></div></div><div class="tag_share"><div class="post-share"><div class="social-share" data-image="/img/jianji.png" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechatpay.jpg" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/img/alipay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/alipay.jpg" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2022/07/27/adb%E8%8E%B7%E5%8F%96%E5%BA%94%E7%94%A8%E5%8C%85%E5%85%A5%E5%8F%A3%E7%9A%84%E6%96%B9%E6%A1%88/" title="adb获取应用包入口的方案"><img class="cover" src="/img/jie.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">adb获取应用包入口的方案</div></div><div class="info-2"><div class="info-item-1">引言小编最近在入手adb调试，刚开始还是挺顺利的，不过后面就遇到了一些小插曲，其中一个就是获取应用包的入口，开启一个应用。这个问题在网上可以找到很多解决方案，但不都是有用，并且有些方法有一点麻烦。这里，小编介绍一下意外摸索到的解决方案。 解决方案1、点开需要打开的应用，使用获取前台Activity命令 adb shell dumpsys activity activities | findstr mResumedActivity 这样便能获得应用包的启动入口比如，获取有道词典的启动入口 2、使用adb启动应用包 adb shell am start -n [应用包名] /[入口]  </div></div></div></a><a class="pagination-related" href="/2022/08/13/%E8%87%AA%E5%AE%9A%E4%B9%89PhotoView%E6%89%8B%E5%8A%BF%E5%A4%84%E7%90%86/" title="自定义PhotoView手势处理"><img class="cover" src="/img/timo.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">自定义PhotoView手势处理</div></div><div class="info-2"><div class="info-item-1">前言  前面介绍了前面介绍了嵌套滑动、自定义Behavior等高级UI实现原理，今天介绍一种比较简单的高级UI用法——手势处理。  你可以点开自己的手机相册，点开任意一张图片，双击图片会有放大效果，再次双击会缩小为原来大小。并且双指操作可以放大缩小图片。今天，小编就来实现一下这样的PhotoView效果。但是我的效果处理肯定不是很完美，毕竟追求代码简洁。  效果展示图：  手势处理API首先，先介绍一个Android处理单指手势的API GestureDetector，在创建一个GestureDetector对象时需要传入一个监听者OnGestureListener，所以我们需要实现OnGestureListener，通常实现SimpleOnGestureListener这个接口里面的功能就足够我们使用了，所以实现它即可。 SimpleOnGestureListener的方法介绍 class PhotoScaleGestureDetector extends GestureDetector.SimpleOnGestureListener&#123;        //在ACTIO...</div></div></div></a></nav><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">搬码人</div><div class="author-info-description">我挥舞着键盘和本子，发誓要把世界写个明明白白。</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">33</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" href="https://github.com/gun-ctrl"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="tencent://AddContact/?fromId=50&amp;fromSubId=1&amp;subcmd=all&amp;uin=1578684787" target="_blank" title="QQ"><i class="fab fa-qq"></i></a><a class="social-icon" href="mailto:pengchuan4314@163.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到搬码人的世界</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E7%BA%BF%E7%A8%8B%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">创建线程的方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CAS"><span class="toc-number">2.</span> <span class="toc-text">CAS</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#CAS%E5%8E%9F%E7%90%86"><span class="toc-number">2.1.</span> <span class="toc-text">CAS原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CAS%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-number">2.2.</span> <span class="toc-text">CAS的问题</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#ABA%E9%97%AE%E9%A2%98"><span class="toc-number">2.2.1.</span> <span class="toc-text">ABA问题</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BC%80%E9%94%80%E9%97%AE%E9%A2%98"><span class="toc-number">2.2.2.</span> <span class="toc-text">开销问题</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%AA%E8%83%BD%E4%BF%9D%E8%AF%81%E4%B8%80%E4%B8%AA%E5%85%B1%E4%BA%AB%E5%8F%98%E9%87%8F%E7%9A%84%E5%8E%9F%E5%AD%90%E6%93%8D%E4%BD%9C"><span class="toc-number">2.2.3.</span> <span class="toc-text">只能保证一个共享变量的原子操作</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0%E6%9C%BA%E5%88%B6"><span class="toc-number">3.</span> <span class="toc-text">线程池机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ThreadLocal%E7%AE%80%E4%BB%8B"><span class="toc-number">3.1.</span> <span class="toc-text">ThreadLocal简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%AE%80%E4%BB%8B"><span class="toc-number">3.2.</span> <span class="toc-text">线程池简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%9A%84%E5%8F%82%E6%95%B0"><span class="toc-number">3.3.</span> <span class="toc-text">线程池的参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97"><span class="toc-number">3.4.</span> <span class="toc-text">阻塞队列</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%A4%E7%A7%8D%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%9A%84%E6%8F%90%E4%BA%A4%E4%BB%BB%E5%8A%A1%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-number">3.5.</span> <span class="toc-text">两种线程池的提交任务的方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%9A%84%E5%85%B3%E9%97%AD"><span class="toc-number">3.6.</span> <span class="toc-text">线程池的关闭</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%88%E7%90%86%E9%85%8D%E7%BD%AE%E7%BA%BF%E7%A8%8B%E6%B1%A0%E8%B5%84%E6%BA%90"><span class="toc-number">3.7.</span> <span class="toc-text">合理配置线程池资源</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/09/13/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6/" title="浏览器渲染机制"><img src="/img/paike.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="浏览器渲染机制"/></a><div class="content"><a class="title" href="/2026/09/13/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6/" title="浏览器渲染机制">浏览器渲染机制</a><time datetime="2026-09-13T07:06:00.000Z" title="发表于 2026-09-13 15:06:00">2026-09-13</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" title="Okhttp框架介绍"><img src="/img/qinggangying.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Okhttp框架介绍"/></a><div class="content"><a class="title" href="/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" title="Okhttp框架介绍">Okhttp框架介绍</a><time datetime="2026-09-09T10:02:00.000Z" title="发表于 2026-09-09 18:02:00">2026-09-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/12/14/%E7%BB%84%E4%BB%B6%E5%8C%96%E5%BC%80%E5%8F%91/" title="组件化开发"><img src="/img/jianlai1.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="组件化开发"/></a><div class="content"><a class="title" href="/2022/12/14/%E7%BB%84%E4%BB%B6%E5%8C%96%E5%BC%80%E5%8F%91/" title="组件化开发">组件化开发</a><time datetime="2022-12-14T10:59:00.000Z" title="发表于 2022-12-14 18:59:00">2022-12-14</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/12/04/%E5%BC%80%E5%8F%91%E6%8A%80%E5%B7%A7/" title="开发技巧（一）"><img src="/img/timo.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="开发技巧（一）"/></a><div class="content"><a class="title" href="/2022/12/04/%E5%BC%80%E5%8F%91%E6%8A%80%E5%B7%A7/" title="开发技巧（一）">开发技巧（一）</a><time datetime="2022-12-04T04:53:00.000Z" title="发表于 2022-12-04 12:53:00">2022-12-04</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/11/19/Activity%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%BA%8E%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%BC%8F/" title="Activity生命周期与启动模式"><img src="/img/pansen.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Activity生命周期与启动模式"/></a><div class="content"><a class="title" href="/2022/11/19/Activity%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%BA%8E%E5%90%AF%E5%8A%A8%E6%A8%A1%E5%BC%8F/" title="Activity生命周期与启动模式">Activity生命周期与启动模式</a><time datetime="2022-11-19T04:11:00.000Z" title="发表于 2022-11-19 12:11:00">2022-11-19</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2022 - 2026 By 搬码人</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const initValine = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyValine = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const valineConfig = {
+      el: '#vcomment',
+      appId: '',
+      appKey: '',
+      avatar: 'monsterid',
+      serverURLs: '',
+      emojiMaps: {"tv_doge":"6ea59c827c414b4a2955fe79e0f6fd3dcd515e24.png","tv_亲亲":"a8111ad55953ef5e3be3327ef94eb4a39d535d06.png","tv_偷笑":"bb690d4107620f1c15cff29509db529a73aee261.png","tv_再见":"180129b8ea851044ce71caf55cc8ce44bd4a4fc8.png","tv_冷漠":"b9cbc755c2b3ee43be07ca13de84e5b699a3f101.png","tv_发怒":"34ba3cd204d5b05fec70ce08fa9fa0dd612409ff.png","tv_发财":"34db290afd2963723c6eb3c4560667db7253a21a.png","tv_可爱":"9e55fd9b500ac4b96613539f1ce2f9499e314ed9.png","tv_吐血":"09dd16a7aa59b77baa1155d47484409624470c77.png","tv_呆":"fe1179ebaa191569b0d31cecafe7a2cd1c951c9d.png","tv_呕吐":"9f996894a39e282ccf5e66856af49483f81870f3.png","tv_困":"241ee304e44c0af029adceb294399391e4737ef2.png","tv_坏笑":"1f0b87f731a671079842116e0991c91c2c88645a.png","tv_大佬":"093c1e2c490161aca397afc45573c877cdead616.png","tv_大哭":"23269aeb35f99daee28dda129676f6e9ea87934f.png","tv_委屈":"d04dba7b5465779e9755d2ab6f0a897b9b33bb77.png","tv_害羞":"a37683fb5642fa3ddfc7f4e5525fd13e42a2bdb1.png","tv_尴尬":"7cfa62dafc59798a3d3fb262d421eeeff166cfa4.png","tv_微笑":"70dc5c7b56f93eb61bddba11e28fb1d18fddcd4c.png","tv_思考":"90cf159733e558137ed20aa04d09964436f618a1.png","tv_惊吓":"0d15c7e2ee58e935adc6a7193ee042388adc22af.png"},
+      visitor: false,
+      ...option,
+      path: isShuoshuo ? path : (option && option.path) || window.location.pathname
+    }
+
+    new Valine(valineConfig)
+  }
+
+  const loadValine = async (el, path) => {
+    if (typeof Valine === 'function') {
+      initValine(el, path)
+    } else {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js')
+      initValine(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Valine' === 'Valine'
+      ? window.shuoshuoComment = { loadComment: loadValine }
+      : window.loadOtherComment = loadValine
+    return
+  }
+
+  if ('Valine' === 'Valine' || !true) {
+    if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+    else setTimeout(loadValine, 0)
+  } else {
+    window.loadOtherComment = loadValine
+  }
+})()</script></div><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="true" data-click="true"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
