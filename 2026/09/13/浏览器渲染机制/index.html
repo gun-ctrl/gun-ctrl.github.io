@@ -1,0 +1,641 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>浏览器渲染机制 | 搬码人’s Blog</title><meta name="author" content="搬码人"><meta name="copyright" content="搬码人"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content=" 关于浏览器渲染机制的整体介绍   一、从 URL 到页面渲染的完整流程URL 输入  ↓1. DNS 解析 → IP 地址  ↓2. TCP 三次握手 → 建立连接  ↓3. TLS 握手（HTTPS）→ 安全连接  ↓4. 发送 HTTP 请求 → 服务器返回 HTML  ↓5. 浏览器解..."><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "浏览器渲染机制",
+  "url": "https://gun-ctrl.github.io/2026/09/13/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6/",
+  "image": "https://gun-ctrl.github.io/img/jianlai1.png",
+  "datePublished": "2026-09-13T06:58:53.652Z",
+  "dateModified": "2026-09-13T07:06:29.379Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "搬码人",
+      "url": "https://gun-ctrl.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://gun-ctrl.github.io/2026/09/13/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":20,"languages":{"author":"作者: 搬码人","link":"链接: ","source":"来源: 搬码人’s Blog","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'null',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '浏览器渲染机制',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="搬码人’s Blog" type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">33</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/jianlai1.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">搬码人’s Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">浏览器渲染机制</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">浏览器渲染机制</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-09-13T06:58:53.652Z" title="发表于 2026-09-13 14:58:53">2026-09-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-09-13T07:06:29.379Z" title="更新于 2026-09-13 15:06:29">2026-09-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Web%E7%AD%91%E5%9F%BA/">Web筑基</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">3.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>12分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;It has been&quot;,&quot;messageNext&quot;:&quot;days since the last update, the content of the article may be outdated.&quot;,&quot;postUpdate&quot;:&quot;2026-09-13 15:06:29&quot;}" hidden></div><blockquote>
+<p>关于浏览器渲染机制的整体介绍</p>
+</blockquote>
+<hr>
+<h2 id="一、从-URL-到页面渲染的完整流程"><a href="#一、从-URL-到页面渲染的完整流程" class="headerlink" title="一、从 URL 到页面渲染的完整流程"></a>一、从 URL 到页面渲染的完整流程</h2><figure class="highlight markdown"><table><tr><td class="code"><pre><span class="line">URL 输入</span><br><span class="line">  ↓</span><br><span class="line"><span class="bullet">1.</span> DNS 解析 → IP 地址</span><br><span class="line">  ↓</span><br><span class="line"><span class="bullet">2.</span> TCP 三次握手 → 建立连接</span><br><span class="line">  ↓</span><br><span class="line"><span class="bullet">3.</span> TLS 握手（HTTPS）→ 安全连接</span><br><span class="line">  ↓</span><br><span class="line"><span class="bullet">4.</span> 发送 HTTP 请求 → 服务器返回 HTML</span><br><span class="line">  ↓</span><br><span class="line"><span class="bullet">5.</span> 浏览器解析 HTML → 构建 DOM 树</span><br><span class="line">  ↓</span><br><span class="line"><span class="bullet">6.</span> 解析 CSS → 构建 CSSOM 树</span><br><span class="line">  ↓</span><br><span class="line"><span class="bullet">7.</span> DOM + CSSOM → Render Tree（合成渲染树）</span><br><span class="line">  ↓</span><br><span class="line"><span class="bullet">8.</span> Layout（布局/回流）→ 计算每个节点位置</span><br><span class="line">  ↓</span><br><span class="line"><span class="bullet">9.</span> Paint（绘制）→ 像素绘制</span><br><span class="line">  ↓</span><br><span class="line"><span class="bullet">10.</span> Composite（合成）→ GPU 合成最终页面</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="二、解析-HTML-构建-DOM-树"><a href="#二、解析-HTML-构建-DOM-树" class="headerlink" title="二、解析 HTML 构建 DOM 树"></a>二、解析 HTML 构建 DOM 树</h2><h3 id="2-1-解析过程"><a href="#2-1-解析过程" class="headerlink" title="2.1 解析过程"></a>2.1 解析过程</h3><figure class="highlight crmsh"><table><tr><td class="code"><pre><span class="line">HTML 字节流</span><br><span class="line">  ↓ 字节 → 字符（解码）</span><br><span class="line">  ↓ 字符 → Token（分词）</span><br><span class="line">  ↓ Token → <span class="keyword">Node</span><span class="title">（构建节点）</span></span><br><span class="line"><span class="title">  ↓ Node</span> → DOM 树</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-2-遇到资源时的行为"><a href="#2-2-遇到资源时的行为" class="headerlink" title="2.2 遇到资源时的行为"></a>2.2 遇到资源时的行为</h3><table>
+<thead>
+<tr>
+<th>标签</th>
+<th>行为</th>
+<th>是否阻塞 HTML 解析</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&lt;script&gt;</code></td>
+<td>下载 + 执行</td>
+<td>✅ 阻塞（脚本会操作 DOM）</td>
+</tr>
+<tr>
+<td><code>&lt;script async&gt;</code></td>
+<td>下载不阻塞，下载完立即执行</td>
+<td>❌ 但执行时阻塞</td>
+</tr>
+<tr>
+<td><code>&lt;script defer&gt;</code></td>
+<td>下载不阻塞，HTML 解析完后按顺序执行</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><code>&lt;link rel=&quot;stylesheet&quot;&gt;</code>（外部样式引入）</td>
+<td>下载 CSS</td>
+<td>❌ 不阻塞（但阻塞渲染）</td>
+</tr>
+<tr>
+<td><code>&lt;img&gt;</code></td>
+<td>异步下载图片</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><code>&lt;link rel=&quot;preload&quot;&gt;</code></td>
+<td>高优先级预加载</td>
+<td>❌</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="三、解析-CSS-构建-CSSOM-树"><a href="#三、解析-CSS-构建-CSSOM-树" class="headerlink" title="三、解析 CSS 构建 CSSOM 树"></a>三、解析 CSS 构建 CSSOM 树</h2><h3 id="3-1-CSS-解析规则"><a href="#3-1-CSS-解析规则" class="headerlink" title="3.1 CSS 解析规则"></a>3.1 CSS 解析规则</h3><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* CSS 解析是从右向左匹配的 */</span></span><br><span class="line"><span class="selector-class">.container</span> <span class="selector-tag">p</span> &#123; <span class="attribute">color</span>: red; &#125;</span><br><span class="line">// 先找所有 &lt;<span class="selector-tag">p</span>&gt;，再判断是否在 <span class="selector-class">.container</span> 内</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-CSS-阻塞渲染"><a href="#3-2-CSS-阻塞渲染" class="headerlink" title="3.2 CSS 阻塞渲染"></a>3.2 CSS 阻塞渲染</h3><ul>
+<li>CSS 不阻塞 HTML 解析，但阻塞渲染</li>
+<li>原因：浏览器需要 CSSOM 才能构建渲染树</li>
+<li>如果不阻塞，页面会先显示无样式的闪烁内容（FOUC）</li>
+</ul>
+<hr>
+<h2 id="四、渲染树（Render-Tree）"><a href="#四、渲染树（Render-Tree）" class="headerlink" title="四、渲染树（Render Tree）"></a>四、渲染树（Render Tree）</h2><h3 id="4-1-构建规则"><a href="#4-1-构建规则" class="headerlink" title="4.1 构建规则"></a>4.1 构建规则</h3><figure class="highlight arduino"><table><tr><td class="code"><pre><span class="line">DOM 树 + CSSOM 树 → 渲染树</span><br><span class="line"></span><br><span class="line">渲染树只包含：</span><br><span class="line">  ✅ 可见节点（display: block/<span class="keyword">inline</span>/flex 等）</span><br><span class="line">  ❌ 不包含不可见节点（display: none、head、meta 等）</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-与-DOM-树的区别"><a href="#4-2-与-DOM-树的区别" class="headerlink" title="4.2 与 DOM 树的区别"></a>4.2 与 DOM 树的区别</h3><table>
+<thead>
+<tr>
+<th></th>
+<th>DOM 树</th>
+<th>渲染树</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>包含内容</td>
+<td>所有节点</td>
+<td>可见节点</td>
+</tr>
+<tr>
+<td>head&#x2F;meta</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>display: none</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>visibility: hidden</td>
+<td>✅</td>
+<td>✅（<strong>占位但不可见</strong>）</td>
+</tr>
+</tbody></table>
+<p>但是，这里有一个关键的前提：<strong>浏览器是在解析真实的 DOM 树时才会忽略它</strong>。<br>使用 <code>v-show</code> 时，无论条件真假，Vue 都会将该元素<strong>真实地渲染到 DOM 树中</strong>，并且始终保留在 DOM 里。因此，在 Vue 将 DOM 提交给浏览器后，浏览器依然会对其进行解析。只不过在构建渲染树的那一瞬间，浏览器发现它有 <code>display: none</code> 样式，于是将其从渲染树中剔除，最终<strong>不会触发后续的布局（Layout）和绘制（Paint）工作</strong>。</p>
+<hr>
+<h2 id="五、布局（Layout-x2F-回流-Reflow）"><a href="#五、布局（Layout-x2F-回流-Reflow）" class="headerlink" title="五、布局（Layout &#x2F; 回流 Reflow）"></a>五、布局（Layout &#x2F; 回流 Reflow）</h2><h3 id="5-1-什么是回流"><a href="#5-1-什么是回流" class="headerlink" title="5.1 什么是回流"></a>5.1 什么是回流</h3><p><strong>回流 &#x3D; 计算每个节点在屏幕上的精确位置和大小</strong></p>
+<p>触发条件：</p>
+<ol>
+<li>页面首次加载</li>
+<li>添加&#x2F;删除可见 DOM 元素</li>
+<li>元素位置变化（position、display）</li>
+<li>元素尺寸变化（width、height、margin、padding）</li>
+<li>内容变化（文字、图片大小改变）</li>
+<li>浏览器窗口大小改变</li>
+<li>读取布局属性（offsetTop、scrollWidth、getComputedStyle 等）</li>
+</ol>
+<h3 id="5-2-减少回流的方法"><a href="#5-2-减少回流的方法" class="headerlink" title="5.2 减少回流的方法"></a>5.2 减少回流的方法</h3><p><strong>1. 批量修改 DOM</strong></p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ❌ 多次回流</span></span><br><span class="line"><span class="keyword">const</span> list = <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;list&#x27;</span>)</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span><br><span class="line">  <span class="keyword">const</span> li = <span class="variable language_">document</span>.<span class="title function_">createElement</span>(<span class="string">&#x27;li&#x27;</span>)</span><br><span class="line">  li.<span class="property">textContent</span> = <span class="string">`Item <span class="subst">$&#123;i&#125;</span>`</span></span><br><span class="line">  list.<span class="title function_">appendChild</span>(li)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ✅ 使用 DocumentFragment</span></span><br><span class="line"><span class="keyword">const</span> fragment = <span class="variable language_">document</span>.<span class="title function_">createDocumentFragment</span>()</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span><br><span class="line">  <span class="keyword">const</span> li = <span class="variable language_">document</span>.<span class="title function_">createElement</span>(<span class="string">&#x27;li&#x27;</span>)</span><br><span class="line">  li.<span class="property">textContent</span> = <span class="string">`Item <span class="subst">$&#123;i&#125;</span>`</span></span><br><span class="line">  fragment.<span class="title function_">appendChild</span>(li)</span><br><span class="line">&#125;</span><br><span class="line">list.<span class="title function_">appendChild</span>(fragment)  <span class="comment">// 只触发一次回流</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// ✅ 使用 display: none 先移除，修改后再显示</span></span><br><span class="line">list.<span class="property">style</span>.<span class="property">display</span> = <span class="string">&#x27;none&#x27;</span></span><br><span class="line"><span class="comment">// ... 修改内容</span></span><br><span class="line">list.<span class="property">style</span>.<span class="property">display</span> = <span class="string">&#x27;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 避免频繁读取布局属性</strong></p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ❌ 强制同步布局</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(element.<span class="property">offsetHeight</span>)</span><br><span class="line">  element.<span class="property">style</span>.<span class="property">height</span> = <span class="string">`<span class="subst">$&#123;i * <span class="number">10</span>&#125;</span>px`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ✅ 先读取，再修改</span></span><br><span class="line"><span class="keyword">const</span> height = element.<span class="property">offsetHeight</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span><br><span class="line">  element.<span class="property">style</span>.<span class="property">height</span> = <span class="string">`<span class="subst">$&#123;i * <span class="number">10</span>&#125;</span>px`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 使用 transform 代替 top&#x2F;left</strong></p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ❌ 触发回流</span></span><br><span class="line">element.<span class="property">style</span>.<span class="property">top</span> = <span class="string">&#x27;100px&#x27;</span></span><br><span class="line">element.<span class="property">style</span>.<span class="property">left</span> = <span class="string">&#x27;50px&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// ✅ 只触发合成（不触发回流）</span></span><br><span class="line">element.<span class="property">style</span>.<span class="property">transform</span> = <span class="string">&#x27;translate(50px, 100px)&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="六、绘制（Paint-x2F-重绘-Repaint）"><a href="#六、绘制（Paint-x2F-重绘-Repaint）" class="headerlink" title="六、绘制（Paint &#x2F; 重绘 Repaint）"></a>六、绘制（Paint &#x2F; 重绘 Repaint）</h2><h3 id="6-1-什么是重绘"><a href="#6-1-什么是重绘" class="headerlink" title="6.1 什么是重绘"></a>6.1 什么是重绘</h3><p><strong>重绘 &#x3D; 将节点绘制到屏幕上（不涉及布局计算）</strong></p>
+<p>触发条件（不改变几何属性）：</p>
+<ol>
+<li>颜色变化（color、background-color）</li>
+<li>背景图片变化</li>
+<li>visibility 变化</li>
+<li>阴影变化（box-shadow、text-shadow）</li>
+<li>outline 变化</li>
+</ol>
+<h3 id="6-2-回流-vs-重绘"><a href="#6-2-回流-vs-重绘" class="headerlink" title="6.2 回流 vs 重绘"></a>6.2 回流 vs 重绘</h3><table>
+<thead>
+<tr>
+<th></th>
+<th>回流（Reflow）</th>
+<th>重绘（Repaint）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>触发条件</td>
+<td>几何属性变化</td>
+<td>外观属性变化</td>
+</tr>
+<tr>
+<td>代价</td>
+<td>高（重新计算布局）</td>
+<td>低（重新绘制像素）</td>
+</tr>
+<tr>
+<td>关系</td>
+<td>回流一定会触发重绘</td>
+<td>重绘不一定触发回流</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="七、合成（Composite）"><a href="#七、合成（Composite）" class="headerlink" title="七、合成（Composite）"></a>七、合成（Composite）</h2><h3 id="7-1-什么是合成"><a href="#7-1-什么是合成" class="headerlink" title="7.1 什么是合成"></a>7.1 什么是合成</h3><p><strong>合成 &#x3D; 将多个层合并成最终页面</strong></p>
+<figure class="highlight"><table><tr><td class="code"><pre><span class="line">渲染流程：Layout → Paint → Composite</span><br><span class="line">  Layout：计算几何信息</span><br><span class="line">  Paint：绘制到多个层（Layer）</span><br><span class="line">  Composite：GPU 合成最终页面</span><br></pre></td></tr></table></figure>
+
+<h3 id="7-2-层（Layer）的概念"><a href="#7-2-层（Layer）的概念" class="headerlink" title="7.2 层（Layer）的概念"></a>7.2 层（Layer）的概念</h3><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* 创建新层 */</span></span><br><span class="line"><span class="selector-class">.element</span> &#123;</span><br><span class="line">  <span class="attribute">will-change</span>: transform;</span><br><span class="line">  <span class="attribute">transform</span>: <span class="built_in">translateZ</span>(<span class="number">0</span>);</span><br><span class="line">  <span class="attribute">contain</span>: layout;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>什么时候创建新层：</p>
+<ul>
+<li><code>position: fixed/sticky</code></li>
+<li><code>will-change: transform/opacity</code></li>
+<li><code>transform: translateZ(0)</code></li>
+<li><code>video</code>、<code>canvas</code>、<code>iframe</code></li>
+<li>CSS 动画（<code>@keyframes</code>）</li>
+</ul>
+<h3 id="7-3-GPU-加速"><a href="#7-3-GPU-加速" class="headerlink" title="7.3 GPU 加速"></a>7.3 GPU 加速</h3><figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* 触发 GPU 加速的属性（只触发合成，不触发回流） */</span></span><br><span class="line"><span class="attribute">transform</span>: <span class="built_in">translate</span>();</span><br><span class="line"><span class="attribute">opacity</span>: <span class="number">0.5</span>;</span><br><span class="line"><span class="attribute">filter</span>: <span class="built_in">blur</span>(<span class="number">10px</span>);</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="八、JS-执行与渲染的关系"><a href="#八、JS-执行与渲染的关系" class="headerlink" title="八、JS 执行与渲染的关系"></a>八、JS 执行与渲染的关系</h2><h3 id="8-1-渲染线程与-JS-线程互斥"><a href="#8-1-渲染线程与-JS-线程互斥" class="headerlink" title="8.1 渲染线程与 JS 线程互斥"></a>8.1 渲染线程与 JS 线程互斥</h3><p>因为 JS 可以操作 DOM，如果同时渲染会导致不一致。浏览器在 JS 执行时会暂停渲染。</p>
+<h3 id="8-2-浏览器渲染流程（每帧）"><a href="#8-2-浏览器渲染流程（每帧）" class="headerlink" title="8.2 浏览器渲染流程（每帧）"></a>8.2 浏览器渲染流程（每帧）</h3><figure class="highlight mipsasm"><table><tr><td class="code"><pre><span class="line">┌─────────────────────────────────────┐</span><br><span class="line">│          一帧的时间（<span class="number">16</span>.<span class="number">6</span>ms）         │</span><br><span class="line">├─────────────────────────────────────┤</span><br><span class="line">│  <span class="number">1</span>. 处理 <span class="keyword">JS </span>回调（宏任务）            │</span><br><span class="line">│  <span class="number">2</span>. 清空微任务队列                    │</span><br><span class="line">│  <span class="number">3</span>. requestAnimationFrame 回调       │</span><br><span class="line">│  <span class="number">4</span>. Layout（如果需要）                │</span><br><span class="line">│  <span class="number">5</span>. Paint（如果需要）                 │</span><br><span class="line">│  <span class="number">6</span>. Composite（如果需要）             │</span><br><span class="line">└─────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<h3 id="8-3-requestAnimationFrame-的作用"><a href="#8-3-requestAnimationFrame-的作用" class="headerlink" title="8.3 requestAnimationFrame 的作用"></a>8.3 requestAnimationFrame 的作用</h3><figure class="highlight js"><table><tr><td class="code"><pre><span class="line"><span class="comment">// rAF 在每次重绘前执行，适合做动画</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">animate</span>(<span class="params"></span>) &#123;</span><br><span class="line">  element.<span class="property">style</span>.<span class="property">transform</span> = <span class="string">`translateX(<span class="subst">$&#123;x&#125;</span>px)`</span></span><br><span class="line">  x++</span><br><span class="line">  <span class="title function_">requestAnimationFrame</span>(animate)</span><br><span class="line">&#125;</span><br><span class="line"><span class="title function_">requestAnimationFrame</span>(animate)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 优势：</span></span><br><span class="line"><span class="comment">// 1. 自动跟随屏幕刷新率（60Hz → 16.6ms 一次）</span></span><br><span class="line"><span class="comment">// 2. 页面不可见时自动暂停，节省性能</span></span><br><span class="line"><span class="comment">// 3. 在 Layout 和 Paint 之前执行</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="九、浏览器缓存机制"><a href="#九、浏览器缓存机制" class="headerlink" title="九、浏览器缓存机制"></a>九、浏览器缓存机制</h2><h3 id="9-1-强缓存"><a href="#9-1-强缓存" class="headerlink" title="9.1 强缓存"></a>9.1 强缓存</h3><figure class="highlight lasso"><table><tr><td class="code"><pre><span class="line"><span class="keyword">Cache</span><span class="params">-Control</span>: <span class="keyword">max</span><span class="params">-age</span>=<span class="number">3600</span>                 <span class="comment">// 相对时间（推荐）</span></span><br><span class="line">Expires: Thu, <span class="number">01</span> Jan <span class="number">2025</span> <span class="number">00</span>:<span class="number">00</span>:<span class="number">00</span> GMT      <span class="comment">// 绝对时间（过时）</span></span><br><span class="line"></span><br><span class="line">命中强缓存：直接用缓存，不发请求（状态码 <span class="number">200</span> from memory/disk <span class="keyword">cache</span>）</span><br></pre></td></tr></table></figure>
+
+<h3 id="9-2-协商缓存"><a href="#9-2-协商缓存" class="headerlink" title="9.2 协商缓存"></a>9.2 协商缓存</h3><figure class="highlight mathematica"><table><tr><td class="code"><pre><span class="line"><span class="built_in">Last</span><span class="operator">-</span><span class="variable">Modified</span> <span class="operator">/</span> <span class="built_in">If</span><span class="operator">-</span><span class="variable">Modified</span><span class="operator">-</span><span class="variable">Since</span>    <span class="operator">//</span> 基于时间</span><br><span class="line"><span class="variable">ETag</span> <span class="operator">/</span> <span class="built_in">If</span><span class="operator">-</span><span class="built_in">None</span><span class="operator">-</span><span class="variable">Match</span>                 <span class="operator">//</span> 基于内容指纹（推荐）</span><br><span class="line"></span><br><span class="line">命中协商缓存：服务器告诉浏览器缓存有效（状态码 <span class="number">304</span> <span class="built_in">Not</span> <span class="variable">Modified</span>）</span><br></pre></td></tr></table></figure>
+
+<h3 id="9-3-缓存流程"><a href="#9-3-缓存流程" class="headerlink" title="9.3 缓存流程"></a>9.3 缓存流程</h3><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">请求 → 有缓存？</span><br><span class="line">  → 强缓存有效？ → 直接用（<span class="number">200</span> <span class="keyword">from</span> cache）</span><br><span class="line">  → 强缓存失效？ → 发请求携带 ETag<span class="operator">/</span><span class="keyword">Last</span><span class="operator">-</span>Modified</span><br><span class="line">    → 服务器返回 <span class="number">304</span>？ → 用缓存</span><br><span class="line">    → 服务器返回 <span class="number">200</span>？ → 更新缓存</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="十、浏览器存储"><a href="#十、浏览器存储" class="headerlink" title="十、浏览器存储"></a>十、浏览器存储</h2><table>
+<thead>
+<tr>
+<th>存储方式</th>
+<th>容量</th>
+<th>过期时间</th>
+<th>作用域</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Cookie</td>
+<td>4KB</td>
+<td>可设置</td>
+<td>同源</td>
+<td>鉴权、跟踪</td>
+</tr>
+<tr>
+<td>localStorage</td>
+<td>5-10MB</td>
+<td>永久</td>
+<td>同源</td>
+<td>持久化数据</td>
+</tr>
+<tr>
+<td>sessionStorage</td>
+<td>5-10MB</td>
+<td>会话结束</td>
+<td>同源+窗口</td>
+<td>临时数据</td>
+</tr>
+<tr>
+<td>IndexedDB</td>
+<td>几乎无限</td>
+<td>永久</td>
+<td>同源</td>
+<td>大量结构化数据</td>
+</tr>
+<tr>
+<td>Cache API</td>
+<td>可配置</td>
+<td>可设置</td>
+<td>同源</td>
+<td>PWA 离线缓存</td>
+</tr>
+</tbody></table>
+<h3 id="适用场景"><a href="#适用场景" class="headerlink" title="适用场景"></a>适用场景</h3><p><strong>Cookie — 鉴权与跟踪</strong></p>
+<ul>
+<li>用户登录状态（Session ID、JWT Token）</li>
+<li>购物车数据（小型电商）</li>
+<li>用户偏好设置（语言、主题）</li>
+<li>第三方跟踪（广告、统计）</li>
+<li>CSRF 防护（CSRF Token）</li>
+</ul>
+<p><strong>localStorage — 持久化本地数据</strong></p>
+<ul>
+<li>用户偏好设置（主题、语言、布局）</li>
+<li>表单草稿自动保存</li>
+<li>离线数据缓存（PWA）</li>
+<li>本地缓存不常变的配置数据</li>
+<li>历史记录（搜索历史、浏览记录）</li>
+</ul>
+<p><strong>sessionStorage — 会话级临时数据</strong></p>
+<ul>
+<li>多页表单的数据传递（如分步注册）</li>
+<li>页面间的状态保持（如 Tab 切换）</li>
+<li>一次性密码&#x2F;验证码的临时存储</li>
+<li>页面刷新后恢复状态</li>
+<li>同一窗口的标签页间数据隔离</li>
+</ul>
+<p><strong>IndexedDB — 大量结构化数据</strong></p>
+<ul>
+<li>离线应用数据存储（PWA、离线文档）</li>
+<li>大文件缓存（图片、视频元数据）</li>
+<li>客户端数据仓库（替代部分后端存储）</li>
+<li>复杂查询（支持索引、游标、事务）</li>
+<li>本地数据库（如笔记应用、待办应用）</li>
+</ul>
+<p><strong>Cache API — 网络资源缓存</strong></p>
+<ul>
+<li>PWA 离线缓存（Service Worker 配合）</li>
+<li>静态资源缓存（JS、CSS、图片）</li>
+<li>API 响应缓存（减少网络请求）</li>
+<li>字体文件缓存（避免重复下载）</li>
+<li>预缓存关键资源（首屏加载优化）</li>
+</ul>
+<hr>
+<h2 id="十一、预加载与预连接"><a href="#十一、预加载与预连接" class="headerlink" title="十一、预加载与预连接"></a>十一、预加载与预连接</h2><figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="comment">&lt;!-- DNS 预解析 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;dns-prefetch&quot;</span> <span class="attr">href</span>=<span class="string">&quot;//cdn.example.com&quot;</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- 预连接（DNS + TCP + TLS） --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;preconnect&quot;</span> <span class="attr">href</span>=<span class="string">&quot;https://fonts.googleapis.com&quot;</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- 预加载（高优先级下载，但不执行） --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;preload&quot;</span> <span class="attr">href</span>=<span class="string">&quot;main.js&quot;</span> <span class="attr">as</span>=<span class="string">&quot;script&quot;</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- 预获取（低优先级，空闲时下载） --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;prefetch&quot;</span> <span class="attr">href</span>=<span class="string">&quot;next-page.html&quot;</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- 预渲染（提前渲染下一个页面） --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;prerender&quot;</span> <span class="attr">href</span>=<span class="string">&quot;next-page.html&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="各指令适用场景"><a href="#各指令适用场景" class="headerlink" title="各指令适用场景"></a>各指令适用场景</h3><p><strong>dns-prefetch — DNS 预解析</strong></p>
+<ul>
+<li>CDN 域名：静态资源和主站不同域</li>
+<li>第三方域名：统计（Google Analytics）、广告（AdSense）</li>
+<li>API 域名：后端接口地址</li>
+<li>登录后跳转的域名：OAuth 回调地址</li>
+<li>任何 100% 确定会访问的外部域名</li>
+</ul>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 典型场景：SPA 应用预解析 API 和 CDN --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;dns-prefetch&quot;</span> <span class="attr">href</span>=<span class="string">&quot;//api.example.com&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;dns-prefetch&quot;</span> <span class="attr">href</span>=<span class="string">&quot;//cdn.example.com&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;dns-prefetch&quot;</span> <span class="attr">href</span>=<span class="string">&quot;//fonts.googleapis.com&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>preconnect — 预连接</strong></p>
+<ul>
+<li>高优先级域名：首屏必须的资源（字体、关键 API）</li>
+<li>跨域 API 请求：减少首次请求延迟</li>
+<li>第三方登录：微信、Google、GitHub OAuth</li>
+<li>视频&#x2F;音频 CDN：流媒体资源</li>
+</ul>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 典型场景：首屏字体加载 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;preconnect&quot;</span> <span class="attr">href</span>=<span class="string">&quot;https://fonts.googleapis.com&quot;</span> <span class="attr">crossorigin</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;preconnect&quot;</span> <span class="attr">href</span>=<span class="string">&quot;https://fonts.gstatic.com&quot;</span> <span class="attr">crossorigin</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- 典型场景：API 预连接 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;preconnect&quot;</span> <span class="attr">href</span>=<span class="string">&quot;https://api.example.com&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>preload — 预加载（高优先级）</strong></p>
+<ul>
+<li>关键 CSS&#x2F;JS：首屏渲染必须的资源</li>
+<li>关键图片：首屏大图、Hero Image</li>
+<li>字体文件：避免 FOUT（字体闪烁）</li>
+<li>数据预取：首屏需要的 API 数据</li>
+</ul>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 典型场景：首屏关键资源 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;preload&quot;</span> <span class="attr">href</span>=<span class="string">&quot;critical.css&quot;</span> <span class="attr">as</span>=<span class="string">&quot;style&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;preload&quot;</span> <span class="attr">href</span>=<span class="string">&quot;main.js&quot;</span> <span class="attr">as</span>=<span class="string">&quot;script&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;preload&quot;</span> <span class="attr">href</span>=<span class="string">&quot;hero.webp&quot;</span> <span class="attr">as</span>=<span class="string">&quot;image&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;preload&quot;</span> <span class="attr">href</span>=<span class="string">&quot;font.woff2&quot;</span> <span class="attr">as</span>=<span class="string">&quot;font&quot;</span> <span class="attr">type</span>=<span class="string">&quot;font/woff2&quot;</span> <span class="attr">crossorigin</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>prefetch — 预获取（低优先级）</strong></p>
+<ul>
+<li>下一页资源：用户可能访问的下一个页面</li>
+<li>非关键但可能用到的资源：侧边栏、推荐内容</li>
+<li>空闲时预加载：不影响当前页面性能</li>
+</ul>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 典型场景：SPA 路由预加载 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;prefetch&quot;</span> <span class="attr">href</span>=<span class="string">&quot;/about&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;prefetch&quot;</span> <span class="attr">href</span>=<span class="string">&quot;/dashboard&quot;</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- 典型场景：电商商品详情页预加载评论接口 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;prefetch&quot;</span> <span class="attr">href</span>=<span class="string">&quot;/api/comments?page=1&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>prerender — 预渲染（提前渲染页面）</strong></p>
+<ul>
+<li>已知用户即将跳转的页面：登录后跳转首页</li>
+<li>搜索结果预渲染：用户点击概率高的结果</li>
+<li>付费页面预渲染：从购物车到结算页</li>
+</ul>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 典型场景：登录后跳转 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">&quot;prerender&quot;</span> <span class="attr">href</span>=<span class="string">&quot;/dashboard&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="对比总结"><a href="#对比总结" class="headerlink" title="对比总结"></a>对比总结</h3><table>
+<thead>
+<tr>
+<th>指令</th>
+<th>优先级</th>
+<th>下载时机</th>
+<th>执行&#x2F;渲染</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>dns-prefetch</td>
+<td>低</td>
+<td>立即</td>
+<td>仅 DNS 解析</td>
+<td>所有外部域名</td>
+</tr>
+<tr>
+<td>preconnect</td>
+<td>中</td>
+<td>立即</td>
+<td>DNS + TCP + TLS</td>
+<td>高优先级域名</td>
+</tr>
+<tr>
+<td>preload</td>
+<td>高</td>
+<td>立即</td>
+<td>不执行&#x2F;不渲染</td>
+<td>首屏关键资源</td>
+</tr>
+<tr>
+<td>prefetch</td>
+<td>低</td>
+<td>空闲时</td>
+<td>不执行&#x2F;不渲染</td>
+<td>下一页资源</td>
+</tr>
+<tr>
+<td>prerender</td>
+<td>最低</td>
+<td>空闲时</td>
+<td>完整渲染</td>
+<td>已知跳转页面</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="十二、性能优化总结"><a href="#十二、性能优化总结" class="headerlink" title="十二、性能优化总结"></a>十二、性能优化总结</h2><h3 id="12-1-加载优化"><a href="#12-1-加载优化" class="headerlink" title="12.1 加载优化"></a>12.1 加载优化</h3><ol>
+<li>减少 HTTP 请求（合并文件、雪碧图）</li>
+<li>压缩资源（gzip、minify）</li>
+<li>使用 CDN</li>
+<li>图片优化（WebP、懒加载）</li>
+<li>预加载关键资源</li>
+</ol>
+<h3 id="12-2-渲染优化"><a href="#12-2-渲染优化" class="headerlink" title="12.2 渲染优化"></a>12.2 渲染优化</h3><ol>
+<li>减少回流（批量修改、使用 transform）</li>
+<li>减少重绘（使用 class 批量修改）</li>
+<li>使用 GPU 加速（transform、opacity）</li>
+<li>使用 requestAnimationFrame 做动画</li>
+<li>虚拟滚动（大列表）</li>
+</ol>
+<h3 id="12-3-代码优化"><a href="#12-3-代码优化" class="headerlink" title="12.3 代码优化"></a>12.3 代码优化</h3><ol>
+<li>减少主线程阻塞（Web Worker）</li>
+<li>事件委托</li>
+<li>防抖&#x2F;节流</li>
+<li>代码分割（Code Splitting）</li>
+<li>懒加载（Lazy Load）</li>
+</ol>
+<hr>
+<h2 id="十三、高频问题汇总"><a href="#十三、高频问题汇总" class="headerlink" title="十三、高频问题汇总"></a>十三、高频问题汇总</h2><h3 id="Q1-为什么-CSS-不阻塞-DOM-解析但阻塞渲染？"><a href="#Q1-为什么-CSS-不阻塞-DOM-解析但阻塞渲染？" class="headerlink" title="Q1: 为什么 CSS 不阻塞 DOM 解析但阻塞渲染？"></a>Q1: 为什么 CSS 不阻塞 DOM 解析但阻塞渲染？</h3><p>HTML 解析和 CSS 解析是并行的。但渲染需要 DOM + CSSOM 合成渲染树，所以必须等 CSS 加载完才能渲染。</p>
+<h3 id="Q2-async-和-defer-的区别？"><a href="#Q2-async-和-defer-的区别？" class="headerlink" title="Q2: async 和 defer 的区别？"></a>Q2: async 和 defer 的区别？</h3><ul>
+<li>async：下载完立即执行，执行时阻塞 HTML 解析，不保证顺序</li>
+<li>defer：HTML 解析完后按顺序执行，不阻塞 HTML 解析</li>
+</ul>
+<h3 id="Q3-回流和重绘的区别？"><a href="#Q3-回流和重绘的区别？" class="headerlink" title="Q3: 回流和重绘的区别？"></a>Q3: 回流和重绘的区别？</h3><ul>
+<li>回流：几何属性变化（位置、大小），需要重新计算布局</li>
+<li>重绘：外观属性变化（颜色、背景），只需重新绘制像素</li>
+<li>回流一定触发重绘，重绘不一定触发回流</li>
+</ul>
+<h3 id="Q4-如何减少回流？"><a href="#Q4-如何减少回流？" class="headerlink" title="Q4: 如何减少回流？"></a>Q4: 如何减少回流？</h3><ol>
+<li>批量修改 DOM（DocumentFragment、一次性 cssText）</li>
+<li>避免频繁读取布局属性</li>
+<li>使用 transform 代替 top&#x2F;left</li>
+<li>使用 visibility 代替 display: none</li>
+<li>使用 absolute&#x2F;fixed 脱离文档流</li>
+</ol>
+<h3 id="Q5-浏览器渲染一帧的流程？"><a href="#Q5-浏览器渲染一帧的流程？" class="headerlink" title="Q5: 浏览器渲染一帧的流程？"></a>Q5: 浏览器渲染一帧的流程？</h3><p>JS 回调 → 微任务 → rAF → Layout → Paint → Composite，每帧约 16.6ms（60fps）</p>
+<h3 id="Q6-什么是强制同步布局？"><a href="#Q6-什么是强制同步布局？" class="headerlink" title="Q6: 什么是强制同步布局？"></a>Q6: 什么是强制同步布局？</h3><figure class="highlight js"><table><tr><td class="code"><pre><span class="line">element.<span class="property">style</span>.<span class="property">width</span> = <span class="string">&#x27;100px&#x27;</span></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(element.<span class="property">offsetWidth</span>)  <span class="comment">// 强制同步布局</span></span><br><span class="line"><span class="comment">// 读取布局属性时，浏览器会立即计算最新布局</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="十四、一句话总结"><a href="#十四、一句话总结" class="headerlink" title="十四、一句话总结"></a>十四、一句话总结</h2><p><strong>浏览器渲染核心流程：解析 HTML&#x2F;CSS → 构建 DOM&#x2F;CSSOM → 合成渲染树 → 布局（回流）→ 绘制（重绘）→ 合成。性能优化的关键是减少回流、合理使用缓存、利用 GPU 加速。</strong></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io">搬码人</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://gun-ctrl.github.io/2026/09/13/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6/">https://gun-ctrl.github.io/2026/09/13/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://gun-ctrl.github.io" target="_blank">搬码人’s Blog</a>！</span></div></div><div class="tag_share"><div class="post-share"><div class="social-share" data-image="/img/jianlai1.png" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechatpay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechatpay.jpg" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/img/alipay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/alipay.jpg" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" title="Okhttp框架介绍"><img class="cover" src="/img/qinggangying.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Okhttp框架介绍</div></div><div class="info-2"><div class="info-item-1"> OkHttp 是由 Square 公司开源的一个高性能 HTTP 客户端，是目前 Java 和 Android 生态中最主流、事实上的网络请求标准库。Android 官方从 Android 4.4 起底层已将 HttpURLConnection 替换为 OkHttp 实现，而当下流行的 Retrofit 网络框架底层也是交由 OkHttp 负责真正的网络收发。 相比 JDK 自带的 HttpURLConnection 或早期的 Apache HttpClient，OkHttp 具有显著的优势：  性能卓越：原生支持 HTTP&#x2F;2 协议（多路复用）和连接池，能够共享同一个 Socket 连接，大幅降低 TCP 握手开销与请求延迟。 自动处理：支持透明的 GZIP 压缩（自动压缩请求体并解压响应体，节省流量）、响应缓存（避免重复网络请求）、以及自动处理重定向和故障恢复。 API 简洁优雅：封装程度高，无需手动处理繁琐的流和状态码，代码量大幅减少，开发效率极高。 灵活的拦截器链：基于责任链设计模式，允许开发者轻松插拔日志记录、统一 Token 注入、签名校验、失败重试等功能...</div></div></div></a></nav><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div class="vcomment" id="vcomment"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">搬码人</div><div class="author-info-description">我挥舞着键盘和本子，发誓要把世界写个明明白白。</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">33</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">12</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" href="https://github.com/gun-ctrl"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="tencent://AddContact/?fromId=50&amp;fromSubId=1&amp;subcmd=all&amp;uin=1578684787" target="_blank" title="QQ"><i class="fab fa-qq"></i></a><a class="social-icon" href="mailto:pengchuan4314@163.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到搬码人的世界</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E4%BB%8E-URL-%E5%88%B0%E9%A1%B5%E9%9D%A2%E6%B8%B2%E6%9F%93%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B"><span class="toc-number">1.</span> <span class="toc-text">一、从 URL 到页面渲染的完整流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E8%A7%A3%E6%9E%90-HTML-%E6%9E%84%E5%BB%BA-DOM-%E6%A0%91"><span class="toc-number">2.</span> <span class="toc-text">二、解析 HTML 构建 DOM 树</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 解析过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E9%81%87%E5%88%B0%E8%B5%84%E6%BA%90%E6%97%B6%E7%9A%84%E8%A1%8C%E4%B8%BA"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 遇到资源时的行为</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E8%A7%A3%E6%9E%90-CSS-%E6%9E%84%E5%BB%BA-CSSOM-%E6%A0%91"><span class="toc-number">3.</span> <span class="toc-text">三、解析 CSS 构建 CSSOM 树</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-CSS-%E8%A7%A3%E6%9E%90%E8%A7%84%E5%88%99"><span class="toc-number">3.1.</span> <span class="toc-text">3.1 CSS 解析规则</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-CSS-%E9%98%BB%E5%A1%9E%E6%B8%B2%E6%9F%93"><span class="toc-number">3.2.</span> <span class="toc-text">3.2 CSS 阻塞渲染</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%B8%B2%E6%9F%93%E6%A0%91%EF%BC%88Render-Tree%EF%BC%89"><span class="toc-number">4.</span> <span class="toc-text">四、渲染树（Render Tree）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E6%9E%84%E5%BB%BA%E8%A7%84%E5%88%99"><span class="toc-number">4.1.</span> <span class="toc-text">4.1 构建规则</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E4%B8%8E-DOM-%E6%A0%91%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">4.2.</span> <span class="toc-text">4.2 与 DOM 树的区别</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E5%B8%83%E5%B1%80%EF%BC%88Layout-x2F-%E5%9B%9E%E6%B5%81-Reflow%EF%BC%89"><span class="toc-number">5.</span> <span class="toc-text">五、布局（Layout &#x2F; 回流 Reflow）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E4%BB%80%E4%B9%88%E6%98%AF%E5%9B%9E%E6%B5%81"><span class="toc-number">5.1.</span> <span class="toc-text">5.1 什么是回流</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E5%87%8F%E5%B0%91%E5%9B%9E%E6%B5%81%E7%9A%84%E6%96%B9%E6%B3%95"><span class="toc-number">5.2.</span> <span class="toc-text">5.2 减少回流的方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E7%BB%98%E5%88%B6%EF%BC%88Paint-x2F-%E9%87%8D%E7%BB%98-Repaint%EF%BC%89"><span class="toc-number">6.</span> <span class="toc-text">六、绘制（Paint &#x2F; 重绘 Repaint）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E4%BB%80%E4%B9%88%E6%98%AF%E9%87%8D%E7%BB%98"><span class="toc-number">6.1.</span> <span class="toc-text">6.1 什么是重绘</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-%E5%9B%9E%E6%B5%81-vs-%E9%87%8D%E7%BB%98"><span class="toc-number">6.2.</span> <span class="toc-text">6.2 回流 vs 重绘</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E5%90%88%E6%88%90%EF%BC%88Composite%EF%BC%89"><span class="toc-number">7.</span> <span class="toc-text">七、合成（Composite）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#7-1-%E4%BB%80%E4%B9%88%E6%98%AF%E5%90%88%E6%88%90"><span class="toc-number">7.1.</span> <span class="toc-text">7.1 什么是合成</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-2-%E5%B1%82%EF%BC%88Layer%EF%BC%89%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toc-number">7.2.</span> <span class="toc-text">7.2 层（Layer）的概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-3-GPU-%E5%8A%A0%E9%80%9F"><span class="toc-number">7.3.</span> <span class="toc-text">7.3 GPU 加速</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E3%80%81JS-%E6%89%A7%E8%A1%8C%E4%B8%8E%E6%B8%B2%E6%9F%93%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-number">8.</span> <span class="toc-text">八、JS 执行与渲染的关系</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#8-1-%E6%B8%B2%E6%9F%93%E7%BA%BF%E7%A8%8B%E4%B8%8E-JS-%E7%BA%BF%E7%A8%8B%E4%BA%92%E6%96%A5"><span class="toc-number">8.1.</span> <span class="toc-text">8.1 渲染线程与 JS 线程互斥</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-2-%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B%EF%BC%88%E6%AF%8F%E5%B8%A7%EF%BC%89"><span class="toc-number">8.2.</span> <span class="toc-text">8.2 浏览器渲染流程（每帧）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-3-requestAnimationFrame-%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="toc-number">8.3.</span> <span class="toc-text">8.3 requestAnimationFrame 的作用</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E6%B5%8F%E8%A7%88%E5%99%A8%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6"><span class="toc-number">9.</span> <span class="toc-text">九、浏览器缓存机制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#9-1-%E5%BC%BA%E7%BC%93%E5%AD%98"><span class="toc-number">9.1.</span> <span class="toc-text">9.1 强缓存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-2-%E5%8D%8F%E5%95%86%E7%BC%93%E5%AD%98"><span class="toc-number">9.2.</span> <span class="toc-text">9.2 协商缓存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-3-%E7%BC%93%E5%AD%98%E6%B5%81%E7%A8%8B"><span class="toc-number">9.3.</span> <span class="toc-text">9.3 缓存流程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E6%B5%8F%E8%A7%88%E5%99%A8%E5%AD%98%E5%82%A8"><span class="toc-number">10.</span> <span class="toc-text">十、浏览器存储</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-number">10.1.</span> <span class="toc-text">适用场景</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E9%A2%84%E5%8A%A0%E8%BD%BD%E4%B8%8E%E9%A2%84%E8%BF%9E%E6%8E%A5"><span class="toc-number">11.</span> <span class="toc-text">十一、预加载与预连接</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%84%E6%8C%87%E4%BB%A4%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-number">11.1.</span> <span class="toc-text">各指令适用场景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E6%AF%94%E6%80%BB%E7%BB%93"><span class="toc-number">11.2.</span> <span class="toc-text">对比总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E6%80%BB%E7%BB%93"><span class="toc-number">12.</span> <span class="toc-text">十二、性能优化总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#12-1-%E5%8A%A0%E8%BD%BD%E4%BC%98%E5%8C%96"><span class="toc-number">12.1.</span> <span class="toc-text">12.1 加载优化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#12-2-%E6%B8%B2%E6%9F%93%E4%BC%98%E5%8C%96"><span class="toc-number">12.2.</span> <span class="toc-text">12.2 渲染优化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#12-3-%E4%BB%A3%E7%A0%81%E4%BC%98%E5%8C%96"><span class="toc-number">12.3.</span> <span class="toc-text">12.3 代码优化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E9%AB%98%E9%A2%91%E9%97%AE%E9%A2%98%E6%B1%87%E6%80%BB"><span class="toc-number">13.</span> <span class="toc-text">十三、高频问题汇总</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Q1-%E4%B8%BA%E4%BB%80%E4%B9%88-CSS-%E4%B8%8D%E9%98%BB%E5%A1%9E-DOM-%E8%A7%A3%E6%9E%90%E4%BD%86%E9%98%BB%E5%A1%9E%E6%B8%B2%E6%9F%93%EF%BC%9F"><span class="toc-number">13.1.</span> <span class="toc-text">Q1: 为什么 CSS 不阻塞 DOM 解析但阻塞渲染？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q2-async-%E5%92%8C-defer-%E7%9A%84%E5%8C%BA%E5%88%AB%EF%BC%9F"><span class="toc-number">13.2.</span> <span class="toc-text">Q2: async 和 defer 的区别？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q3-%E5%9B%9E%E6%B5%81%E5%92%8C%E9%87%8D%E7%BB%98%E7%9A%84%E5%8C%BA%E5%88%AB%EF%BC%9F"><span class="toc-number">13.3.</span> <span class="toc-text">Q3: 回流和重绘的区别？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q4-%E5%A6%82%E4%BD%95%E5%87%8F%E5%B0%91%E5%9B%9E%E6%B5%81%EF%BC%9F"><span class="toc-number">13.4.</span> <span class="toc-text">Q4: 如何减少回流？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q5-%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E4%B8%80%E5%B8%A7%E7%9A%84%E6%B5%81%E7%A8%8B%EF%BC%9F"><span class="toc-number">13.5.</span> <span class="toc-text">Q5: 浏览器渲染一帧的流程？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q6-%E4%BB%80%E4%B9%88%E6%98%AF%E5%BC%BA%E5%88%B6%E5%90%8C%E6%AD%A5%E5%B8%83%E5%B1%80%EF%BC%9F"><span class="toc-number">13.6.</span> <span class="toc-text">Q6: 什么是强制同步布局？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93"><span class="toc-number">14.</span> <span class="toc-text">十四、一句话总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/09/13/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6/" title="浏览器渲染机制"><img src="/img/jianlai1.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="浏览器渲染机制"/></a><div class="content"><a class="title" href="/2026/09/13/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B8%B2%E6%9F%93%E6%9C%BA%E5%88%B6/" title="浏览器渲染机制">浏览器渲染机制</a><time datetime="2026-09-13T06:58:53.652Z" title="发表于 2026-09-13 14:58:53">2026-09-13</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" title="Okhttp框架介绍"><img src="/img/qinggangying.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Okhttp框架介绍"/></a><div class="content"><a class="title" href="/2026/09/09/OkHttp%20%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/" title="Okhttp框架介绍">Okhttp框架介绍</a><time datetime="2026-09-09T09:52:24.492Z" title="发表于 2026-09-09 17:52:24">2026-09-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89LayoutManager%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E6%BB%91%E5%8A%A8/" title="自定义LayoutManager实现卡片滑动"><img src="/img/jianlai3.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="自定义LayoutManager实现卡片滑动"/></a><div class="content"><a class="title" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89LayoutManager%E5%AE%9E%E7%8E%B0%E5%8D%A1%E7%89%87%E6%BB%91%E5%8A%A8/" title="自定义LayoutManager实现卡片滑动">自定义LayoutManager实现卡片滑动</a><time datetime="2026-09-09T08:35:21.592Z" title="发表于 2026-09-09 16:35:21">2026-09-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89PhotoView%E6%89%8B%E5%8A%BF%E5%A4%84%E7%90%86/" title="自定义PhotoView手势处理"><img src="/img/fanren1.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="自定义PhotoView手势处理"/></a><div class="content"><a class="title" href="/2026/09/09/%E8%87%AA%E5%AE%9A%E4%B9%89PhotoView%E6%89%8B%E5%8A%BF%E5%A4%84%E7%90%86/" title="自定义PhotoView手势处理">自定义PhotoView手势处理</a><time datetime="2026-09-09T08:35:21.592Z" title="发表于 2026-09-09 16:35:21">2026-09-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/09/%E9%80%9A%E7%9F%A5%E7%9A%84%E5%88%9B%E5%BB%BA/" title="通知的创建"><img src="/img/pansen.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="通知的创建"/></a><div class="content"><a class="title" href="/2026/09/09/%E9%80%9A%E7%9F%A5%E7%9A%84%E5%88%9B%E5%BB%BA/" title="通知的创建">通知的创建</a><time datetime="2026-09-09T08:35:21.592Z" title="发表于 2026-09-09 16:35:21">2026-09-09</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2022 - 2026 By 搬码人</span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const initValine = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyValine = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const valineConfig = {
+      el: '#vcomment',
+      appId: '',
+      appKey: '',
+      avatar: 'monsterid',
+      serverURLs: '',
+      emojiMaps: {"tv_doge":"6ea59c827c414b4a2955fe79e0f6fd3dcd515e24.png","tv_亲亲":"a8111ad55953ef5e3be3327ef94eb4a39d535d06.png","tv_偷笑":"bb690d4107620f1c15cff29509db529a73aee261.png","tv_再见":"180129b8ea851044ce71caf55cc8ce44bd4a4fc8.png","tv_冷漠":"b9cbc755c2b3ee43be07ca13de84e5b699a3f101.png","tv_发怒":"34ba3cd204d5b05fec70ce08fa9fa0dd612409ff.png","tv_发财":"34db290afd2963723c6eb3c4560667db7253a21a.png","tv_可爱":"9e55fd9b500ac4b96613539f1ce2f9499e314ed9.png","tv_吐血":"09dd16a7aa59b77baa1155d47484409624470c77.png","tv_呆":"fe1179ebaa191569b0d31cecafe7a2cd1c951c9d.png","tv_呕吐":"9f996894a39e282ccf5e66856af49483f81870f3.png","tv_困":"241ee304e44c0af029adceb294399391e4737ef2.png","tv_坏笑":"1f0b87f731a671079842116e0991c91c2c88645a.png","tv_大佬":"093c1e2c490161aca397afc45573c877cdead616.png","tv_大哭":"23269aeb35f99daee28dda129676f6e9ea87934f.png","tv_委屈":"d04dba7b5465779e9755d2ab6f0a897b9b33bb77.png","tv_害羞":"a37683fb5642fa3ddfc7f4e5525fd13e42a2bdb1.png","tv_尴尬":"7cfa62dafc59798a3d3fb262d421eeeff166cfa4.png","tv_微笑":"70dc5c7b56f93eb61bddba11e28fb1d18fddcd4c.png","tv_思考":"90cf159733e558137ed20aa04d09964436f618a1.png","tv_惊吓":"0d15c7e2ee58e935adc6a7193ee042388adc22af.png"},
+      visitor: false,
+      ...option,
+      path: isShuoshuo ? path : (option && option.path) || window.location.pathname
+    }
+
+    new Valine(valineConfig)
+  }
+
+  const loadValine = async (el, path) => {
+    if (typeof Valine === 'function') {
+      initValine(el, path)
+    } else {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/valine/dist/Valine.min.js')
+      initValine(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Valine' === 'Valine'
+      ? window.shuoshuoComment = { loadComment: loadValine }
+      : window.loadOtherComment = loadValine
+    return
+  }
+
+  if ('Valine' === 'Valine' || !true) {
+    if (true) btf.loadComment(document.getElementById('vcomment'),loadValine)
+    else setTimeout(loadValine, 0)
+  } else {
+    window.loadOtherComment = loadValine
+  }
+})()</script></div><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="true" data-click="true"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
