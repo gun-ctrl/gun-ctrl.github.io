@@ -326,7 +326,7 @@
   </url>
   
   <url>
-    <loc>https://gun-ctrl.github.io/categories/index.html</loc>
+    <loc>https://gun-ctrl.github.io/link/index.html</loc>
     
     <lastmod>2026-09-09</lastmod>
     
@@ -335,7 +335,7 @@
   </url>
   
   <url>
-    <loc>https://gun-ctrl.github.io/link/index.html</loc>
+    <loc>https://gun-ctrl.github.io/categories/index.html</loc>
     
     <lastmod>2026-09-09</lastmod>
     
@@ -376,13 +376,6 @@
   </url>
   
   <url>
-    <loc>https://gun-ctrl.github.io/tags/Android%E9%9A%8F%E7%AC%94/</loc>
-    <lastmod>2026-09-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://gun-ctrl.github.io/tags/RecyclerView/</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
@@ -390,7 +383,7 @@
   </url>
   
   <url>
-    <loc>https://gun-ctrl.github.io/tags/Service%E6%80%BB%E7%BB%93/</loc>
+    <loc>https://gun-ctrl.github.io/tags/Android%E9%9A%8F%E7%AC%94/</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -398,6 +391,13 @@
   
   <url>
     <loc>https://gun-ctrl.github.io/tags/adb/</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://gun-ctrl.github.io/tags/Service%E6%80%BB%E7%BB%93/</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -418,14 +418,14 @@
   </url>
   
   <url>
-    <loc>https://gun-ctrl.github.io/tags/%E6%A8%A1%E6%9D%BF/</loc>
+    <loc>https://gun-ctrl.github.io/tags/%E5%BC%80%E5%8F%91%E6%8A%80%E5%B7%A7/</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://gun-ctrl.github.io/tags/%E5%BC%80%E5%8F%91%E6%8A%80%E5%B7%A7/</loc>
+    <loc>https://gun-ctrl.github.io/tags/%E6%A8%A1%E6%9D%BF/</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -448,13 +448,6 @@
 
   
   <url>
-    <loc>https://gun-ctrl.github.io/categories/Android%E9%9A%8F%E7%AC%94/</loc>
-    <lastmod>2026-09-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://gun-ctrl.github.io/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
@@ -462,7 +455,7 @@
   </url>
   
   <url>
-    <loc>https://gun-ctrl.github.io/categories/Web%E7%AD%91%E5%9F%BA/</loc>
+    <loc>https://gun-ctrl.github.io/categories/Android%E9%9A%8F%E7%AC%94/</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -470,6 +463,13 @@
   
   <url>
     <loc>https://gun-ctrl.github.io/categories/%E9%AB%98%E7%BA%A7UI/</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://gun-ctrl.github.io/categories/Web%E7%AD%91%E5%9F%BA/</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
